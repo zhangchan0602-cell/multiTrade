@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import re
-import requests
 from pathlib import Path
+
+from screen_common import fetch_latest_close_map
 
 MD = Path('docs/list/history/buylist/20260327buy.md')
 text = MD.read_text(encoding='utf-8')
@@ -42,36 +42,7 @@ for tl in table_lines:
 codes = [r['code'] for r in rows]
 print('Fetching prices for codes:', codes)
 
-# fetch current close prices from eastmoney datacenter
-DATA_CENTER_URL = 'https://datacenter-web.eastmoney.com/api/data/v1/get'
-HEADERS = {'User-Agent':'Mozilla/5.0','Referer':'https://data.eastmoney.com/'}
-TOKEN = '894050c76af8597a853f5b408b759f5d'
-
-filter_expr = '(SECURITY_CODE in ("' + '","'.join(codes) + '"))'
-params = {
-    'reportName':'RPT_DMSK_TS_STOCKNEW',
-    'columns':'ALL',
-    'pageNumber':1,
-    'pageSize':500,
-    'sortColumns':'SECURITY_CODE',
-    'sortTypes': '1',
-    'filter': filter_expr,
-    'token': TOKEN,
-}
-resp = requests.get(DATA_CENTER_URL, params=params, headers=HEADERS, timeout=20)
-resp.raise_for_status()
-js = resp.json()
-data = ((js or {}).get('result') or {}).get('data') or []
-
-price_map = {}
-for item in data:
-    code = str(item.get('SECURITY_CODE') or item.get('code') or '')
-    close = item.get('CLOSE_PRICE')
-    try:
-        close_f = float(close) if close is not None else None
-    except:
-        close_f = None
-    price_map[code.zfill(6)] = close_f
+price_map = fetch_latest_close_map(codes)
 
 # compute pnl
 total_pnl = 0.0
@@ -80,7 +51,7 @@ for r in rows:
     code = r['code']
     ref = r['ref_price']
     qty = r['qty']
-    cur = price_map.get(code) or price_map.get(code.zfill(6))
+    cur = price_map.get(code.zfill(6))
     if cur is None or ref is None:
         pnl = None
         pnl_pct = None

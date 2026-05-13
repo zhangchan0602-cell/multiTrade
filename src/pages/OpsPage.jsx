@@ -1,0 +1,257 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { parseCsv } from '../lib/csv';
+import { fetchOpsHealth, fetchOpsJobs, fetchOpsTop5, getOpsApiBase, runOpsJob } from '../lib/opsApi';
+
+const JOB_ORDER = [
+  { key: 'postclose', title: '短线多因子-盘后版', hint: '运行盘后版筛选，并刷新当天 Top5。' },
+  { key: 'tail', title: '短线多因子-尾盘版', hint: '运行尾盘版筛选，并刷新当天 Top5。' },
+];
+
+function extractMeta(markdown, label) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matched = markdown?.match(new RegExp(`^- ${escaped}:\\s*(.+)$`, 'm'));
+  return matched ? matched[1].trim() : '-';
+}
+
+function formatState(status) {
+  switch (status) {
+    case 'running':
+      return '运行中';
+    case 'success':
+      return '已完成';
+    case 'error':
+      return '运行失败';
+    default:
+      return '待执行';
+  }
+}
+
+function statusClass(status) {
+  switch (status) {
+    case 'running':
+      return 'status-chip status-running';
+    case 'success':
+      return 'status-chip status-success';
+    case 'error':
+      return 'status-chip status-error';
+    default:
+      return 'status-chip status-idle';
+  }
+}
+
+export default function OpsPage() {
+  const [apiOk, setApiOk] = useState(true);
+  const [apiMessage, setApiMessage] = useState('');
+  const [jobs, setJobs] = useState({});
+  const [top5Map, setTop5Map] = useState({});
+  const [actionError, setActionError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function refreshDashboard() {
+      try {
+        await fetchOpsHealth();
+        if (!mounted) {
+          return;
+        }
+        setApiOk(true);
+        setApiMessage('');
+
+        const { jobs: jobList } = await fetchOpsJobs();
+        if (!mounted) {
+          return;
+        }
+
+        const nextJobs = Object.fromEntries(jobList.map((item) => [item.key, item]));
+        setJobs(nextJobs);
+
+        const top5Entries = await Promise.all(
+          JOB_ORDER.map(async (job) => {
+            const payload = await fetchOpsTop5(job.key);
+            return [job.key, payload];
+          })
+        );
+
+        if (!mounted) {
+          return;
+        }
+
+        setTop5Map(Object.fromEntries(top5Entries));
+        setLoading(false);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setApiOk(false);
+        setApiMessage(error.message || 'ops-api-unavailable');
+        setLoading(false);
+      }
+    }
+
+    refreshDashboard();
+    const timer = window.setInterval(refreshDashboard, 3000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const anyRunning = useMemo(() => Object.values(jobs).some((job) => job?.running), [jobs]);
+
+  async function handleRun(jobKey) {
+    setActionError('');
+    try {
+      const result = await runOpsJob(jobKey);
+      setJobs((current) => ({
+        ...current,
+        [jobKey]: result.state,
+      }));
+    } catch (error) {
+      setActionError(error.message || 'run-failed');
+    }
+  }
+
+  if (loading) {
+    return <section className="panel">正在连接操作服务...</section>;
+  }
+
+  return (
+    <section className="content-stack">
+      <article className="panel panel-intro ops-intro">
+        <div>
+          <h2>操作界面</h2>
+          <p>点击执行本地多因子脚本，并在完成后直接查看当天 Top5 内容。</p>
+          <p className="panel-meta-line">操作服务地址：{getOpsApiBase()}</p>
+        </div>
+        <div className="ops-summary">
+          <div className="summary-item">
+            <span>服务状态</span>
+            <strong>{apiOk ? '已连接' : '未连接'}</strong>
+          </div>
+          <div className="summary-item">
+            <span>运行状态</span>
+            <strong>{anyRunning ? '任务执行中' : '空闲'}</strong>
+          </div>
+        </div>
+      </article>
+
+      {!apiOk && (
+        <article className="freshness-banner freshness-danger">
+          <strong>未连接到本地操作服务</strong>
+          <p>请先在项目根目录执行 `npm run api`，然后刷新当前页面。</p>
+          <p>错误信息：{apiMessage}</p>
+        </article>
+      )}
+
+      {actionError && <article className="panel error">{actionError}</article>}
+
+      <div className="ops-grid">
+        {JOB_ORDER.map((job) => {
+          const state = jobs[job.key] || { status: 'idle', output: [], running: false };
+          const top5 = top5Map[job.key] || { exists: false, csvText: '', markdown: '' };
+          const rows = parseCsv(top5.csvText).slice(0, 5);
+          const generatedAt = extractMeta(top5.markdown, '生成时间');
+          const dataState = extractMeta(top5.markdown, '数据状态');
+          const tradeDate = rows[0]?.trade_date || rows[0]?.tradeDate || '-';
+
+          return (
+            <article key={job.key} className="panel ops-card">
+              <div className="ops-card-head">
+                <div>
+                  <h3>{job.title}</h3>
+                  <p className="panel-meta-line">{job.hint}</p>
+                </div>
+                <span className={statusClass(state.status)}>{formatState(state.status)}</span>
+              </div>
+
+              <div className="ops-actions">
+                <button
+                  type="button"
+                  className="action-button action-primary"
+                  onClick={() => handleRun(job.key)}
+                  disabled={!apiOk || state.running}
+                >
+                  {state.running ? '执行中...' : `执行${job.title}`}
+                </button>
+              </div>
+
+              <div className="ops-meta-grid">
+                <div className="meta-card">
+                  <div className="meta-key">开始时间</div>
+                  <div className="meta-value">{state.startedAt || '-'}</div>
+                </div>
+                <div className="meta-card">
+                  <div className="meta-key">结束时间</div>
+                  <div className="meta-value">{state.finishedAt || '-'}</div>
+                </div>
+                <div className="meta-card">
+                  <div className="meta-key">退出码</div>
+                  <div className="meta-value">{state.exitCode ?? '-'}</div>
+                </div>
+              </div>
+
+              <div className="ops-log">
+                <div className="ops-section-title">执行日志</div>
+                <pre className="log-box">{(state.output || []).join('\n') || '暂无日志输出。'}</pre>
+              </div>
+
+              <div className="ops-top5">
+                <div className="ops-section-title">当天 Top5</div>
+                {top5.exists ? (
+                  <>
+                    <div className="ops-meta-grid compact-grid">
+                      <div className="meta-card">
+                        <div className="meta-key">生成时间</div>
+                        <div className="meta-value">{generatedAt}</div>
+                      </div>
+                      <div className="meta-card">
+                        <div className="meta-key">行情日期</div>
+                        <div className="meta-value">{tradeDate}</div>
+                      </div>
+                      <div className="meta-card">
+                        <div className="meta-key">数据状态</div>
+                        <div className="meta-value">{dataState}</div>
+                      </div>
+                    </div>
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>排名</th>
+                            <th>代码</th>
+                            <th>名称</th>
+                            <th>行业</th>
+                            <th>得分</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((row) => (
+                            <tr key={`${job.key}-${row.rank}-${row.code}`}>
+                              <td>{row.rank}</td>
+                              <td>{row.code}</td>
+                              <td>{row.name}</td>
+                              <td className="industry-col">{row.industry}</td>
+                              <td>{row.score_100 || row.score100 || '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <div className="freshness-banner freshness-warn">
+                    <strong>尚未读取到 Top5 文件</strong>
+                    <p>先执行一次当前模型，完成后这里会自动刷新。</p>
+                  </div>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

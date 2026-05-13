@@ -1,35 +1,35 @@
 import { parseCsv } from './csv';
-import shortTop5Text from '../../docs/list/all_a_no_star_short_multifactor_top5.csv?raw';
-import shortTop5Markdown from '../../docs/list/all_a_no_star_short_multifactor_top5.md?raw';
-import shortSummaryText from '../../docs/list/all_a_no_star_short_multifactor_summary.md?raw';
-import midTop20Text from '../../docs/list/all_a_no_star_mid_multifactor_top20.csv?raw';
-import midTop20Markdown from '../../docs/list/all_a_no_star_mid_multifactor_top20.md?raw';
-import myPlanText from '../../myplan.md?raw';
+import shortTop5Text from '../../docs/list/postclose_top5.csv?raw';
+import shortTop5Markdown from '../../docs/list/postclose_top5.md?raw';
+import shortSummaryText from '../../docs/list/postclose_summary.md?raw';
+import tailTop5Text from '../../docs/list/tail_top5.csv?raw';
+import tailTop5Markdown from '../../docs/list/tail_top5.md?raw';
+import tailSummaryText from '../../docs/list/tail_summary.md?raw';
 import historySeed from '../data/top20_history.json';
 
 export const FACTOR_DEFINITIONS = {
   short: {
     key: 'short',
-    title: '短线多因子',
+    title: '短线多因子-盘后版',
     subtitle: '查看盘后Top5候选，并按记录日期回看榜单与新增/移除变化。',
     description: '聚焦次日可交易的短期启动、活跃度、风险控制与流动性，目标持有后续2-3个交易日。',
-    emptyMessage: '未找到 `all_a_no_star_short_multifactor_top5*.csv` 数据文件。',
+    emptyMessage: '未找到 `postclose_top5*.csv` 数据文件。',
     current: {
-      sourcePath: 'docs/list/all_a_no_star_short_multifactor_top5.csv',
+      sourcePath: 'docs/list/postclose_top5.csv',
       csvText: shortTop5Text,
       metaTexts: [shortTop5Markdown, shortSummaryText],
     },
   },
-  mid: {
-    key: 'mid',
-    title: '中线多因子',
-    subtitle: '查看最新 Top20，并按记录日期回看榜单与新增/移除变化。',
-    description: '聚焦价值、质量、成长、动量与低波，适合做中线候选池与跟踪观察。',
-    emptyMessage: '未找到 `all_a_no_star_mid_multifactor_top20*.csv` 数据文件。',
+  tail: {
+    key: 'tail',
+    title: '短线多因子-尾盘版',
+    subtitle: '查看尾盘Top5候选，并按记录日期回看榜单与新增/移除变化。',
+    description: '当前先复用盘后版的因子与阈值，独立输出尾盘版榜单，便于后续针对尾盘场景单独调参。',
+    emptyMessage: '未找到 `tail_top5*.csv` 数据文件。',
     current: {
-      sourcePath: 'docs/list/all_a_no_star_mid_multifactor_top20.csv',
-      csvText: midTop20Text,
-      metaTexts: [myPlanText, midTop20Markdown],
+      sourcePath: 'docs/list/tail_top5.csv',
+      csvText: tailTop5Text,
+      metaTexts: [tailTop5Markdown, tailSummaryText],
     },
   },
 };
@@ -181,10 +181,6 @@ function buildHistorySnapshot(snapshot, sourcePath) {
 }
 
 function getHistoryList(factorKey) {
-  if (Array.isArray(historySeed)) {
-    return factorKey === 'mid' ? historySeed : [];
-  }
-
   return Array.isArray(historySeed?.[factorKey]) ? historySeed[factorKey] : [];
 }
 

@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { getFactorDefinition, loadFactorSnapshots } from '../lib/top20';
 
 const factorOptions = [
-  { key: 'short', label: '短线Top5' },
-  { key: 'mid', label: '中线Top20' },
+  { key: 'short', label: '盘后版Top5' },
+  { key: 'tail', label: '尾盘版Top5' },
 ];
 
 function formatNumber(value, digits = 2) {
@@ -126,7 +126,7 @@ export default function Top20Page() {
       {quoteOnly && (
         <article className="freshness-banner freshness-warn">
           <strong>历史K线不可用</strong>
-          <p>当前短线Top5为纯行情降级候选，适合先观察，实盘优先等待真实K线结果。</p>
+          <p>当前{definition.title}为纯行情降级候选，适合先观察，实盘优先等待真实K线结果。</p>
         </article>
       )}
 

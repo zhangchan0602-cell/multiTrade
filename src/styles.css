@@ -257,6 +257,130 @@ tbody tr:hover {
   border-color: #decdab;
 }
 
+.ops-intro {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.ops-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ops-card {
+  display: grid;
+  gap: 14px;
+}
+
+.ops-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.ops-summary,
+.ops-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ops-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-button {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.action-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.ops-section-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ops-log,
+.ops-top5 {
+  display: grid;
+  gap: 8px;
+}
+
+.log-box {
+  margin: 0;
+  min-height: 120px;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  background: #171a1d;
+  color: #edf2f7;
+  font-family: 'SFMono-Regular', 'Menlo', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.status-idle {
+  background: #f7f1e2;
+  color: var(--flat);
+  border-color: #decdab;
+}
+
+.status-running {
+  background: var(--sun-soft);
+  color: #8a4f04;
+  border-color: #efc78d;
+}
+
+.status-success {
+  background: #e7f7ed;
+  color: var(--up);
+  border-color: #9bd1af;
+}
+
+.status-error {
+  background: #fdeceb;
+  color: var(--down);
+  border-color: #f1b9b6;
+}
+
+.compact-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .split-panel {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
@@ -368,5 +492,16 @@ tbody tr:hover {
 
   .split-panel {
     grid-template-columns: 1fr;
+  }
+
+  .ops-grid,
+  .ops-summary,
+  .ops-meta-grid,
+  .compact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-card-head {
+    flex-direction: column;
   }
 }
