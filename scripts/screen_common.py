@@ -1,6 +1,7 @@
 import os
 import re
 import time
+import threading
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
@@ -15,6 +16,8 @@ CODE_RE = re.compile(r"^(6|0|3)\d{5}$")
 VALID_MARKETS = {"主板", "创业板"}
 STOCK_BASIC_CACHE = Path(__file__).resolve().parent / ".cache" / "stock_basic.csv"
 KLINE_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "kline"
+_TUSHARE_CALL_LOCK = threading.Lock()
+_LAST_TUSHARE_CALL_TS = 0.0
 
 
 def _load_env_file() -> None:
@@ -47,6 +50,20 @@ def get_tushare_token() -> str:
 @lru_cache(maxsize=1)
 def get_tushare_pro():
     return ts.pro_api(get_tushare_token())
+
+
+def call_tushare_api(api_callable, *args, **kwargs):
+    """串行限速访问 Tushare，避免在批量历史回放时触发频控。"""
+    global _LAST_TUSHARE_CALL_TS
+    min_interval = max(0.0, float(os.environ.get("TUSHARE_MIN_INTERVAL", "0.15")))
+    with _TUSHARE_CALL_LOCK:
+        now = time.monotonic()
+        wait_seconds = min_interval - (now - _LAST_TUSHARE_CALL_TS)
+        if wait_seconds > 0:
+            time.sleep(wait_seconds)
+        result = api_callable(*args, **kwargs)
+        _LAST_TUSHARE_CALL_TS = time.monotonic()
+        return result
 
 
 def code_to_ts_code(code: str) -> str:
@@ -97,7 +114,8 @@ def fetch_stock_basic() -> pd.DataFrame:
 
     pro = get_tushare_pro()
     try:
-        df = pro.stock_basic(
+        df = call_tushare_api(
+            pro.stock_basic,
             exchange="",
             list_status="L",
             fields="ts_code,symbol,name,industry,market,list_date",
@@ -131,7 +149,8 @@ def fetch_stock_basic() -> pd.DataFrame:
 @lru_cache(maxsize=32)
 def fetch_daily_snapshot(trade_date: str) -> pd.DataFrame:
     pro = get_tushare_pro()
-    df = pro.daily(
+    df = call_tushare_api(
+        pro.daily,
         trade_date=trade_date,
         fields="ts_code,trade_date,open,high,low,close,pre_close,pct_chg,vol,amount",
     )
@@ -141,14 +160,14 @@ def fetch_daily_snapshot(trade_date: str) -> pd.DataFrame:
 @lru_cache(maxsize=32)
 def fetch_bak_daily_snapshot(trade_date: str) -> pd.DataFrame:
     pro = get_tushare_pro()
-    df = pro.bak_daily(trade_date=trade_date)
+    df = call_tushare_api(pro.bak_daily, trade_date=trade_date)
     return df if df is not None else pd.DataFrame()
 
 
 @lru_cache(maxsize=32)
 def fetch_adj_factor_snapshot(trade_date: str) -> pd.DataFrame:
     pro = get_tushare_pro()
-    df = pro.adj_factor(trade_date=trade_date)
+    df = call_tushare_api(pro.adj_factor, trade_date=trade_date)
     return df if df is not None else pd.DataFrame()
 
 
@@ -156,7 +175,7 @@ def fetch_adj_factor_snapshot(trade_date: str) -> pd.DataFrame:
 def fetch_trade_cal_dates(start_date: str, end_date: str) -> list:
     """返回 [start_date, end_date] 区间内的上交所交易日列表（升序 YYYYMMDD 字符串）。"""
     pro = get_tushare_pro()
-    df = pro.trade_cal(exchange="SSE", start_date=start_date, end_date=end_date, is_open=1)
+    df = call_tushare_api(pro.trade_cal, exchange="SSE", start_date=start_date, end_date=end_date, is_open=1)
     if df is None or df.empty:
         return []
     return sorted(df["cal_date"].astype(str).tolist())
@@ -166,7 +185,8 @@ def fetch_trade_cal_dates(start_date: str, end_date: str) -> list:
 def fetch_daily_basic_snapshot(trade_date: str) -> pd.DataFrame:
     """获取指定交易日的每日指标快照（流通换手率/量比/PE/PB/市值）。"""
     pro = get_tushare_pro()
-    df = pro.daily_basic(
+    df = call_tushare_api(
+        pro.daily_basic,
         trade_date=trade_date,
         fields="ts_code,trade_date,turnover_rate_f,volume_ratio,pe_ttm,pb,total_mv,circ_mv",
     )
@@ -450,9 +470,15 @@ def fetch_a_no_star_quotes_akshare() -> pd.DataFrame:
     ]].copy()
 
 
-def fetch_a_no_star_quotes(source: str = "auto") -> pd.DataFrame:
-    """获取全 A（不含科创板）行情快照，支持按来源选择。"""
+def fetch_a_no_star_quotes(
+    source: str = "auto",
+    trade_date: Optional[str] = None,
+    as_of: Optional[datetime] = None,
+) -> pd.DataFrame:
+    """获取全 A（不含科创板）行情快照，支持按来源选择和指定交易日回放。"""
     fallback_reason = ""
+    historical_mode = bool(trade_date)
+    target_trade_date = trade_date or get_latest_trade_date(as_of=as_of)
 
     def _annotate_quote_meta(df: pd.DataFrame, actual_source: str, is_intraday: bool) -> pd.DataFrame:
         df = df.copy()
@@ -462,9 +488,11 @@ def fetch_a_no_star_quotes(source: str = "auto") -> pd.DataFrame:
         df["quote_fallback_reason"] = fallback_reason[:200]
         return df
 
+    if source == "akshare" and historical_mode:
+        raise RuntimeError("akshare spot quote does not support historical trade_date replay")
     if source == "akshare":
         return _annotate_quote_meta(fetch_a_no_star_quotes_akshare(), actual_source="akshare", is_intraday=True)
-    if source == "auto":
+    if source == "auto" and not historical_mode:
         try:
             return _annotate_quote_meta(fetch_a_no_star_quotes_akshare(), actual_source="akshare", is_intraday=True)
         except Exception as e:
@@ -472,7 +500,7 @@ def fetch_a_no_star_quotes(source: str = "auto") -> pd.DataFrame:
             print(f"[fetch_a_no_star_quotes] akshare 失败，回退 tushare: {e}")
 
     # --- tushare 路径（daily + daily_basic + stock_basic，不依赖 bak_daily）---
-    latest_trade_date = get_latest_trade_date()
+    latest_trade_date = target_trade_date
     basic = fetch_stock_basic()
 
     # 价格数据：daily（amount 单位千元，pct_chg=涨跌幅%）
@@ -489,6 +517,7 @@ def fetch_a_no_star_quotes(source: str = "auto") -> pd.DataFrame:
     quote = quote.rename(columns={"ts_code": "secucode", "pct_chg": "change_rate"})
     quote["code"] = quote["secucode"].map(ts_code_to_code)
     quote = quote[quote["code"].astype(str).str.match(CODE_RE, na=False)].copy()
+    quote = quote[~quote["code"].astype(str).str.startswith("688")].copy()
 
     # 振幅 = (high - low) / pre_close * 100
     pre_close = pd.to_numeric(quote["pre_close"], errors="coerce")
@@ -570,7 +599,11 @@ def fetch_a_no_star_quotes(source: str = "auto") -> pd.DataFrame:
     return _annotate_quote_meta(quote, actual_source="tushare", is_intraday=False)
 
 
-def fetch_org_info(secucodes: List[str]) -> pd.DataFrame:
+def fetch_org_info(
+    secucodes: List[str],
+    trade_date: Optional[str] = None,
+    as_of: Optional[datetime] = None,
+) -> pd.DataFrame:
     basic = fetch_stock_basic()
     if not basic.empty:
         if secucodes:
@@ -580,7 +613,7 @@ def fetch_org_info(secucodes: List[str]) -> pd.DataFrame:
                 subset=["secucode"], keep="first"
             )
 
-    latest_trade_date = get_latest_trade_date()
+    latest_trade_date = trade_date or get_latest_trade_date(as_of=as_of)
     try:
         bak = fetch_bak_daily_snapshot(latest_trade_date).rename(columns={"ts_code": "secucode"})
     except Exception:
@@ -609,7 +642,8 @@ def fetch_tushare_kline_frame(code: str, start_date: str, end_date: str) -> pd.D
     ts_code = code_to_ts_code(code)
     pro = get_tushare_pro()
 
-    daily = pro.daily(
+    daily = call_tushare_api(
+        pro.daily,
         ts_code=ts_code,
         start_date=start_date,
         end_date=end_date,
@@ -618,12 +652,12 @@ def fetch_tushare_kline_frame(code: str, start_date: str, end_date: str) -> pd.D
     if daily.empty:
         raise RuntimeError(f"empty daily history for {ts_code}")
 
-    adj = pro.adj_factor(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    adj = call_tushare_api(pro.adj_factor, ts_code=ts_code, start_date=start_date, end_date=end_date)
     if adj.empty:
         raise RuntimeError(f"empty adj_factor history for {ts_code}")
 
     try:
-        bak = pro.bak_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+        bak = call_tushare_api(pro.bak_daily, ts_code=ts_code, start_date=start_date, end_date=end_date)
         bak_turnover = bak[["ts_code", "trade_date", "turn_over"]].copy() if not bak.empty else pd.DataFrame()
     except Exception:
         bak_turnover = pd.DataFrame()

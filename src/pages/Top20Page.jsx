@@ -99,6 +99,7 @@ export default function Top20Page() {
           <h2>{definition.title}</h2>
           <p>{definition.subtitle}</p>
           <p className="panel-meta-line">{definition.description}</p>
+          <p className="panel-meta-line">{definition.riskNote}</p>
         </div>
         <div className="history-tools">
           {factorOptions.map((option) => (
@@ -129,6 +130,11 @@ export default function Top20Page() {
           <p>当前{definition.title}为纯行情降级候选，适合先观察，实盘优先等待真实K线结果。</p>
         </article>
       )}
+
+      <article className="freshness-banner freshness-warn">
+        <strong>当前仅提供单票层风控</strong>
+        <p>后端当前未加入指数环境过滤、市场风格切换、行业集中度约束、单日组合最大敞口和容量约束，Top5 可能集中于同一题材或风格。</p>
+      </article>
 
       <article className="panel">
         <div className="stat-row">

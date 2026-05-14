@@ -3,8 +3,8 @@ import { parseCsv } from '../lib/csv';
 import { fetchOpsHealth, fetchOpsJobs, fetchOpsTop5, getOpsApiBase, runOpsJob } from '../lib/opsApi';
 
 const JOB_ORDER = [
-  { key: 'postclose', title: '短线多因子-盘后版', hint: '运行盘后版筛选，并刷新当天 Top5。' },
-  { key: 'tail', title: '短线多因子-尾盘版', hint: '运行尾盘版筛选，并刷新当天 Top5。' },
+  { key: 'postclose', title: '短线多因子-盘后版', hint: '运行盘后版筛选，并刷新当天 Top5 候选。' },
+  { key: 'tail', title: '短线多因子-尾盘版', hint: '运行尾盘版筛选，并刷新当天 Top5 候选。' },
 ];
 
 function extractMeta(markdown, label) {
@@ -123,7 +123,8 @@ export default function OpsPage() {
       <article className="panel panel-intro ops-intro">
         <div>
           <h2>操作界面</h2>
-          <p>点击执行本地多因子脚本，并在完成后直接查看当天 Top5 内容。</p>
+          <p>点击执行本地多因子脚本，并在完成后查看当天 Top5 候选内容。</p>
+          <p className="panel-meta-line">当前后端主要提供单票过滤与评分，尚未加入组合层和市场层风控约束。</p>
           <p className="panel-meta-line">操作服务地址：{getOpsApiBase()}</p>
         </div>
         <div className="ops-summary">
@@ -150,12 +151,13 @@ export default function OpsPage() {
 
       <div className="ops-grid">
         {JOB_ORDER.map((job) => {
-          const state = jobs[job.key] || { status: 'idle', output: [], running: false };
+          const state = jobs[job.key] || { status: 'idle', output: [], running: false, settlementSummary: null };
           const top5 = top5Map[job.key] || { exists: false, csvText: '', markdown: '' };
           const rows = parseCsv(top5.csvText).slice(0, 5);
           const generatedAt = extractMeta(top5.markdown, '生成时间');
           const dataState = extractMeta(top5.markdown, '数据状态');
           const tradeDate = rows[0]?.trade_date || rows[0]?.tradeDate || '-';
+          const settlement = state.settlementSummary;
 
           return (
             <article key={job.key} className="panel ops-card">
@@ -197,6 +199,78 @@ export default function OpsPage() {
                 <div className="ops-section-title">执行日志</div>
                 <pre className="log-box">{(state.output || []).join('\n') || '暂无日志输出。'}</pre>
               </div>
+
+              {settlement && (
+                <div className="ops-log">
+                  <div className="ops-section-title">自动结算</div>
+                  <div className="ops-meta-grid compact-grid">
+                    <div className="meta-card">
+                      <div className="meta-key">结算状态</div>
+                      <div className="meta-value">{settlement.status || '-'}</div>
+                    </div>
+                    <div className="meta-card">
+                      <div className="meta-key">结算日期</div>
+                      <div className="meta-value">{settlement.currentTradeDate || '-'}</div>
+                    </div>
+                    <div className="meta-card">
+                      <div className="meta-key">截止买入日</div>
+                      <div className="meta-value">{settlement.cutoffBuyDate || '-'}</div>
+                    </div>
+                    <div className="meta-card">
+                      <div className="meta-key">新增结算</div>
+                      <div className="meta-value">{settlement.settledCount ?? 0}</div>
+                    </div>
+                    <div className="meta-card">
+                      <div className="meta-key">待补价文件</div>
+                      <div className="meta-value">{settlement.pendingFileCount ?? 0}</div>
+                    </div>
+                    <div className="meta-card">
+                      <div className="meta-key">迁移 sidecar</div>
+                      <div className="meta-value">{settlement.migratedCount ?? 0}</div>
+                    </div>
+                  </div>
+
+                  {settlement.message && <p className="panel-meta-line">{settlement.message}</p>}
+
+                  {Array.isArray(settlement.settledFiles) && settlement.settledFiles.length > 0 && (
+                    <div className="table-wrap">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>文件</th>
+                            <th>买入日</th>
+                            <th>已结算</th>
+                            <th>待补价</th>
+                            <th>尾盘价</th>
+                            <th>收盘回退</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {settlement.settledFiles.map((item) => (
+                            <tr key={`${job.key}-${item.fileName}`}>
+                              <td>{item.fileName}</td>
+                              <td>{item.buyDate}</td>
+                              <td>{item.settledRows}</td>
+                              <td>{item.pendingRows}</td>
+                              <td>{item.tailPriceRows}</td>
+                              <td>{item.dailyCloseRows}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {Array.isArray(settlement.skippedFiles) && settlement.skippedFiles.length > 0 && (
+                    <div className="freshness-banner freshness-warn">
+                      <strong>部分文件未纳入自动结算</strong>
+                      {settlement.skippedFiles.slice(0, 3).map((item) => (
+                        <p key={`${job.key}-${item.fileName || item.reason}`}>{`${item.fileName || 'unknown'}: ${item.reason}`}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="ops-top5">
                 <div className="ops-section-title">当天 Top5</div>

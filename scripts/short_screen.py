@@ -17,17 +17,19 @@
 - docs/list/short_summary.md
 """
 
+import json
 import os
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
+from buylist_settlement import SETTLEMENT_SUMMARY_PREFIX, auto_settle_due_buylists
 from screen_common import (
     OUTPUT_DIR,
     fetch_a_no_star_quotes,
@@ -111,9 +113,17 @@ def slope_pct(values: np.ndarray) -> float:
     return float(slope / np.nanmean(values))
 
 
-def get_short_kline_feature(code: str, retries: int = 6, kline_source: str = "auto") -> Dict:
-    end_date = datetime.now().strftime("%Y%m%d")
-    start_date = (pd.Timestamp(datetime.now()) - pd.Timedelta(days=220)).strftime("%Y%m%d")
+def get_short_kline_feature(
+    code: str,
+    retries: int = 6,
+    kline_source: str = "auto",
+    end_trade_date: Optional[str] = None,
+) -> Dict:
+    anchor = pd.to_datetime(end_trade_date, format="%Y%m%d", errors="coerce") if end_trade_date else pd.Timestamp.now()
+    if pd.isna(anchor):
+        anchor = pd.Timestamp.now()
+    end_date = anchor.strftime("%Y%m%d")
+    start_date = (anchor - pd.Timedelta(days=220)).strftime("%Y%m%d")
     last_err = None
     for i in range(retries):
         try:
@@ -175,8 +185,10 @@ def get_short_kline_feature(code: str, retries: int = 6, kline_source: str = "au
             amount_ratio_3_20 = safe_ratio(avg_amount_3, avg_amount_20)
             amount_ratio_5_20 = safe_ratio(avg_amount_5, avg_amount_20)
 
-            turnover_5 = float(np.nanmean(t[-5:])) if len(t) >= 5 else np.nan
-            turnover_20 = float(np.nanmean(t[-20:])) if len(t) >= 20 else np.nan
+            turnover_5_window = t[-5:] if len(t) >= 5 else np.array([])
+            turnover_20_window = t[-20:] if len(t) >= 20 else np.array([])
+            turnover_5 = float(np.nanmean(turnover_5_window)) if np.isfinite(turnover_5_window).any() else np.nan
+            turnover_20 = float(np.nanmean(turnover_20_window)) if np.isfinite(turnover_20_window).any() else np.nan
             turnover_accel_5_20 = safe_ratio(turnover_5, turnover_20) - 1.0 if pd.notna(turnover_20) else np.nan
             vol_10 = float(np.std(rets[-10:], ddof=0)) if len(rets) >= 10 else np.nan
             vol_20 = float(np.std(rets[-20:], ddof=0)) if len(rets) >= 20 else np.nan
@@ -336,6 +348,7 @@ def fetch_short_kline_features(
     max_workers: int = 8,
     retries: int = 2,
     kline_source: str = "auto",
+    end_trade_date: Optional[str] = None,
 ) -> pd.DataFrame:
     if not codes:
         return empty_short_kline_features([])
@@ -344,7 +357,10 @@ def fetch_short_kline_features(
     total = len(codes)
     done = 0
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = {ex.submit(get_short_kline_feature, c, retries, kline_source): c for c in codes}
+        futs = {
+            ex.submit(get_short_kline_feature, c, retries, kline_source, end_trade_date): c
+            for c in codes
+        }
         for fut in as_completed(futs):
             done += 1
             out.append(fut.result())
@@ -923,6 +939,7 @@ def write_outputs(
     model_name: str = DEFAULT_MODEL_NAME,
     output_stem: str = DEFAULT_OUTPUT_STEM,
     trade_target_text: str = DEFAULT_TRADE_TARGET_TEXT,
+    copy_history: bool = True,
 ) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     scored = scored.copy()
@@ -1070,14 +1087,15 @@ def write_outputs(
             f.write("- K线口径: 默认不使用代理兜底，真实K线缺失时不进入最终Top5\n")
         f.write("- 百分制得分: 按原始综合分在全样本中的线性排名换算到0-100\n")
 
-    # 保留带时间戳的历史副本，方便跨日比较（top5 + top20 + summary）
-    _history_dir = OUTPUT_DIR / "history"
-    _history_dir.mkdir(parents=True, exist_ok=True)
-    _ts_tag = run_ts.strftime("%Y%m%d-%H%M")
-    for _suf in ["top5.md", "top20.csv", "summary.md"]:
-        _src = build_output_path(output_stem, _suf)
-        if _src.exists():
-            shutil.copy2(_src, _history_dir / f"{output_stem}_{_ts_tag}_{_suf}")
+    if copy_history:
+        # 保留带时间戳的历史副本，方便跨日比较（top5 + top20 + summary）
+        _history_dir = OUTPUT_DIR / "history"
+        _history_dir.mkdir(parents=True, exist_ok=True)
+        _ts_tag = run_ts.strftime("%Y%m%d-%H%M")
+        for _suf in ["top5.md", "top20.csv", "summary.md"]:
+            _src = build_output_path(output_stem, _suf)
+            if _src.exists():
+                shutil.copy2(_src, _history_dir / f"{output_stem}_{_ts_tag}_{_suf}")
 
 
 def run_screen(
@@ -1085,10 +1103,14 @@ def run_screen(
     output_stem: str = DEFAULT_OUTPUT_STEM,
     trade_target_text: str = DEFAULT_TRADE_TARGET_TEXT,
     _mode: str = "postclose",
-) -> None:
+    run_ts: Optional[datetime] = None,
+    trade_date: Optional[str] = None,
+    persist_outputs: bool = True,
+    copy_history: bool = True,
+) -> dict:
     """通用筛选入口。_mode='postclose'（盘后版）或 'tail'（尾盘版）。"""
-    run_ts = datetime.now()
-    as_of = run_ts.date()
+    run_ts = run_ts or datetime.now()
+    as_of = pd.to_datetime(trade_date, format="%Y%m%d", errors="coerce").date() if trade_date else run_ts.date()
     kline_workers = max(1, int(os.environ.get("SHORT_KLINE_WORKERS", "6")))
     kline_retries = max(1, int(os.environ.get("SHORT_KLINE_RETRIES", "2")))
     kline_candidate_limit = max(0, int(os.environ.get("SHORT_KLINE_CANDIDATE_LIMIT", str(DEFAULT_KLINE_CANDIDATE_LIMIT))))
@@ -1112,15 +1134,18 @@ def run_screen(
     require_real_kline = os.environ.get("SHORT_REQUIRE_REAL_KLINE", "1") != "0"
     quote_only_fallback = os.environ.get("SHORT_QUOTE_ONLY_FALLBACK", "1") != "0"
     quote_only_limit = max(SHORT_TOP_N, int(os.environ.get("SHORT_QUOTE_ONLY_LIMIT", "50")))
-    quote_source = "tushare" if _mode == "postclose" else "auto"
-    kline_source = "tushare" if _mode == "postclose" else "auto"
+    quote_source = os.environ.get("SHORT_QUOTE_SOURCE", "tushare" if _mode == "postclose" else "auto")
+    kline_source = os.environ.get("SHORT_KLINE_SOURCE", "tushare" if _mode == "postclose" else "auto")
     tail_allow_daily_fallback = os.environ.get("SHORT_TAIL_ALLOW_DAILY_FALLBACK", "0") == "1"
 
     print("[1/3] fetch A-share quote universe (no STAR)...")
-    quote = fetch_a_no_star_quotes(source=quote_source)
+    quote = fetch_a_no_star_quotes(source=quote_source, trade_date=trade_date, as_of=run_ts)
     quote_source_used = str(quote["quote_source_used"].iloc[0]) if (not quote.empty and "quote_source_used" in quote.columns) else quote_source
     quote_is_intraday = bool(quote["quote_is_intraday"].iloc[0]) if (not quote.empty and "quote_is_intraday" in quote.columns) else False
     quote_fallback_reason = str(quote["quote_fallback_reason"].iloc[0]) if (not quote.empty and "quote_fallback_reason" in quote.columns) else ""
+    resolved_trade_date = ""
+    if not quote.empty and "trade_date" in quote.columns:
+        resolved_trade_date = pd.to_datetime(quote["trade_date"].iloc[0], errors="coerce").strftime("%Y%m%d")
     print(
         f"[1/3] quote rows={len(quote)}, source_used={quote_source_used}, intraday={int(quote_is_intraday)}"
     )
@@ -1144,7 +1169,7 @@ def run_screen(
         f"quote_source={quote_source}, quote_source_used={quote_source_used}, "
         f"tail_allow_daily_fallback={int(tail_allow_daily_fallback)}, kline_source={kline_source}"
     )
-    org = fetch_org_info(quote["secucode"].unique().tolist())
+    org = fetch_org_info(quote["secucode"].unique().tolist(), trade_date=resolved_trade_date or trade_date, as_of=run_ts)
 
     pre = quote.merge(org[["secucode", "listing_date", "industry"]], on="secucode", how="left")
     pre = add_fast_prefilter_columns(pre, as_of)
@@ -1164,6 +1189,7 @@ def run_screen(
             max_workers=kline_workers,
             retries=kline_retries,
             kline_source=kline_source,
+            end_trade_date=resolved_trade_date or trade_date,
         )
     print(f"[2/3] org rows={len(org)}, short kline rows={len(kf)}")
 
@@ -1177,7 +1203,14 @@ def run_screen(
     df["pass_listing"] = np.where(df["listed_days_kline"].notna(), df["listed_days_kline"] >= 60, calendar_days >= 90)
 
     df["avg_amount_20_used"] = df["avg_amount_20"].where(df["avg_amount_20"].notna(), df["deal_amount"])
+    df["turnover_5"] = df["turnover_5"].where(df["turnover_5"].notna(), df["turnover"])
+    df["turnover_20"] = df["turnover_20"].where(df["turnover_20"].notna(), df["turnover"])
     df["turnover_20_used"] = df["turnover_20"].where(df["turnover_20"].notna(), df["turnover"])
+    neutral_turnover_accel = pd.Series(0.0, index=df.index)
+    df["turnover_accel_5_20"] = df["turnover_accel_5_20"].where(
+        df["turnover_accel_5_20"].notna(),
+        neutral_turnover_accel,
+    )
 
     df["pass_liquidity"] = df["avg_amount_20_used"].fillna(0) >= 100_000_000
     df["pass_price"] = pd.to_numeric(df["close"], errors="coerce").fillna(0) >= 3.0
@@ -1246,12 +1279,29 @@ def run_screen(
         quote_scored = score_quote_only_candidates(df, limit=quote_only_limit)
         if not quote_scored.empty:
             scored = quote_scored
-    write_outputs(scored, df, run_ts, model_name=model_name, output_stem=output_stem, trade_target_text=trade_target_text)
+    if persist_outputs:
+        write_outputs(
+            scored,
+            df,
+            run_ts,
+            model_name=model_name,
+            output_stem=output_stem,
+            trade_target_text=trade_target_text,
+            copy_history=copy_history,
+        )
 
     print("done")
     print(f"universe_total={len(df)}")
     print(f"hard_pass={int(df['hard_pass'].sum())}")
     print(f"final_passed={len(scored)}")
+    return {
+        "quote": quote,
+        "quote_is_intraday": quote_is_intraday,
+        "quote_source_used": quote_source_used,
+        "trade_date": resolved_trade_date or trade_date,
+        "scored": scored,
+        "merged": df,
+    }
 
 
 def run_tail_screen(
@@ -1260,12 +1310,29 @@ def run_tail_screen(
     trade_target_text: str = DEFAULT_TAIL_TRADE_TARGET_TEXT,
 ) -> None:
     """尾盘版筛选入口（14:30-14:45 运行，面向当日 14:50 操作）。"""
-    run_screen(
+    result = run_screen(
         model_name=model_name,
         output_stem=output_stem,
         trade_target_text=trade_target_text,
         _mode="tail",
     )
+    try:
+        settlement_summary = auto_settle_due_buylists(
+            result["quote"],
+            quote_is_intraday=bool(result["quote_is_intraday"]),
+        )
+    except Exception as exc:
+        print(f"[tail-settle] error: {exc}")
+        settlement_summary = {
+            "status": "error",
+            "message": str(exc),
+            "settledCount": 0,
+            "pendingFileCount": 0,
+            "pendingSymbolCount": 0,
+            "settledFiles": [],
+            "skippedFiles": [],
+        }
+    print(f"{SETTLEMENT_SUMMARY_PREFIX}{json.dumps(settlement_summary, ensure_ascii=False)}")
 
 
 def main() -> None:

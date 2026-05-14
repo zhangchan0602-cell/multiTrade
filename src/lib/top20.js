@@ -12,7 +12,8 @@ export const FACTOR_DEFINITIONS = {
     key: 'short',
     title: '短线多因子-盘后版',
     subtitle: '查看盘后Top5候选，并按记录日期回看榜单与新增/移除变化。',
-    description: '聚焦次日可交易的短期启动、活跃度、风险控制与流动性，目标持有后续2-3个交易日。',
+    description: '聚焦次日可交易的短期启动、活跃度、单票过滤与流动性，目标持有后续2-3个交易日。',
+    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。Top5 更适合作为候选池参考，不等同于可直接等权执行的组合。',
     emptyMessage: '未找到 `short_top5*.csv` 数据文件。',
     current: {
       sourcePath: 'docs/list/short_top5.csv',
@@ -24,7 +25,8 @@ export const FACTOR_DEFINITIONS = {
     key: 'tail',
     title: '短线多因子-尾盘版',
     subtitle: '查看尾盘Top5候选，并按记录日期回看榜单与新增/移除变化。',
-    description: '当前先复用盘后版的因子与阈值，独立输出尾盘版榜单，便于后续针对尾盘场景单独调参。',
+    description: '使用尾盘版独立权重与过滤器，偏重当日量能爆发和短期启动，输出尾盘场景候选。',
+    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。尾盘 Top5 可能出现同题材或同风格集中，适合作为候选池参考。',
     emptyMessage: '未找到 `tail_top5*.csv` 数据文件。',
     current: {
       sourcePath: 'docs/list/tail_top5.csv',

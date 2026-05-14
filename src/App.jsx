@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import BacktestPage from './pages/BacktestPage';
 import OpsPage from './pages/OpsPage';
 import Top20Page from './pages/Top20Page';
 import MyPlanPage from './pages/MyPlanPage';
@@ -21,6 +22,9 @@ export default function App() {
           <NavLink to="/top20" className={navClassName}>
             榜单
           </NavLink>
+          <NavLink to="/backtest" className={navClassName}>
+            回测
+          </NavLink>
           <NavLink to="/myplan" className={navClassName}>
             MyPlan
           </NavLink>
@@ -32,6 +36,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/top20" replace />} />
           <Route path="/ops" element={<OpsPage />} />
           <Route path="/top20" element={<Top20Page />} />
+          <Route path="/backtest" element={<BacktestPage />} />
           <Route path="/myplan" element={<MyPlanPage />} />
         </Routes>
       </main>

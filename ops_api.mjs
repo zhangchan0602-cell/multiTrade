@@ -16,6 +16,7 @@ const pythonCandidates = [
   '/Users/ljjjjj/miniconda3/bin/python',
   'python3',
 ].filter(Boolean);
+const SETTLEMENT_SUMMARY_PREFIX = '[tail-settle-summary]';
 
 const jobs = {
   postclose: {
@@ -46,6 +47,7 @@ const jobState = Object.fromEntries(
       output: [],
       pid: null,
       pythonBin: pythonCandidates[0] || 'python3',
+      settlementSummary: null,
     },
   ])
 );
@@ -56,7 +58,20 @@ function appendOutput(state, chunk) {
   if (!lines.length) {
     return;
   }
-  state.output.push(...lines);
+  const visibleLines = [];
+  lines.forEach((line) => {
+    if (line.startsWith(SETTLEMENT_SUMMARY_PREFIX)) {
+      try {
+        state.settlementSummary = JSON.parse(line.slice(SETTLEMENT_SUMMARY_PREFIX.length));
+      } catch (error) {
+        visibleLines.push(`[settlement-summary-parse-error] ${error.message}`);
+      }
+      return;
+    }
+    visibleLines.push(line);
+  });
+
+  state.output.push(...visibleLines);
   if (state.output.length > 200) {
     state.output = state.output.slice(-200);
   }
@@ -131,6 +146,7 @@ function startJob(key) {
   state.exitCode = null;
   state.output = [`[start] ${job.label}`, `[python] ${pythonBin}`, `[script] ${path.relative(ROOT_DIR, job.scriptPath)}`];
   state.pythonBin = pythonBin;
+  state.settlementSummary = null;
 
   const child = spawn(pythonBin, [job.scriptPath], {
     cwd: ROOT_DIR,

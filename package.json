@@ -7,7 +7,8 @@
     "api": "node ops_api.mjs",
     "dev": "vite",
     "build": "vite build --base ./",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backtest:short": "${OPS_PYTHON:-/Users/ljjjjj/miniconda3/bin/python} scripts/postclose_t3_history.py"
   },
   "dependencies": {
     "react": "^18.3.1",
