@@ -7,6 +7,11 @@ export TUSHARE_TOKEN=你的token
 npm install
 npm run api
 npm run dev
+# 14:30 跑尾盘版
+30 14 * * 1-5  cd /path/to/multitrade/scripts && python3 tail_screen.py
+
+# 15:30 跑盘后版
+30 15 * * 1-5  cd /path/to/multitrade/scripts && python3 short_screen.py
 ```
 
 Python 脚本和本地 API 都会读取 `TUSHARE_TOKEN`，未设置时无法抓取最新股票数据。
@@ -23,7 +28,7 @@ npm run preview
 ## 页面说明
 
 - `#/ops`：操作界面，可执行盘后版/尾盘版脚本并查看当天 Top5
-- `#/top20`：展示 `docs/list/postclose_top5*.csv` 与 `docs/list/tail_top5*.csv`
+- `#/top20`：展示 `docs/list/short_top5*.csv` 与 `docs/list/tail_top5*.csv`
   - 支持评分历史（按日期）
   - 自动标记新增项
   - 自动显示本期移出前20项（按最近两期对比）
@@ -33,7 +38,7 @@ npm run preview
 
 `Top20` 页默认加载：
 
-- `docs/list/postclose_top5.csv`（当前盘后版）
+- `docs/list/short_top5.csv`（当前盘后版）
 - `docs/list/tail_top5.csv`（当前尾盘版）
 - `src/data/top20_history.json`（历史快照）
 

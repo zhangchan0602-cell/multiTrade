@@ -1,7 +1,7 @@
 import { parseCsv } from './csv';
-import shortTop5Text from '../../docs/list/postclose_top5.csv?raw';
-import shortTop5Markdown from '../../docs/list/postclose_top5.md?raw';
-import shortSummaryText from '../../docs/list/postclose_summary.md?raw';
+import shortTop5Text from '../../docs/list/short_top5.csv?raw';
+import shortTop5Markdown from '../../docs/list/short_top5.md?raw';
+import shortSummaryText from '../../docs/list/short_summary.md?raw';
 import tailTop5Text from '../../docs/list/tail_top5.csv?raw';
 import tailTop5Markdown from '../../docs/list/tail_top5.md?raw';
 import tailSummaryText from '../../docs/list/tail_summary.md?raw';
@@ -13,9 +13,9 @@ export const FACTOR_DEFINITIONS = {
     title: '短线多因子-盘后版',
     subtitle: '查看盘后Top5候选，并按记录日期回看榜单与新增/移除变化。',
     description: '聚焦次日可交易的短期启动、活跃度、风险控制与流动性，目标持有后续2-3个交易日。',
-    emptyMessage: '未找到 `postclose_top5*.csv` 数据文件。',
+    emptyMessage: '未找到 `short_top5*.csv` 数据文件。',
     current: {
-      sourcePath: 'docs/list/postclose_top5.csv',
+      sourcePath: 'docs/list/short_top5.csv',
       csvText: shortTop5Text,
       metaTexts: [shortTop5Markdown, shortSummaryText],
     },

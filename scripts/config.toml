@@ -1,0 +1,171 @@
+# 短线多因子模型权重配置
+# 修改此文件后，脚本重启时自动生效，无需改代码。
+# 注意：每个小节内各权重之和应为 1.0，否则评分尺度会偏移。
+
+# ────────────────────────────────────────────────────────────
+# 盘后版（15:30-20:00 运行，次日 2-3 交易日持有）
+# ────────────────────────────────────────────────────────────
+
+[postclose.launch]
+ret_3              = 0.16
+ret_5              = 0.22
+accel              = 0.20
+high_breakout_20   = 0.18
+close_position_20  = 0.12
+price_vs_ma20      = 0.08
+close_strength_5   = 0.04
+
+[postclose.trend]
+ret_10              = 0.20
+ret_20              = 0.16
+breakout_20         = 0.16
+ma_alignment_20     = 0.24
+trend_slope_20      = 0.16
+trend_efficiency_20 = 0.08
+
+[postclose.momentum]
+launch = 0.56
+trend  = 0.44
+
+[postclose.activity]
+amount_ratio_1_20   = 0.16
+amount_ratio_3_20   = 0.30
+amount_ratio_5_20   = 0.22
+turnover_5          = 0.12
+turnover_accel_5_20 = 0.10
+volume_ratio        = 0.10
+
+[postclose.stability]
+lowvol_10           = 0.14
+lowvol_20           = 0.14
+low_downside_vol_20 = 0.14
+drawdown_20         = 0.20
+win_rate_20         = 0.16
+low_vol_base        = 0.14
+low_range_base      = 0.06
+upper_shadow_5      = 0.02
+
+[postclose.score]
+launch    = 0.40
+trend     = 0.20
+activity  = 0.24
+stability = 0.10
+liquidity = 0.06
+
+# ────────────────────────────────────────────────────────────
+# 尾盘版（14:30-14:45 运行，当日 14:50 操作）
+# ────────────────────────────────────────────────────────────
+
+[tail.launch]
+ret_3              = 0.22
+ret_5              = 0.26
+accel              = 0.22
+high_breakout_20   = 0.16
+close_position_20  = 0.08
+price_vs_ma20      = 0.04
+close_strength_5   = 0.02
+
+[tail.trend]
+ret_10              = 0.22
+ret_20              = 0.08
+breakout_20         = 0.26
+ma_alignment_20     = 0.18
+trend_slope_20      = 0.18
+trend_efficiency_20 = 0.08
+
+[tail.momentum]
+launch = 0.68
+trend  = 0.32
+
+[tail.activity]
+amount_ratio_1_20   = 0.34
+amount_ratio_3_20   = 0.20
+amount_ratio_5_20   = 0.10
+turnover_5          = 0.10
+turnover_accel_5_20 = 0.06
+volume_ratio        = 0.20
+
+[tail.stability]
+lowvol_10           = 0.20
+lowvol_20           = 0.08
+low_downside_vol_20 = 0.10
+drawdown_20         = 0.14
+win_rate_20         = 0.12
+low_vol_base        = 0.12
+low_range_base      = 0.14
+upper_shadow_5      = 0.10
+
+[tail.score]
+launch    = 0.36
+trend     = 0.12
+activity  = 0.36
+stability = 0.10
+liquidity = 0.06
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 过滤器阈值（对应 add_next_2_3d_trade_filters / add_tail_trade_filters）
+# 修改此处无需改代码，重启脚本即可生效。
+# ─────────────────────────────────────────────────────────────────────────────
+
+[postclose.filters]
+# 当日涨幅 & 振幅
+change_rate_min        = -4.0
+change_rate_max        = 9.8
+amp_max                = 16.0
+# 近期动量窗口
+ret_3_min              = -0.02
+ret_3_max              = 0.12
+ret_5_min              = -0.01
+ret_5_max              = 0.18
+ret_20_min             = -0.08
+ret_20_max             = 0.35
+accel_min              = -0.05
+# 突破形态（price_vs_ma20 = MA5/MA20-1，非收盘/MA20）
+close_position_20_min  = 0.55
+close_position_20_max  = 1.05
+high_breakout_20_min   = -0.04
+high_breakout_20_max   = 0.12
+price_vs_ma20_min      = -0.03
+price_vs_ma20_max      = 0.10
+# 活跃度
+amount_ratio_3_20_min  = 1.05
+amount_ratio_3_20_max  = 3.50
+amount_ratio_5_20_min  = 0.95
+amount_ratio_5_20_max  = 3.00
+turnover_5_min         = 1.50
+turnover_5_max         = 18.00
+# 风险
+vol_20_max             = 0.08
+max_drawdown_20_min    = -0.18
+upper_shadow_5_max     = 0.42
+
+[tail.filters]
+# 当日涨幅 & 振幅
+change_rate_min        = 0.5
+change_rate_max        = 8.5
+amp_max                = 15.0
+# 近期动量窗口
+ret_3_min              = 0.0
+ret_3_max              = 0.10
+ret_5_min              = 0.0
+ret_5_max              = 0.15
+ret_20_min             = -0.05
+ret_20_max             = 0.30
+accel_min              = 0.0
+# 突破形态（price_vs_ma20 = MA5/MA20-1）
+close_position_20_min  = 0.60
+close_position_20_max  = 1.05
+high_breakout_20_min   = -0.02
+high_breakout_20_max   = 0.10
+price_vs_ma20_min      = 0.0
+price_vs_ma20_max      = 0.08
+# 活跃度
+amount_ratio_1_20_min  = 1.20
+amount_ratio_3_20_min  = 1.05
+amount_ratio_3_20_max  = 3.50
+turnover_5_min         = 2.00
+turnover_5_max         = 18.00
+# 风险
+vol_20_max             = 0.075
+max_drawdown_20_min    = -0.16
+upper_shadow_5_max     = 0.38

@@ -1,0 +1,8 @@
+{
+  "github.copilot.chat.localeOverride": "zh-cn",
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    "生成提交信息时始终使用简体中文。",
+    "提交信息应简洁明确，优先概括本次变更的核心意图。",
+    "除代码符号、文件名、命令名外，避免使用英文句子。"
+  ]
+}

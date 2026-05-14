@@ -21,9 +21,9 @@ const jobs = {
   postclose: {
     key: 'postclose',
     label: '短线多因子-盘后版',
-    scriptPath: path.join(ROOT_DIR, 'scripts', 'postclose_screen.py'),
-    top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'postclose_top5.csv'),
-    top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'postclose_top5.md'),
+    scriptPath: path.join(ROOT_DIR, 'scripts', 'short_screen.py'),
+    top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'short_top5.csv'),
+    top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'short_top5.md'),
   },
   tail: {
     key: 'tail',

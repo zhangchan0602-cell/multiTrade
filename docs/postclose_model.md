@@ -77,11 +77,11 @@ K 线抓取前使用宽松预筛：上市约满 `45` 个自然日、当日成交
 
 ## 5. 输出文件
 
-- `docs/list/postclose_passed.csv`
-- `docs/list/postclose_passed.md`
-- `docs/list/postclose_top20.csv`
-- `docs/list/postclose_top20.md`
-- `docs/list/postclose_summary.md`
+- `docs/list/short_passed.csv`
+- `docs/list/short_passed.md`
+- `docs/list/short_top20.csv`
+- `docs/list/short_top20.md`
+- `docs/list/short_summary.md`
 
 ## 6. 说明
 
