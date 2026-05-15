@@ -4,7 +4,7 @@
 __pycache__/
 *.py[cod]
 *.pyo
-
+scripts/.cacheA
 
 # Node / Vite
 node_modules/
