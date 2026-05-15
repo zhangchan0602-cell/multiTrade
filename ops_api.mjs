@@ -21,17 +21,24 @@ const SETTLEMENT_SUMMARY_PREFIX = '[tail-settle-summary]';
 const jobs = {
   postclose: {
     key: 'postclose',
-    label: '短线多因子-盘后版',
+    label: '策略-多因子尾盘',
     scriptPath: path.join(ROOT_DIR, 'scripts', 'short_screen.py'),
     top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'short_top5.csv'),
     top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'short_top5.md'),
   },
   tail: {
     key: 'tail',
-    label: '短线多因子-尾盘版',
+    label: '策略-多因子盘中',
     scriptPath: path.join(ROOT_DIR, 'scripts', 'tail_screen.py'),
     top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'tail_top5.csv'),
     top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'tail_top5.md'),
+  },
+  rps90: {
+    key: 'rps90',
+    label: '策略-RPS双90',
+    scriptPath: path.join(ROOT_DIR, 'scripts', 'rps90_screen.py'),
+    top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'rps90_top5.csv'),
+    top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'rps90_top5.md'),
   },
 };
 
@@ -211,14 +218,14 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  const jobStatusMatch = url.pathname.match(/^\/api\/jobs\/(postclose|tail)$/);
+  const jobStatusMatch = url.pathname.match(/^\/api\/jobs\/(postclose|tail|rps90)$/);
   if (req.method === 'GET' && jobStatusMatch) {
     const key = jobStatusMatch[1];
     json(res, 200, snapshotState(key));
     return;
   }
 
-  const jobRunMatch = url.pathname.match(/^\/api\/run\/(postclose|tail)$/);
+  const jobRunMatch = url.pathname.match(/^\/api\/run\/(postclose|tail|rps90)$/);
   if (req.method === 'POST' && jobRunMatch) {
     const key = jobRunMatch[1];
     const result = startJob(key);
@@ -226,7 +233,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  const top5Match = url.pathname.match(/^\/api\/top5\/(postclose|tail)$/);
+  const top5Match = url.pathname.match(/^\/api\/top5\/(postclose|tail|rps90)$/);
   if (req.method === 'GET' && top5Match) {
     try {
       const payload = await readTop5(top5Match[1]);
