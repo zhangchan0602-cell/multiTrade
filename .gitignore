@@ -1,11 +1,10 @@
 # 环境变量（含 token，不提交到版本控制）
-.env
 
 # Python
 __pycache__/
 *.py[cod]
 *.pyo
-scripts/.cache/
+
 
 # Node / Vite
 node_modules/

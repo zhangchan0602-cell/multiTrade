@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -67,7 +67,7 @@ def get_settled_csv_path(markdown_path: Path) -> Path:
     return markdown_path.with_name(f"{markdown_path.stem}.settled.csv")
 
 
-def _to_optional_float(value) -> float | None:
+def _to_optional_float(value) -> Optional[float]:
     return float(value) if np.isfinite(value) else None
 
 

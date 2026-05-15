@@ -16,6 +16,10 @@ CODE_RE = re.compile(r"^(6|0|3)\d{5}$")
 VALID_MARKETS = {"主板", "创业板"}
 STOCK_BASIC_CACHE = Path(__file__).resolve().parent / ".cache" / "stock_basic.csv"
 KLINE_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "kline"
+DAILY_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "daily"
+DAILY_BASIC_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "daily_basic"
+ADJ_FACTOR_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "adj_factor"
+TRADE_CAL_CACHE = Path(__file__).resolve().parent / ".cache" / "trade_cal.csv"
 _TUSHARE_CALL_LOCK = threading.Lock()
 _LAST_TUSHARE_CALL_TS = 0.0
 
@@ -146,15 +150,24 @@ def fetch_stock_basic() -> pd.DataFrame:
     return df
 
 
-@lru_cache(maxsize=32)
 def fetch_daily_snapshot(trade_date: str) -> pd.DataFrame:
+    cache_path = DAILY_CACHE_DIR / f"{trade_date}.csv"
+    if cache_path.exists():
+        try:
+            return pd.read_csv(cache_path, dtype=str)
+        except Exception:
+            cache_path.unlink(missing_ok=True)
     pro = get_tushare_pro()
     df = call_tushare_api(
         pro.daily,
         trade_date=trade_date,
         fields="ts_code,trade_date,open,high,low,close,pre_close,pct_chg,vol,amount",
     )
-    return df if df is not None else pd.DataFrame()
+    df = df if df is not None else pd.DataFrame()
+    if not df.empty:
+        DAILY_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        df.to_csv(cache_path, index=False)
+    return df
 
 
 @lru_cache(maxsize=32)
@@ -164,33 +177,72 @@ def fetch_bak_daily_snapshot(trade_date: str) -> pd.DataFrame:
     return df if df is not None else pd.DataFrame()
 
 
-@lru_cache(maxsize=32)
 def fetch_adj_factor_snapshot(trade_date: str) -> pd.DataFrame:
+    cache_path = ADJ_FACTOR_CACHE_DIR / f"{trade_date}.csv"
+    if cache_path.exists():
+        try:
+            return pd.read_csv(cache_path, dtype=str)
+        except Exception:
+            cache_path.unlink(missing_ok=True)
     pro = get_tushare_pro()
     df = call_tushare_api(pro.adj_factor, trade_date=trade_date)
-    return df if df is not None else pd.DataFrame()
+    df = df if df is not None else pd.DataFrame()
+    if not df.empty:
+        ADJ_FACTOR_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        df.to_csv(cache_path, index=False)
+    return df
 
 
-@lru_cache(maxsize=8)
 def fetch_trade_cal_dates(start_date: str, end_date: str) -> list:
     """返回 [start_date, end_date] 区间内的上交所交易日列表（升序 YYYYMMDD 字符串）。"""
+    # 优先从文件缓存读取整个交易日历，再过滤区间，避免重复请求
+    if TRADE_CAL_CACHE.exists():
+        try:
+            cal_df = pd.read_csv(TRADE_CAL_CACHE, dtype=str)
+            dates = sorted(
+                d for d in cal_df["cal_date"].tolist()
+                if start_date <= d <= end_date
+            )
+            if dates:
+                return dates
+        except Exception:
+            TRADE_CAL_CACHE.unlink(missing_ok=True)
     pro = get_tushare_pro()
-    df = call_tushare_api(pro.trade_cal, exchange="SSE", start_date=start_date, end_date=end_date, is_open=1)
-    if df is None or df.empty:
+    # 下载完整的历史交易日历（2000-01-01 至今），一次缓存长期复用
+    df_all = call_tushare_api(
+        pro.trade_cal, exchange="SSE",
+        start_date="20000101", end_date="20991231",
+        is_open=1,
+    )
+    if df_all is None or df_all.empty:
         return []
-    return sorted(df["cal_date"].astype(str).tolist())
+    TRADE_CAL_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    df_all[["cal_date"]].to_csv(TRADE_CAL_CACHE, index=False)
+    return sorted(
+        d for d in df_all["cal_date"].astype(str).tolist()
+        if start_date <= d <= end_date
+    )
 
 
-@lru_cache(maxsize=32)
 def fetch_daily_basic_snapshot(trade_date: str) -> pd.DataFrame:
     """获取指定交易日的每日指标快照（流通换手率/量比/PE/PB/市值）。"""
+    cache_path = DAILY_BASIC_CACHE_DIR / f"{trade_date}.csv"
+    if cache_path.exists():
+        try:
+            return pd.read_csv(cache_path, dtype=str)
+        except Exception:
+            cache_path.unlink(missing_ok=True)
     pro = get_tushare_pro()
     df = call_tushare_api(
         pro.daily_basic,
         trade_date=trade_date,
         fields="ts_code,trade_date,turnover_rate_f,volume_ratio,pe_ttm,pb,total_mv,circ_mv",
     )
-    return df if df is not None else pd.DataFrame()
+    df = df if df is not None else pd.DataFrame()
+    if not df.empty:
+        DAILY_BASIC_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        df.to_csv(cache_path, index=False)
+    return df
 
 
 def get_latest_trade_date(as_of: Optional[datetime] = None, max_lookback_days: int = 14) -> str:

@@ -113,6 +113,19 @@ def slope_pct(values: np.ndarray) -> float:
     return float(slope / np.nanmean(values))
 
 
+def series_corr(x: np.ndarray, y: np.ndarray, min_obs: int = 5) -> float:
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    valid = np.isfinite(x) & np.isfinite(y)
+    if valid.sum() < min_obs:
+        return np.nan
+    x = x[valid]
+    y = y[valid]
+    if np.nanstd(x) <= 1e-12 or np.nanstd(y) <= 1e-12:
+        return np.nan
+    return float(np.corrcoef(x, y)[0, 1])
+
+
 def get_short_kline_feature(
     code: str,
     retries: int = 6,
@@ -160,6 +173,7 @@ def get_short_kline_feature(
             ma5 = trailing_mean(c, 5)
             ma10 = trailing_mean(c, 10)
             ma20 = trailing_mean(c, 20)
+            ma60 = trailing_mean(c, 60)
             breakout_20 = safe_ratio(c[-1], ma20) - 1.0 if pd.notna(ma20) else np.nan
             # price_vs_ma20: MA5/MA20 相对强度，量化短期均线对中期均线的偏离
             # 与 breakout_20（收盘价/MA20）使用不同来源，避免因子重复计数
@@ -169,6 +183,7 @@ def get_short_kline_feature(
                 if pd.notna(ma5) and pd.notna(ma10) and pd.notna(ma20)
                 else np.nan
             )
+            ma_bull_20_60 = safe_ratio(ma20, ma60) - 1.0 if (pd.notna(ma20) and pd.notna(ma60)) else np.nan
             trend_slope_20 = slope_pct(c[-20:]) if len(c) >= 20 else np.nan
 
             high_20 = float(np.nanmax(h[-20:])) if len(h) >= 20 else np.nan
@@ -184,6 +199,22 @@ def get_short_kline_feature(
             amount_ratio_1_20 = safe_ratio(avg_amount_1, avg_amount_20)
             amount_ratio_3_20 = safe_ratio(avg_amount_3, avg_amount_20)
             amount_ratio_5_20 = safe_ratio(avg_amount_5, avg_amount_20)
+
+            flow_rets_20 = rets[-20:] if len(rets) >= 20 else np.array([])
+            flow_amounts_20 = a[1:][-20:] if len(a) >= 21 else np.array([])
+            if len(flow_rets_20) == len(flow_amounts_20) and len(flow_rets_20) > 0:
+                up_amount = float(np.nansum(flow_amounts_20[flow_rets_20 > 0]))
+                down_amount = float(np.nansum(flow_amounts_20[flow_rets_20 < 0]))
+                money_flow_bias_20 = safe_ratio(up_amount - down_amount, up_amount + down_amount)
+            else:
+                money_flow_bias_20 = np.nan
+
+            amount_rets = a[1:] / a[:-1] - 1.0 if len(a) >= 2 else np.array([])
+            price_volume_sync_10 = (
+                series_corr(rets[-10:], amount_rets[-10:], min_obs=6)
+                if len(rets) >= 10 and len(amount_rets) >= 10
+                else np.nan
+            )
 
             turnover_5_window = t[-5:] if len(t) >= 5 else np.array([])
             turnover_20_window = t[-20:] if len(t) >= 20 else np.array([])
@@ -207,6 +238,15 @@ def get_short_kline_feature(
             vol_base = float(np.std(rets[-20:-5], ddof=0)) if len(rets) >= 20 else np.nan
             daily_range = np.where(l > 0, h / l - 1.0, np.nan)
             range_base = float(np.nanmean(daily_range[-20:-5])) if len(daily_range) >= 20 else np.nan
+            chip_parts = []
+            chip_weights = []
+            if pd.notna(vol_base):
+                chip_parts.append(vol_base)
+                chip_weights.append(0.6)
+            if pd.notna(range_base):
+                chip_parts.append(range_base)
+                chip_weights.append(0.4)
+            chip_tightness_20 = -float(np.average(chip_parts, weights=chip_weights)) if chip_weights else np.nan
 
             # 启动加速度: 近5日涨幅 - 前15日涨幅，正值说明刚启动
             if len(c) >= 21 and pd.notna(ret_5):
@@ -239,11 +279,14 @@ def get_short_kline_feature(
                 "close_position_20": close_position_20,
                 "price_vs_ma20": price_vs_ma20,
                 "ma_alignment_20": ma_alignment_20,
+                "ma_bull_20_60": ma_bull_20_60,
                 "trend_slope_20": trend_slope_20,
                 "avg_amount_20": avg_amount_20,
                 "amount_ratio_1_20": amount_ratio_1_20,
                 "amount_ratio_3_20": amount_ratio_3_20,
                 "amount_ratio_5_20": amount_ratio_5_20,
+                "money_flow_bias_20": money_flow_bias_20,
+                "price_volume_sync_10": price_volume_sync_10,
                 "turnover_5": turnover_5,
                 "turnover_20": turnover_20,
                 "turnover_accel_5_20": turnover_accel_5_20,
@@ -254,6 +297,7 @@ def get_short_kline_feature(
                 "max_drawdown_20": max_drawdown_20,
                 "vol_base": vol_base,
                 "range_base": range_base,
+                "chip_tightness_20": chip_tightness_20,
                 "accel": accel,
                 "trend_efficiency_20": trend_efficiency_20,
                 "close_strength_5": close_strength_5,
@@ -276,11 +320,14 @@ def get_short_kline_feature(
         "close_position_20": np.nan,
         "price_vs_ma20": np.nan,
         "ma_alignment_20": np.nan,
+        "ma_bull_20_60": np.nan,
         "trend_slope_20": np.nan,
         "avg_amount_20": np.nan,
         "amount_ratio_1_20": np.nan,
         "amount_ratio_3_20": np.nan,
         "amount_ratio_5_20": np.nan,
+        "money_flow_bias_20": np.nan,
+        "price_volume_sync_10": np.nan,
         "turnover_5": np.nan,
         "turnover_20": np.nan,
         "turnover_accel_5_20": np.nan,
@@ -291,6 +338,7 @@ def get_short_kline_feature(
         "max_drawdown_20": np.nan,
         "vol_base": np.nan,
         "range_base": np.nan,
+        "chip_tightness_20": np.nan,
         "accel": np.nan,
         "trend_efficiency_20": np.nan,
         "close_strength_5": np.nan,
@@ -312,11 +360,14 @@ SHORT_KLINE_COLUMNS = [
     "close_position_20",
     "price_vs_ma20",
     "ma_alignment_20",
+    "ma_bull_20_60",
     "trend_slope_20",
     "avg_amount_20",
     "amount_ratio_1_20",
     "amount_ratio_3_20",
     "amount_ratio_5_20",
+    "money_flow_bias_20",
+    "price_volume_sync_10",
     "turnover_5",
     "turnover_20",
     "turnover_accel_5_20",
@@ -327,6 +378,7 @@ SHORT_KLINE_COLUMNS = [
     "max_drawdown_20",
     "vol_base",
     "range_base",
+    "chip_tightness_20",
     "accel",
     "trend_efficiency_20",
     "close_strength_5",
@@ -485,11 +537,14 @@ def apply_short_kline_fallback(df: pd.DataFrame) -> pd.DataFrame:
         "close_position_20": (0.5 + ret_60d / 3.0 + change_1d).clip(0.0, 1.0),
         "price_vs_ma20": (change_1d + ret_60d / 6.0).clip(-0.4, 0.4),
         "ma_alignment_20": (ret_60d / 8.0).clip(-0.25, 0.25),
+        "ma_bull_20_60": (ret_60d / 10.0).clip(-0.20, 0.25),
         "trend_slope_20": (ret_60d / 20.0).clip(-0.08, 0.08),
         "avg_amount_20": pd.to_numeric(df["deal_amount"], errors="coerce"),
         "amount_ratio_1_20": (1.0 + change_1d.abs() * 5.0).clip(0.5, 2.5),
         "amount_ratio_3_20": (1.0 + change_1d.abs() * 4.5).clip(0.5, 2.3),
         "amount_ratio_5_20": (1.0 + change_1d.abs() * 4.0).clip(0.6, 2.0),
+        "money_flow_bias_20": (change_1d + ret_60d / 5.0).clip(-0.8, 0.8),
+        "price_volume_sync_10": (ret_60d / 6.0 - amp / 3.0).clip(-1.0, 1.0),
         "turnover_5": turnover,
         "turnover_20": turnover,
         "turnover_accel_5_20": pd.Series(0.0, index=df.index),
@@ -500,6 +555,7 @@ def apply_short_kline_fallback(df: pd.DataFrame) -> pd.DataFrame:
         "max_drawdown_20": -amp,
         "vol_base": amp.where(amp > 0, np.nan),
         "range_base": amp.where(amp > 0, np.nan),
+        "chip_tightness_20": -(amp.fillna(0.0)).clip(0.0, 0.3),
         "accel": (change_1d + ret_60d / 12.0 - ret_60d / 3.0).clip(-0.5, 0.5),
         "trend_efficiency_20": (ret_60d / (ret_60d.abs() + amp + 1e-9)).clip(-1.0, 1.0),
         "close_strength_5": (0.5 + change_1d * 2.0).clip(0.0, 1.0),
@@ -539,10 +595,13 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
         "close_position_20",
         "price_vs_ma20",
         "ma_alignment_20",
+        "ma_bull_20_60",
         "trend_slope_20",
         "amount_ratio_1_20",
         "amount_ratio_3_20",
         "amount_ratio_5_20",
+        "money_flow_bias_20",
+        "price_volume_sync_10",
         "turnover_5",
         "turnover_accel_5_20",
         "volume_ratio",
@@ -555,6 +614,7 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
         "turnover_20_used",
         "low_vol_base_raw",
         "low_range_base_raw",
+        "chip_tightness_20",
         "accel_raw",
         "trend_efficiency_20",
         "close_strength_5",
@@ -584,11 +644,12 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
         + wl.get("close_strength_5",  0.04) * df["close_strength_5_z"]
     )
     df["trend_score"] = (
-        wt.get("ret_10",              0.20) * df["ret_10_z"]
-        + wt.get("ret_20",            0.16) * df["ret_20_z"]
-        + wt.get("breakout_20",       0.16) * df["breakout_20_z"]
-        + wt.get("ma_alignment_20",   0.24) * df["ma_alignment_20_z"]
-        + wt.get("trend_slope_20",    0.16) * df["trend_slope_20_z"]
+        wt.get("ret_10",              0.14) * df["ret_10_z"]
+        + wt.get("ret_20",            0.10) * df["ret_20_z"]
+        + wt.get("breakout_20",       0.12) * df["breakout_20_z"]
+        + wt.get("ma_alignment_20",   0.18) * df["ma_alignment_20_z"]
+        + wt.get("ma_bull_20_60",     0.28) * df["ma_bull_20_60_z"]
+        + wt.get("trend_slope_20",    0.10) * df["trend_slope_20_z"]
         + wt.get("trend_efficiency_20", 0.08) * df["trend_efficiency_20_z"]
     )
     df["momentum_score"] = (
@@ -596,29 +657,30 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
         + wm.get("trend", 0.44) * df["trend_score"]
     )
     df["activity_score"] = (
-        wa.get("amount_ratio_1_20",    0.16) * df["amount_ratio_1_20_z"]
-        + wa.get("amount_ratio_3_20",  0.30) * df["amount_ratio_3_20_z"]
-        + wa.get("amount_ratio_5_20",  0.22) * df["amount_ratio_5_20_z"]
-        + wa.get("turnover_5",         0.12) * df["turnover_5_z"]
-        + wa.get("turnover_accel_5_20", 0.10) * df["turnover_accel_5_20_z"]
+        wa.get("amount_ratio_1_20",    0.10) * df["amount_ratio_1_20_z"]
+        + wa.get("amount_ratio_3_20",  0.18) * df["amount_ratio_3_20_z"]
+        + wa.get("amount_ratio_5_20",  0.06) * df["amount_ratio_5_20_z"]
+        + wa.get("turnover_5",         0.10) * df["turnover_5_z"]
+        + wa.get("turnover_accel_5_20", 0.06) * df["turnover_accel_5_20_z"]
         + wa.get("volume_ratio",       0.10) * df["volume_ratio_z"]
+        + wa.get("money_flow_bias_20", 0.22) * df["money_flow_bias_20_z"]
+        + wa.get("price_volume_sync_10", 0.18) * df["price_volume_sync_10_z"]
     )
     df["stability_score"] = (
-        ws.get("lowvol_10",             0.14) * df["lowvol_10_raw_z"]
-        + ws.get("lowvol_20",           0.14) * df["lowvol_20_raw_z"]
-        + ws.get("low_downside_vol_20",  0.14) * df["low_downside_vol_20_raw_z"]
-        + ws.get("drawdown_20",         0.20) * df["drawdown_20_raw_z"]
-        + ws.get("win_rate_20",         0.16) * df["win_rate_20_z"]
-        + ws.get("low_vol_base",        0.14) * df["low_vol_base_raw_z"]
-        + ws.get("low_range_base",      0.06) * df["low_range_base_raw_z"]
-        + ws.get("upper_shadow_5",      0.02) * df["upper_shadow_5_raw_z"]
+        ws.get("lowvol_10",             0.08) * df["lowvol_10_raw_z"]
+        + ws.get("lowvol_20",           0.10) * df["lowvol_20_raw_z"]
+        + ws.get("low_downside_vol_20", 0.10) * df["low_downside_vol_20_raw_z"]
+        + ws.get("drawdown_20",         0.18) * df["drawdown_20_raw_z"]
+        + ws.get("win_rate_20",         0.12) * df["win_rate_20_z"]
+        + ws.get("chip_tightness_20",   0.34) * df["chip_tightness_20_z"]
+        + ws.get("upper_shadow_5",      0.08) * df["upper_shadow_5_raw_z"]
     )
     df["liquidity_score"] = 0.55 * df["avg_amount_20_used_z"] + 0.45 * df["turnover_20_used_z"]
     df["score"] = (
-        wsc.get("launch",     0.40) * df["launch_score"]
-        + wsc.get("trend",    0.20) * df["trend_score"]
-        + wsc.get("activity", 0.24) * df["activity_score"]
-        + wsc.get("stability", 0.10) * df["stability_score"]
+        wsc.get("launch",     0.25) * df["launch_score"]
+        + wsc.get("trend",    0.26) * df["trend_score"]
+        + wsc.get("activity", 0.29) * df["activity_score"]
+        + wsc.get("stability", 0.14) * df["stability_score"]
         + wsc.get("liquidity", 0.06) * df["liquidity_score"]
     )
 
@@ -655,10 +717,17 @@ def add_next_2_3d_trade_filters(df: pd.DataFrame) -> pd.DataFrame:
         & pd.to_numeric(df["high_breakout_20"],  errors="coerce").between(wf.get("high_breakout_20_min", -0.04), wf.get("high_breakout_20_max", 0.12))
         & pd.to_numeric(df["price_vs_ma20"],     errors="coerce").between(wf.get("price_vs_ma20_min",  -0.03), wf.get("price_vs_ma20_max",  0.10))
     )
+    df["pass_bull_trend"] = pd.to_numeric(df["ma_bull_20_60"], errors="coerce").ge(
+        wf.get("ma_bull_20_60_min", 0.0)
+    )
     df["pass_activity_setup"] = (
         pd.to_numeric(df["amount_ratio_3_20"], errors="coerce").between(wf.get("amount_ratio_3_20_min", 1.05), wf.get("amount_ratio_3_20_max", 3.50))
         & pd.to_numeric(df["amount_ratio_5_20"], errors="coerce").between(wf.get("amount_ratio_5_20_min", 0.95), wf.get("amount_ratio_5_20_max", 3.00))
         & pd.to_numeric(df["turnover_5"],         errors="coerce").between(wf.get("turnover_5_min", 1.50),        wf.get("turnover_5_max", 18.00))
+    )
+    df["pass_flow_sync"] = (
+        pd.to_numeric(df["money_flow_bias_20"], errors="coerce").ge(wf.get("money_flow_bias_20_min", 0.05))
+        & pd.to_numeric(df["price_volume_sync_10"], errors="coerce").ge(wf.get("price_volume_sync_10_min", 0.0))
     )
     df["pass_risk_setup"] = (
         pd.to_numeric(df["vol_20"],          errors="coerce").le(wf.get("vol_20_max",          0.08))
@@ -669,7 +738,9 @@ def add_next_2_3d_trade_filters(df: pd.DataFrame) -> pd.DataFrame:
         df["pass_daily_chase"]
         & df["pass_launch_window"]
         & df["pass_breakout_setup"]
+        & df["pass_bull_trend"]
         & df["pass_activity_setup"]
+        & df["pass_flow_sync"]
         & df["pass_risk_setup"]
     )
     return df
@@ -698,12 +769,13 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
     raw_factor_cols = [
         "ret_3", "ret_5", "ret_10", "ret_20",
         "breakout_20", "high_breakout_20", "close_position_20",
-        "price_vs_ma20", "ma_alignment_20", "trend_slope_20",
+        "price_vs_ma20", "ma_alignment_20", "ma_bull_20_60", "trend_slope_20",
         "amount_ratio_1_20", "amount_ratio_3_20", "amount_ratio_5_20",
+        "money_flow_bias_20", "price_volume_sync_10",
         "turnover_5", "turnover_accel_5_20", "volume_ratio",
         "lowvol_10_raw", "lowvol_20_raw", "low_downside_vol_20_raw",
         "drawdown_20_raw", "win_rate_20", "avg_amount_20_used", "turnover_20_used",
-        "low_vol_base_raw", "low_range_base_raw", "accel_raw",
+        "low_vol_base_raw", "low_range_base_raw", "chip_tightness_20", "accel_raw",
         "trend_efficiency_20", "close_strength_5", "upper_shadow_5_raw",
     ]
 
@@ -732,12 +804,13 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
     )
     # 趋势：突破信号最重要，20日周期权重降低
     df["trend_score"] = (
-        wtt.get("ret_10",               0.22) * df["ret_10_z"]
-        + wtt.get("ret_20",             0.08) * df["ret_20_z"]
-        + wtt.get("breakout_20",        0.26) * df["breakout_20_z"]
-        + wtt.get("ma_alignment_20",    0.18) * df["ma_alignment_20_z"]
-        + wtt.get("trend_slope_20",     0.18) * df["trend_slope_20_z"]
-        + wtt.get("trend_efficiency_20", 0.08) * df["trend_efficiency_20_z"]
+        wtt.get("ret_10",               0.18) * df["ret_10_z"]
+        + wtt.get("ret_20",             0.06) * df["ret_20_z"]
+        + wtt.get("breakout_20",        0.24) * df["breakout_20_z"]
+        + wtt.get("ma_alignment_20",    0.16) * df["ma_alignment_20_z"]
+        + wtt.get("ma_bull_20_60",      0.22) * df["ma_bull_20_60_z"]
+        + wtt.get("trend_slope_20",     0.08) * df["trend_slope_20_z"]
+        + wtt.get("trend_efficiency_20", 0.06) * df["trend_efficiency_20_z"]
     )
     # 动量：尾盘以"刚启动"为主，大幅偏向 launch
     df["momentum_score"] = (
@@ -746,31 +819,32 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
     )
     # 活跃度：当日量能爆发（amount_ratio_1_20）权重大幅提升；量比为实时量能佐证
     df["activity_score"] = (
-        wta.get("amount_ratio_1_20",    0.34) * df["amount_ratio_1_20_z"]
-        + wta.get("amount_ratio_3_20",  0.20) * df["amount_ratio_3_20_z"]
-        + wta.get("amount_ratio_5_20",  0.10) * df["amount_ratio_5_20_z"]
-        + wta.get("turnover_5",         0.10) * df["turnover_5_z"]
-        + wta.get("turnover_accel_5_20", 0.06) * df["turnover_accel_5_20_z"]
-        + wta.get("volume_ratio",       0.20) * df["volume_ratio_z"]
+        wta.get("amount_ratio_1_20",    0.20) * df["amount_ratio_1_20_z"]
+        + wta.get("amount_ratio_3_20",  0.10) * df["amount_ratio_3_20_z"]
+        + wta.get("amount_ratio_5_20",  0.04) * df["amount_ratio_5_20_z"]
+        + wta.get("turnover_5",         0.08) * df["turnover_5_z"]
+        + wta.get("turnover_accel_5_20", 0.04) * df["turnover_accel_5_20_z"]
+        + wta.get("volume_ratio",       0.08) * df["volume_ratio_z"]
+        + wta.get("money_flow_bias_20", 0.28) * df["money_flow_bias_20_z"]
+        + wta.get("price_volume_sync_10", 0.18) * df["price_volume_sync_10_z"]
     )
     # 稳定性：近期低波动 + 底部整理紧密 + 上影线压力
     df["stability_score"] = (
-        wts.get("lowvol_10",              0.20) * df["lowvol_10_raw_z"]
+        wts.get("lowvol_10",              0.16) * df["lowvol_10_raw_z"]
         + wts.get("lowvol_20",            0.08) * df["lowvol_20_raw_z"]
         + wts.get("low_downside_vol_20",  0.10) * df["low_downside_vol_20_raw_z"]
         + wts.get("drawdown_20",          0.14) * df["drawdown_20_raw_z"]
-        + wts.get("win_rate_20",          0.12) * df["win_rate_20_z"]
-        + wts.get("low_vol_base",         0.12) * df["low_vol_base_raw_z"]
-        + wts.get("low_range_base",       0.14) * df["low_range_base_raw_z"]
-        + wts.get("upper_shadow_5",       0.10) * df["upper_shadow_5_raw_z"]
+        + wts.get("win_rate_20",          0.08) * df["win_rate_20_z"]
+        + wts.get("chip_tightness_20",    0.30) * df["chip_tightness_20_z"]
+        + wts.get("upper_shadow_5",       0.14) * df["upper_shadow_5_raw_z"]
     )
     df["liquidity_score"] = 0.55 * df["avg_amount_20_used_z"] + 0.45 * df["turnover_20_used_z"]
     # 综合：活跃度与启动并列最高权重，趋势降至最低
     df["score"] = (
-        wtsc.get("launch",     0.36) * df["launch_score"]
-        + wtsc.get("trend",    0.12) * df["trend_score"]
-        + wtsc.get("activity", 0.36) * df["activity_score"]
-        + wtsc.get("stability", 0.10) * df["stability_score"]
+        wtsc.get("launch",     0.28) * df["launch_score"]
+        + wtsc.get("trend",    0.18) * df["trend_score"]
+        + wtsc.get("activity", 0.34) * df["activity_score"]
+        + wtsc.get("stability", 0.14) * df["stability_score"]
         + wtsc.get("liquidity", 0.06) * df["liquidity_score"]
     )
 
@@ -811,11 +885,18 @@ def add_tail_trade_filters(df: pd.DataFrame) -> pd.DataFrame:
         & pd.to_numeric(df["high_breakout_20"],  errors="coerce").between(wf.get("high_breakout_20_min", -0.02), wf.get("high_breakout_20_max", 0.10))
         & pd.to_numeric(df["price_vs_ma20"],     errors="coerce").between(wf.get("price_vs_ma20_min",   0.0),  wf.get("price_vs_ma20_max",  0.08))
     )
+    df["pass_bull_trend"] = pd.to_numeric(df["ma_bull_20_60"], errors="coerce").ge(
+        wf.get("ma_bull_20_60_min", 0.0)
+    )
     # 活跃度：当日成交量必须明显高于均值
     df["pass_activity_setup"] = (
         pd.to_numeric(df["amount_ratio_1_20"], errors="coerce").ge(wf.get("amount_ratio_1_20_min", 1.20))
         & pd.to_numeric(df["amount_ratio_3_20"], errors="coerce").between(wf.get("amount_ratio_3_20_min", 1.05), wf.get("amount_ratio_3_20_max", 3.50))
         & pd.to_numeric(df["turnover_5"],         errors="coerce").between(wf.get("turnover_5_min", 2.00),        wf.get("turnover_5_max", 18.00))
+    )
+    df["pass_flow_sync"] = (
+        pd.to_numeric(df["money_flow_bias_20"], errors="coerce").ge(wf.get("money_flow_bias_20_min", 0.10))
+        & pd.to_numeric(df["price_volume_sync_10"], errors="coerce").ge(wf.get("price_volume_sync_10_min", 0.0))
     )
     # 风险：波动率和回撤更严格，上影线过大不买
     df["pass_risk_setup"] = (
@@ -827,7 +908,9 @@ def add_tail_trade_filters(df: pd.DataFrame) -> pd.DataFrame:
         df["pass_daily_chase"]
         & df["pass_launch_window"]
         & df["pass_breakout_setup"]
+        & df["pass_bull_trend"]
         & df["pass_activity_setup"]
+        & df["pass_flow_sync"]
         & df["pass_risk_setup"]
     )
     return df
@@ -973,10 +1056,13 @@ def write_outputs(
         "close_position_20",
         "price_vs_ma20",
         "ma_alignment_20",
+        "ma_bull_20_60",
         "trend_slope_20",
         "amount_ratio_1_20",
         "amount_ratio_3_20",
         "amount_ratio_5_20",
+        "money_flow_bias_20",
+        "price_volume_sync_10",
         "turnover_5",
         "turnover_20_used",
         "turnover_accel_5_20",
@@ -987,6 +1073,7 @@ def write_outputs(
         "max_drawdown_20",
         "vol_base",
         "range_base",
+        "chip_tightness_20",
         "accel",
         "trend_efficiency_20",
         "close_strength_5",
@@ -999,6 +1086,9 @@ def write_outputs(
         "pass_momentum_floor",
         "pass_next_2_3d_setup",
     ]
+    for col in export_cols:
+        if col not in scored.columns:
+            scored[col] = np.nan
     scored[export_cols].to_csv(build_output_path(output_stem, "passed.csv"), index=False, encoding="utf-8-sig")
 
     with build_output_path(output_stem, "passed.md").open("w", encoding="utf-8") as f:
@@ -1068,9 +1158,9 @@ def write_outputs(
         f.write("- 上市天数: 优先用K线交易日，缺失时按上市日自然日近似\n")
         f.write("- 执行流动性: 20日均成交额优先，缺失时回退到当日成交额\n")
         f.write("- 启动: 启动加速度（最高权重）、3日/5日收益、20日新高突破、20日区间收盘位置、站上20日均线、近5日收盘强度\n")
-        f.write("- 趋势: 10日/20日收益、20日均线突破、均线排列、20日斜率、趋势效率\n")
-        f.write("- 活跃度: 1日/3日/5日对20日成交额放大比、5日换手率、换手加速度\n")
-        f.write("- 稳定性: 底部低波动/振幅收敛（最高权重）、10/20日波动率、下行波动、20日最大回撤、20日上涨胜率、近5日上影线\n")
+        f.write("- 趋势: 10日/20日收益、20日均线突破、均线排列、20/60日多头强度、20日斜率、趋势效率\n")
+        f.write("- 活跃度: 1日/3日/5日对20日成交额放大比、5日换手率、换手加速度、20日资金流向偏置、10日量价同步\n")
+        f.write("- 稳定性: 筹码集中度（底部低波动+振幅收敛，最高权重）、10/20日波动率、下行波动、20日最大回撤、20日上涨胜率、近5日上影线\n")
         f.write("- 选股流程: 先做硬过滤并在可交易样本内打分，再叠加次日2-3天交易过滤与动量地板\n")
         f.write("- 启动检测: 底部横盘低波动收敛 + 量价同步放大 + 刚突破均线（20日涨幅≤20%、5日涨幅≤12%）+ 回撤受控\n")
         f.write(f"- 交易目标: {trade_target_text}\n")
@@ -1238,11 +1328,15 @@ def run_screen(
         "breakout_20",
         "high_breakout_20",
         "close_position_20",
+        "price_vs_ma20",
         "ma_alignment_20",
+        "ma_bull_20_60",
         "trend_slope_20",
         "amount_ratio_1_20",
         "amount_ratio_3_20",
         "amount_ratio_5_20",
+        "money_flow_bias_20",
+        "price_volume_sync_10",
         "turnover_5",
         "turnover_20_used",
         "turnover_accel_5_20",
@@ -1253,6 +1347,7 @@ def run_screen(
         "max_drawdown_20",
         "vol_base",
         "range_base",
+        "chip_tightness_20",
         "accel",
         "trend_efficiency_20",
         "close_strength_5",
@@ -1260,7 +1355,7 @@ def run_screen(
         "avg_amount_20_used",
     ]
     base["raw_missing_count"] = base[raw_cols].isna().sum(axis=1)
-    base = base[base["raw_missing_count"] <= 4].copy()
+    base = base[base["raw_missing_count"] <= 6].copy()
 
     if _mode == "tail":
         scored = score_factors_tail(base)

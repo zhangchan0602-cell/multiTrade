@@ -16,11 +16,12 @@ price_vs_ma20      = 0.08
 close_strength_5   = 0.04
 
 [postclose.trend]
-ret_10              = 0.20
-ret_20              = 0.16
-breakout_20         = 0.16
-ma_alignment_20     = 0.24
-trend_slope_20      = 0.16
+ret_10              = 0.14
+ret_20              = 0.10
+breakout_20         = 0.12
+ma_alignment_20     = 0.18
+ma_bull_20_60       = 0.28
+trend_slope_20      = 0.10
 trend_efficiency_20 = 0.08
 
 [postclose.momentum]
@@ -28,28 +29,29 @@ launch = 0.56
 trend  = 0.44
 
 [postclose.activity]
-amount_ratio_1_20   = 0.16
-amount_ratio_3_20   = 0.30
-amount_ratio_5_20   = 0.22
-turnover_5          = 0.12
-turnover_accel_5_20 = 0.10
+amount_ratio_1_20    = 0.10
+amount_ratio_3_20    = 0.18
+amount_ratio_5_20    = 0.06
+turnover_5           = 0.10
+turnover_accel_5_20  = 0.06
 volume_ratio        = 0.10
+money_flow_bias_20  = 0.22
+price_volume_sync_10 = 0.18
 
 [postclose.stability]
-lowvol_10           = 0.14
-lowvol_20           = 0.14
-low_downside_vol_20 = 0.14
-drawdown_20         = 0.20
-win_rate_20         = 0.16
-low_vol_base        = 0.14
-low_range_base      = 0.06
-upper_shadow_5      = 0.02
+lowvol_10           = 0.08
+lowvol_20           = 0.10
+low_downside_vol_20 = 0.10
+drawdown_20         = 0.18
+win_rate_20         = 0.12
+chip_tightness_20   = 0.34
+upper_shadow_5      = 0.08
 
 [postclose.score]
-launch    = 0.40
-trend     = 0.20
-activity  = 0.24
-stability = 0.10
+launch    = 0.25
+trend     = 0.26
+activity  = 0.29
+stability = 0.14
 liquidity = 0.06
 
 # ────────────────────────────────────────────────────────────
@@ -66,40 +68,42 @@ price_vs_ma20      = 0.04
 close_strength_5   = 0.02
 
 [tail.trend]
-ret_10              = 0.22
-ret_20              = 0.08
-breakout_20         = 0.26
-ma_alignment_20     = 0.18
-trend_slope_20      = 0.18
-trend_efficiency_20 = 0.08
+ret_10              = 0.18
+ret_20              = 0.06
+breakout_20         = 0.24
+ma_alignment_20     = 0.16
+ma_bull_20_60       = 0.22
+trend_slope_20      = 0.08
+trend_efficiency_20 = 0.06
 
 [tail.momentum]
 launch = 0.68
 trend  = 0.32
 
 [tail.activity]
-amount_ratio_1_20   = 0.34
-amount_ratio_3_20   = 0.20
-amount_ratio_5_20   = 0.10
-turnover_5          = 0.10
-turnover_accel_5_20 = 0.06
-volume_ratio        = 0.20
+amount_ratio_1_20    = 0.20
+amount_ratio_3_20    = 0.10
+amount_ratio_5_20    = 0.04
+turnover_5           = 0.08
+turnover_accel_5_20  = 0.04
+volume_ratio         = 0.08
+money_flow_bias_20   = 0.28
+price_volume_sync_10 = 0.18
 
 [tail.stability]
-lowvol_10           = 0.20
+lowvol_10           = 0.16
 lowvol_20           = 0.08
 low_downside_vol_20 = 0.10
 drawdown_20         = 0.14
-win_rate_20         = 0.12
-low_vol_base        = 0.12
-low_range_base      = 0.14
-upper_shadow_5      = 0.10
+win_rate_20         = 0.08
+chip_tightness_20   = 0.30
+upper_shadow_5      = 0.14
 
 [tail.score]
-launch    = 0.36
-trend     = 0.12
-activity  = 0.36
-stability = 0.10
+launch    = 0.28
+trend     = 0.18
+activity  = 0.34
+stability = 0.14
 liquidity = 0.06
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -127,6 +131,7 @@ high_breakout_20_min   = -0.04
 high_breakout_20_max   = 0.12
 price_vs_ma20_min      = -0.03
 price_vs_ma20_max      = 0.10
+ma_bull_20_60_min      = 0.0
 # 活跃度
 amount_ratio_3_20_min  = 1.05
 amount_ratio_3_20_max  = 3.50
@@ -134,6 +139,8 @@ amount_ratio_5_20_min  = 0.95
 amount_ratio_5_20_max  = 3.00
 turnover_5_min         = 1.50
 turnover_5_max         = 18.00
+money_flow_bias_20_min = 0.05
+price_volume_sync_10_min = 0.0
 # 风险
 vol_20_max             = 0.08
 max_drawdown_20_min    = -0.18
@@ -159,12 +166,15 @@ high_breakout_20_min   = -0.02
 high_breakout_20_max   = 0.10
 price_vs_ma20_min      = 0.0
 price_vs_ma20_max      = 0.08
+ma_bull_20_60_min      = 0.0
 # 活跃度
 amount_ratio_1_20_min  = 1.20
 amount_ratio_3_20_min  = 1.05
 amount_ratio_3_20_max  = 3.50
 turnover_5_min         = 2.00
 turnover_5_max         = 18.00
+money_flow_bias_20_min = 0.10
+price_volume_sync_10_min = 0.0
 # 风险
 vol_20_max             = 0.075
 max_drawdown_20_min    = -0.16
