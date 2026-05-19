@@ -8,13 +8,13 @@
 - 创业板
 
 输出文件：
-- docs/list/short_passed.csv
-- docs/list/short_passed.md
-- docs/list/short_top5.csv
-- docs/list/short_top5.md
-- docs/list/short_top20.csv
-- docs/list/short_top20.md
-- docs/list/short_summary.md
+- docs/list/history/short/YYYY-MM-DD/short_passed.csv
+- docs/list/history/short/YYYY-MM-DD/short_passed.md
+- docs/list/history/short/YYYY-MM-DD/short_top5.csv
+- docs/list/history/short/YYYY-MM-DD/short_top5.md
+- docs/list/history/short/YYYY-MM-DD/short_top20.csv
+- docs/list/history/short/YYYY-MM-DD/short_top20.md
+- docs/list/history/short/YYYY-MM-DD/short_summary.md
 """
 
 import json
@@ -1009,10 +1009,21 @@ def write_rank_table(f, rows: pd.DataFrame, title: str, run_ts: datetime) -> Non
                 liquidity=float(r["liquidity_score"]),
             )
         )
+def build_output_dir(output_stem: str, run_ts: datetime) -> Path:
+    if output_stem == DEFAULT_OUTPUT_STEM:
+        return OUTPUT_DIR / "history" / "short" / run_ts.strftime("%Y-%m-%d")
+    return OUTPUT_DIR
 
 
-def build_output_path(output_stem: str, suffix: str):
-    return OUTPUT_DIR / f"{output_stem}_{suffix}"
+def build_output_path(output_stem: str, suffix: str, run_ts: Optional[datetime] = None) -> Path:
+    anchor = run_ts or datetime.now()
+    return build_output_dir(output_stem, anchor) / f"{output_stem}_{suffix}"
+
+
+def build_output_display_path(output_stem: str, suffix: str, run_ts: datetime) -> str:
+    output_path = build_output_path(output_stem, suffix, run_ts)
+    project_root = OUTPUT_DIR.parent.parent
+    return output_path.relative_to(project_root).as_posix()
 
 
 def write_outputs(
@@ -1025,6 +1036,7 @@ def write_outputs(
     copy_history: bool = True,
 ) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    build_output_dir(output_stem, run_ts).mkdir(parents=True, exist_ok=True)
     scored = scored.copy()
     merged = merged.copy()
     if "kline_fallback_used" not in scored.columns:
@@ -1089,9 +1101,9 @@ def write_outputs(
     for col in export_cols:
         if col not in scored.columns:
             scored[col] = np.nan
-    scored[export_cols].to_csv(build_output_path(output_stem, "passed.csv"), index=False, encoding="utf-8-sig")
+    scored[export_cols].to_csv(build_output_path(output_stem, "passed.csv", run_ts), index=False, encoding="utf-8-sig")
 
-    with build_output_path(output_stem, "passed.md").open("w", encoding="utf-8") as f:
+    with build_output_path(output_stem, "passed.md", run_ts).open("w", encoding="utf-8") as f:
         f.write(f"# 全A（不含科创板）{model_name}模型 符合清单\n\n")
         f.write(f"- 生成时间: {run_ts.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"- 共 {len(scored)} 只\n\n")
@@ -1103,15 +1115,15 @@ def write_outputs(
             )
 
     top5 = scored.head(SHORT_TOP_N).copy()
-    top5[export_cols].to_csv(build_output_path(output_stem, "top5.csv"), index=False, encoding="utf-8-sig")
+    top5[export_cols].to_csv(build_output_path(output_stem, "top5.csv", run_ts), index=False, encoding="utf-8-sig")
 
-    with build_output_path(output_stem, "top5.md").open("w", encoding="utf-8") as f:
+    with build_output_path(output_stem, "top5.md", run_ts).open("w", encoding="utf-8") as f:
         write_rank_table(f, top5, f"全A（不含科创板）{model_name}模型 Top 5", run_ts)
 
     top20 = scored.head(20).copy()
-    top20[export_cols].to_csv(build_output_path(output_stem, "top20.csv"), index=False, encoding="utf-8-sig")
+    top20[export_cols].to_csv(build_output_path(output_stem, "top20.csv", run_ts), index=False, encoding="utf-8-sig")
 
-    with build_output_path(output_stem, "top20.md").open("w", encoding="utf-8") as f:
+    with build_output_path(output_stem, "top20.md", run_ts).open("w", encoding="utf-8") as f:
         write_rank_table(f, top20, f"全A（不含科创板）{model_name}模型 Top 20", run_ts)
 
     kline_ok = int((merged["kline_ok"] == 1).sum())
@@ -1126,7 +1138,7 @@ def write_outputs(
     quote_source_requested = str(merged.get("quote_source_requested", pd.Series(["unknown"], index=merged.index[:1])).iloc[0]) if not merged.empty else "unknown"
     quote_is_intraday = bool(merged.get("quote_is_intraday", pd.Series([False], index=merged.index[:1])).iloc[0]) if not merged.empty else False
     quote_fallback_reason = str(merged.get("quote_fallback_reason", pd.Series([""], index=merged.index[:1])).iloc[0]) if not merged.empty else ""
-    with build_output_path(output_stem, "summary.md").open("w", encoding="utf-8") as f:
+    with build_output_path(output_stem, "summary.md", run_ts).open("w", encoding="utf-8") as f:
         f.write(f"# 全A（不含科创板）{model_name}筛选统计\n\n")
         f.write(f"- 生成时间: {run_ts.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"- 行情快照请求来源: {quote_source_requested}\n")
@@ -1145,13 +1157,13 @@ def write_outputs(
         f.write(f"- 最终兜底样本: {scored_fallback}\n\n")
         f.write(f"- 最终纯行情降级样本: {scored_quote_only}\n\n")
         f.write("## 输出文件\n\n")
-        f.write(f"- `docs/list/{output_stem}_passed.csv`\n")
-        f.write(f"- `docs/list/{output_stem}_passed.md`\n")
-        f.write(f"- `docs/list/{output_stem}_top5.csv`\n")
-        f.write(f"- `docs/list/{output_stem}_top5.md`\n")
-        f.write(f"- `docs/list/{output_stem}_top20.csv`\n")
-        f.write(f"- `docs/list/{output_stem}_top20.md`\n")
-        f.write(f"- `docs/list/{output_stem}_summary.md`\n\n")
+        f.write(f"- `{build_output_display_path(output_stem, 'passed.csv', run_ts)}`\n")
+        f.write(f"- `{build_output_display_path(output_stem, 'passed.md', run_ts)}`\n")
+        f.write(f"- `{build_output_display_path(output_stem, 'top5.csv', run_ts)}`\n")
+        f.write(f"- `{build_output_display_path(output_stem, 'top5.md', run_ts)}`\n")
+        f.write(f"- `{build_output_display_path(output_stem, 'top20.csv', run_ts)}`\n")
+        f.write(f"- `{build_output_display_path(output_stem, 'top20.md', run_ts)}`\n")
+        f.write(f"- `{build_output_display_path(output_stem, 'summary.md', run_ts)}`\n\n")
         f.write("## 口径说明\n\n")
         f.write("- 股票池: 沪A主板 + 深A主板 + 创业板（不含科创板）\n")
         f.write("- ST过滤: 名称含 `ST` 或 `*ST` 剔除\n")
@@ -1183,7 +1195,7 @@ def write_outputs(
         _history_dir.mkdir(parents=True, exist_ok=True)
         _ts_tag = run_ts.strftime("%Y%m%d-%H%M")
         for _suf in ["top5.md", "top20.csv", "summary.md"]:
-            _src = build_output_path(output_stem, _suf)
+            _src = build_output_path(output_stem, _suf, run_ts)
             if _src.exists():
                 shutil.copy2(_src, _history_dir / f"{output_stem}_{_ts_tag}_{_suf}")
 

@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build --base ./",
     "preview": "vite preview",
-    "backtest:short": "${OPS_PYTHON:-/Users/ljjjjj/miniconda3/bin/python} scripts/postclose_t3_history.py"
+    "backtest:short": "${OPS_PYTHON:-python3} scripts/postclose_t3_history.py"
   },
   "dependencies": {
     "react": "^18.3.1",

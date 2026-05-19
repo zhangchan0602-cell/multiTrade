@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
-import { spawn } from 'node:child_process';
-import { existsSync, statSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,11 +11,38 @@ const ROOT_DIR = __dirname;
 const HOST = process.env.OPS_HOST || '127.0.0.1';
 const PORT = Number(process.env.OPS_PORT || 8787);
 
-const pythonCandidates = [
+function resolvePythonCandidates(candidates) {
+  const seen = new Set();
+  return candidates.filter((candidate) => {
+    const value = String(candidate || '').trim();
+    if (!value || seen.has(value)) {
+      return false;
+    }
+    seen.add(value);
+
+    if (path.isAbsolute(value)) {
+      return existsSync(value);
+    }
+
+    const probe = spawnSync(value, ['--version'], {
+      cwd: ROOT_DIR,
+      env: {
+        ...process.env,
+        PYTHONUTF8: '1',
+      },
+      stdio: 'ignore',
+    });
+    return !probe.error && probe.status === 0;
+  });
+}
+
+const pythonCandidates = resolvePythonCandidates([
   process.env.OPS_PYTHON,
-  '/Users/ljjjjj/miniconda3/bin/python',
+  '/usr/local/bin/python3',
   'python3',
-].filter(Boolean);
+  'python',
+]);
+const DEFAULT_PYTHON_BIN = pythonCandidates[0] || process.env.OPS_PYTHON || 'python3';
 const SETTLEMENT_SUMMARY_PREFIX = '[tail-settle-summary]';
 
 const jobs = {
@@ -53,11 +80,57 @@ const jobState = Object.fromEntries(
       exitCode: null,
       output: [],
       pid: null,
-      pythonBin: pythonCandidates[0] || 'python3',
+      pythonBin: DEFAULT_PYTHON_BIN,
       settlementSummary: null,
     },
   ])
 );
+
+function resolveLatestShortOutputDir() {
+  const historyRoot = path.join(ROOT_DIR, 'docs', 'list', 'history', 'short');
+  if (!existsSync(historyRoot)) {
+    return null;
+  }
+
+  const latestDirName = readdirSync(historyRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && /^\d{4}-\d{2}-\d{2}$/.test(entry.name))
+    .map((entry) => entry.name)
+    .sort()
+    .at(-1);
+
+  return latestDirName ? path.join(historyRoot, latestDirName) : null;
+}
+
+function resolveTop5Paths(job) {
+  if (job.key !== 'postclose') {
+    return {
+      csvPath: job.top5CsvPath,
+      mdPath: job.top5MdPath,
+    };
+  }
+
+  const latestShortDir = resolveLatestShortOutputDir();
+  if (!latestShortDir) {
+    return {
+      csvPath: job.top5CsvPath,
+      mdPath: job.top5MdPath,
+    };
+  }
+
+  const datedCsvPath = path.join(latestShortDir, 'short_top5.csv');
+  const datedMdPath = path.join(latestShortDir, 'short_top5.md');
+  if (existsSync(datedCsvPath) || existsSync(datedMdPath)) {
+    return {
+      csvPath: datedCsvPath,
+      mdPath: datedMdPath,
+    };
+  }
+
+  return {
+    csvPath: job.top5CsvPath,
+    mdPath: job.top5MdPath,
+  };
+}
 
 function appendOutput(state, chunk) {
   const text = String(chunk || '').replace(/\r/g, '');
@@ -105,8 +178,9 @@ function snapshotState(key) {
 
 async function readTop5(key) {
   const job = jobs[key];
-  const csvExists = existsSync(job.top5CsvPath);
-  const mdExists = existsSync(job.top5MdPath);
+  const { csvPath, mdPath } = resolveTop5Paths(job);
+  const csvExists = existsSync(csvPath);
+  const mdExists = existsSync(mdPath);
   const exists = csvExists || mdExists;
 
   if (!exists) {
@@ -121,11 +195,11 @@ async function readTop5(key) {
   }
 
   const [csvText, markdown] = await Promise.all([
-    csvExists ? readFile(job.top5CsvPath, 'utf8') : Promise.resolve(''),
-    mdExists ? readFile(job.top5MdPath, 'utf8') : Promise.resolve(''),
+    csvExists ? readFile(csvPath, 'utf8') : Promise.resolve(''),
+    mdExists ? readFile(mdPath, 'utf8') : Promise.resolve(''),
   ]);
 
-  const latestPath = mdExists ? job.top5MdPath : job.top5CsvPath;
+  const latestPath = mdExists ? mdPath : csvPath;
   const updatedAt = statSync(latestPath).mtime.toISOString();
 
   return {
@@ -145,7 +219,7 @@ function startJob(key) {
     return { ok: false, reason: 'already-running', state: snapshotState(key) };
   }
 
-  const pythonBin = pythonCandidates[0] || 'python3';
+  const pythonBin = DEFAULT_PYTHON_BIN;
   state.status = 'running';
   state.running = true;
   state.startedAt = new Date().toISOString();

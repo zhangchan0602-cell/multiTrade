@@ -2,10 +2,34 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { parseCsv } from '../lib/csv';
 import { fetchOpsHealth, fetchOpsJobs, fetchOpsTop5, getOpsApiBase, runOpsJob } from '../lib/opsApi';
 
-const JOB_ORDER = [
-  { key: 'postclose', title: '短线多因子-盘后版', hint: '运行盘后版筛选，并刷新当天 Top5 候选。' },
-  { key: 'tail', title: '短线多因子-尾盘版', hint: '运行尾盘版筛选，并刷新当天 Top5 候选。' },
-];
+const JOB_PRESETS = {
+  postclose: { key: 'postclose', title: '短线多因子-盘后版', hint: '运行盘后版筛选，并刷新当天 Top5 候选。' },
+  tail: { key: 'tail', title: '短线多因子-尾盘版', hint: '运行尾盘版筛选，并刷新当天 Top5 候选。' },
+  rps90: { key: 'rps90', title: '策略-RPS双90', hint: '运行 RPS 双90 筛选，并刷新当天 Top5 候选。' },
+};
+
+const JOB_PRIORITY = ['postclose', 'tail', 'rps90'];
+
+function normalizeJobMeta(job) {
+  const preset = JOB_PRESETS[job.key] || {};
+  return {
+    ...job,
+    title: preset.title || job.label || job.key,
+    hint: preset.hint || `执行 ${preset.title || job.label || job.key}。`,
+  };
+}
+
+function orderJobs(jobList) {
+  return [...jobList]
+    .map(normalizeJobMeta)
+    .sort((left, right) => {
+      const leftIndex = JOB_PRIORITY.indexOf(left.key);
+      const rightIndex = JOB_PRIORITY.indexOf(right.key);
+      const safeLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+      const safeRight = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+      return safeLeft - safeRight || left.title.localeCompare(right.title, 'zh-CN');
+    });
+}
 
 function extractMeta(markdown, label) {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -46,6 +70,9 @@ export default function OpsPage() {
   const [top5Map, setTop5Map] = useState({});
   const [actionError, setActionError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedJobKey, setSelectedJobKey] = useState('');
+
+  const orderedJobs = useMemo(() => orderJobs(Object.values(jobs)), [jobs]);
 
   useEffect(() => {
     let mounted = true;
@@ -66,9 +93,15 @@ export default function OpsPage() {
 
         const nextJobs = Object.fromEntries(jobList.map((item) => [item.key, item]));
         setJobs(nextJobs);
+        setSelectedJobKey((current) => {
+          if (current && nextJobs[current]) {
+            return current;
+          }
+          return orderJobs(jobList)[0]?.key || '';
+        });
 
         const top5Entries = await Promise.all(
-          JOB_ORDER.map(async (job) => {
+          jobList.map(async (job) => {
             const payload = await fetchOpsTop5(job.key);
             return [job.key, payload];
           })
@@ -100,6 +133,7 @@ export default function OpsPage() {
   }, []);
 
   const anyRunning = useMemo(() => Object.values(jobs).some((job) => job?.running), [jobs]);
+  const selectedJob = selectedJobKey ? normalizeJobMeta(jobs[selectedJobKey] || { key: selectedJobKey }) : null;
 
   async function handleRun(jobKey) {
     setActionError('');
@@ -123,7 +157,7 @@ export default function OpsPage() {
       <article className="panel panel-intro ops-intro">
         <div>
           <h2>操作界面</h2>
-          <p>点击执行本地多因子脚本，并在完成后查看当天 Top5 候选内容。</p>
+          <p>从统一入口选择策略执行，本地脚本完成后会自动刷新当天 Top5 候选内容。</p>
           <p className="panel-meta-line">当前后端主要提供单票过滤与评分，尚未加入组合层和市场层风控约束。</p>
           <p className="panel-meta-line">操作服务地址：{getOpsApiBase()}</p>
         </div>
@@ -149,8 +183,42 @@ export default function OpsPage() {
 
       {actionError && <article className="panel error">{actionError}</article>}
 
+      <article className="panel ops-launcher">
+        <div>
+          <h3>统一策略入口</h3>
+          <p className="panel-meta-line">选择要执行的策略，使用同一个入口发起任务。</p>
+        </div>
+        <div className="ops-launcher-form">
+          <label className="ops-launcher-copy" htmlFor="strategy-select">
+            当前策略
+          </label>
+          <select
+            id="strategy-select"
+            className="ops-select"
+            value={selectedJobKey}
+            onChange={(event) => setSelectedJobKey(event.target.value)}
+            disabled={!apiOk || orderedJobs.length === 0 || anyRunning}
+          >
+            {orderedJobs.map((job) => (
+              <option key={job.key} value={job.key}>
+                {job.title}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="action-button action-primary"
+            onClick={() => selectedJobKey && handleRun(selectedJobKey)}
+            disabled={!apiOk || !selectedJobKey || jobs[selectedJobKey]?.running || anyRunning}
+          >
+            {selectedJob?.running ? '执行中...' : selectedJob ? `执行${selectedJob.title}` : '选择策略后执行'}
+          </button>
+        </div>
+        {selectedJob && <p className="panel-meta-line">{selectedJob.hint}</p>}
+      </article>
+
       <div className="ops-grid">
-        {JOB_ORDER.map((job) => {
+        {orderedJobs.map((job) => {
           const state = jobs[job.key] || { status: 'idle', output: [], running: false, settlementSummary: null };
           const top5 = top5Map[job.key] || { exists: false, csvText: '', markdown: '' };
           const rows = parseCsv(top5.csvText).slice(0, 5);

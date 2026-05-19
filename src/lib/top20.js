@@ -7,6 +7,50 @@ import tailTop5Markdown from '../../docs/list/tail_top5.md?raw';
 import tailSummaryText from '../../docs/list/tail_summary.md?raw';
 import historySeed from '../data/top20_history.json';
 
+const shortTop5HistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top5.csv', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
+
+const shortTop5MarkdownHistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top5.md', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
+
+const shortSummaryHistoryModules = import.meta.glob('../../docs/list/history/short/*/short_summary.md', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
+
+function normalizeModuleSourcePath(modulePath) {
+  return String(modulePath || '').replace(/^\.\.\/\.\.\//, '');
+}
+
+function extractShortHistoryDate(modulePath) {
+  const matched = String(modulePath || '').match(/history\/short\/(\d{4}-\d{2}-\d{2})\//);
+  return matched ? matched[1] : null;
+}
+
+function selectLatestShortHistoryModule(modules) {
+  const entries = Object.entries(modules || {})
+    .map(([modulePath, text]) => ({
+      date: extractShortHistoryDate(modulePath),
+      sourcePath: normalizeModuleSourcePath(modulePath),
+      text,
+    }))
+    .filter((entry) => entry.date && typeof entry.text === 'string')
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+  return entries.at(-1) || null;
+}
+
+const latestShortTop5History = selectLatestShortHistoryModule(shortTop5HistoryModules);
+const latestShortTop5MarkdownHistory = selectLatestShortHistoryModule(shortTop5MarkdownHistoryModules);
+const latestShortSummaryHistory = selectLatestShortHistoryModule(shortSummaryHistoryModules);
+
 export const FACTOR_DEFINITIONS = {
   short: {
     key: 'short',
@@ -16,9 +60,12 @@ export const FACTOR_DEFINITIONS = {
     riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。Top5 更适合作为候选池参考，不等同于可直接等权执行的组合。',
     emptyMessage: '未找到 `short_top5*.csv` 数据文件。',
     current: {
-      sourcePath: 'docs/list/short_top5.csv',
-      csvText: shortTop5Text,
-      metaTexts: [shortTop5Markdown, shortSummaryText],
+      sourcePath: latestShortTop5History?.sourcePath || 'docs/list/short_top5.csv',
+      csvText: latestShortTop5History?.text || shortTop5Text,
+      metaTexts: [
+        latestShortTop5MarkdownHistory?.text || shortTop5Markdown,
+        latestShortSummaryHistory?.text || shortSummaryText,
+      ],
     },
   },
   tail: {

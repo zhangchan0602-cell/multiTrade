@@ -77,11 +77,13 @@ K 线抓取前使用宽松预筛：上市约满 `45` 个自然日、当日成交
 
 ## 5. 输出文件
 
-- `docs/list/short_passed.csv`
-- `docs/list/short_passed.md`
-- `docs/list/short_top20.csv`
-- `docs/list/short_top20.md`
-- `docs/list/short_summary.md`
+- `docs/list/history/short/YYYY-MM-DD/short_passed.csv`
+- `docs/list/history/short/YYYY-MM-DD/short_passed.md`
+- `docs/list/history/short/YYYY-MM-DD/short_top5.csv`
+- `docs/list/history/short/YYYY-MM-DD/short_top5.md`
+- `docs/list/history/short/YYYY-MM-DD/short_top20.csv`
+- `docs/list/history/short/YYYY-MM-DD/short_top20.md`
+- `docs/list/history/short/YYYY-MM-DD/short_summary.md`
 
 ## 6. 说明
 
