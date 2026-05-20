@@ -67,6 +67,13 @@ const jobs = {
     top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'rps90_top5.csv'),
     top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'rps90_top5.md'),
   },
+  leader: {
+    key: 'leader',
+    label: '策略-龙头抱团',
+    scriptPath: path.join(ROOT_DIR, 'scripts', 'leader_screen.py'),
+    top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'leader_top5.csv'),
+    top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'leader_top5.md'),
+  },
 };
 
 const jobState = Object.fromEntries(
@@ -292,14 +299,14 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  const jobStatusMatch = url.pathname.match(/^\/api\/jobs\/(postclose|tail|rps90)$/);
+  const jobStatusMatch = url.pathname.match(/^\/api\/jobs\/(postclose|tail|rps90|leader)$/);
   if (req.method === 'GET' && jobStatusMatch) {
     const key = jobStatusMatch[1];
     json(res, 200, snapshotState(key));
     return;
   }
 
-  const jobRunMatch = url.pathname.match(/^\/api\/run\/(postclose|tail|rps90)$/);
+  const jobRunMatch = url.pathname.match(/^\/api\/run\/(postclose|tail|rps90|leader)$/);
   if (req.method === 'POST' && jobRunMatch) {
     const key = jobRunMatch[1];
     const result = startJob(key);
@@ -307,7 +314,7 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  const top5Match = url.pathname.match(/^\/api\/top5\/(postclose|tail|rps90)$/);
+  const top5Match = url.pathname.match(/^\/api\/top5\/(postclose|tail|rps90|leader)$/);
   if (req.method === 'GET' && top5Match) {
     try {
       const payload = await readTop5(top5Match[1]);

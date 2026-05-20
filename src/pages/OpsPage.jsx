@@ -6,9 +6,10 @@ const JOB_PRESETS = {
   postclose: { key: 'postclose', title: '短线多因子-盘后版', hint: '运行盘后版筛选，并刷新当天 Top5 候选。' },
   tail: { key: 'tail', title: '短线多因子-尾盘版', hint: '运行尾盘版筛选，并刷新当天 Top5 候选。' },
   rps90: { key: 'rps90', title: '策略-RPS双90', hint: '运行 RPS 双90 筛选，并刷新当天 Top5 候选。' },
+  leader: { key: 'leader', title: '策略-龙头抱团', hint: '运行龙头抱团模型筛选，歌加行业领先与抱团特征标的。' },
 };
 
-const JOB_PRIORITY = ['postclose', 'tail', 'rps90'];
+const JOB_PRIORITY = ['postclose', 'tail', 'rps90', 'leader'];
 
 function normalizeJobMeta(job) {
   const preset = JOB_PRESETS[job.key] || {};

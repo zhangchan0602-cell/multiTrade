@@ -4,6 +4,7 @@ import { getFactorDefinition, loadFactorSnapshots } from '../lib/top20';
 const factorOptions = [
   { key: 'short', label: '盘后版Top5' },
   { key: 'tail', label: '尾盘版Top5' },
+  { key: 'leader', label: '龙头抱团Top5' },
 ];
 
 function formatNumber(value, digits = 2) {

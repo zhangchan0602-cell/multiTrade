@@ -44,11 +44,12 @@ def _load_env_file() -> None:
 _load_env_file()
 
 
+_HARDCODED_TUSHARE_TOKEN = "66e342740a8e93dbd06c91d972dd4313a4e3d166e7cff1dbacb6d2bb"
+
+
 def get_tushare_token() -> str:
     token = os.environ.get("TUSHARE_TOKEN", "").strip()
-    if token:
-        return token
-    raise RuntimeError("missing TUSHARE_TOKEN environment variable")
+    return token if token else _HARDCODED_TUSHARE_TOKEN
 
 
 @lru_cache(maxsize=1)
@@ -395,15 +396,12 @@ def fetch_akshare_kline_frame(code: str, start_date: str, end_date: str, retries
 
 def _fetch_kline_from_source(code: str, start_date: str, end_date: str, source: str = "auto") -> pd.DataFrame:
     """按指定来源获取 K 线，不含缓存逻辑。"""
-    if source == "tushare":
+    if source == "tushare" or source == "auto":
         return fetch_tushare_kline_frame(code, start_date, end_date)
     if source == "akshare":
         return fetch_akshare_kline_frame(code, start_date, end_date)
 
-    try:
-        return fetch_akshare_kline_frame(code, start_date, end_date)
-    except Exception:
-        return fetch_tushare_kline_frame(code, start_date, end_date)
+    return fetch_tushare_kline_frame(code, start_date, end_date)
 
 
 def fetch_kline_frame(code: str, start_date: str, end_date: str, source: str = "auto") -> pd.DataFrame:
@@ -544,12 +542,6 @@ def fetch_a_no_star_quotes(
         raise RuntimeError("akshare spot quote does not support historical trade_date replay")
     if source == "akshare":
         return _annotate_quote_meta(fetch_a_no_star_quotes_akshare(), actual_source="akshare", is_intraday=True)
-    if source == "auto" and not historical_mode:
-        try:
-            return _annotate_quote_meta(fetch_a_no_star_quotes_akshare(), actual_source="akshare", is_intraday=True)
-        except Exception as e:
-            fallback_reason = str(e)
-            print(f"[fetch_a_no_star_quotes] akshare 失败，回退 tushare: {e}")
 
     # --- tushare 路径（daily + daily_basic + stock_basic，不依赖 bak_daily）---
     latest_trade_date = target_trade_date

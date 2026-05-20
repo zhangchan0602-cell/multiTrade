@@ -1236,8 +1236,8 @@ def run_screen(
     require_real_kline = os.environ.get("SHORT_REQUIRE_REAL_KLINE", "1") != "0"
     quote_only_fallback = os.environ.get("SHORT_QUOTE_ONLY_FALLBACK", "1") != "0"
     quote_only_limit = max(SHORT_TOP_N, int(os.environ.get("SHORT_QUOTE_ONLY_LIMIT", "50")))
-    quote_source = os.environ.get("SHORT_QUOTE_SOURCE", "tushare" if _mode == "postclose" else "auto")
-    kline_source = os.environ.get("SHORT_KLINE_SOURCE", "tushare" if _mode == "postclose" else "auto")
+    quote_source = "tushare"
+    kline_source = "tushare"
     tail_allow_daily_fallback = os.environ.get("SHORT_TAIL_ALLOW_DAILY_FALLBACK", "0") == "1"
 
     print("[1/3] fetch A-share quote universe (no STAR)...")

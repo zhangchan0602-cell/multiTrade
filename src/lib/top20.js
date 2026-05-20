@@ -5,6 +5,9 @@ import shortSummaryText from '../../docs/list/short_summary.md?raw';
 import tailTop5Text from '../../docs/list/tail_top5.csv?raw';
 import tailTop5Markdown from '../../docs/list/tail_top5.md?raw';
 import tailSummaryText from '../../docs/list/tail_summary.md?raw';
+import leaderTop5Text from '../../docs/list/leader_top5.csv?raw';
+import leaderTop5Markdown from '../../docs/list/leader_top5.md?raw';
+import leaderSummaryText from '../../docs/list/leader_summary.md?raw';
 import historySeed from '../data/top20_history.json';
 
 const shortTop5HistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top5.csv', {
@@ -51,6 +54,46 @@ const latestShortTop5History = selectLatestShortHistoryModule(shortTop5HistoryMo
 const latestShortTop5MarkdownHistory = selectLatestShortHistoryModule(shortTop5MarkdownHistoryModules);
 const latestShortSummaryHistory = selectLatestShortHistoryModule(shortSummaryHistoryModules);
 
+const leaderTop5HistoryModules = import.meta.glob('../../docs/list/history/leader/*/leader_top5.csv', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
+
+const leaderTop5MarkdownHistoryModules = import.meta.glob('../../docs/list/history/leader/*/leader_top5.md', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
+
+const leaderSummaryHistoryModules = import.meta.glob('../../docs/list/history/leader/*/leader_summary.md', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+});
+
+function extractLeaderHistoryDate(modulePath) {
+  const matched = String(modulePath || '').match(/history\/leader\/(\d{4}-\d{2}-\d{2})\//);
+  return matched ? matched[1] : null;
+}
+
+function selectLatestLeaderHistoryModule(modules) {
+  const entries = Object.entries(modules || {})
+    .map(([modulePath, text]) => ({
+      date: extractLeaderHistoryDate(modulePath),
+      sourcePath: normalizeModuleSourcePath(modulePath),
+      text,
+    }))
+    .filter((entry) => entry.date && typeof entry.text === 'string')
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+  return entries.at(-1) || null;
+}
+
+const latestLeaderTop5History = selectLatestLeaderHistoryModule(leaderTop5HistoryModules);
+const latestLeaderTop5MarkdownHistory = selectLatestLeaderHistoryModule(leaderTop5MarkdownHistoryModules);
+const latestLeaderSummaryHistory = selectLatestLeaderHistoryModule(leaderSummaryHistoryModules);
+
 export const FACTOR_DEFINITIONS = {
   short: {
     key: 'short',
@@ -79,6 +122,22 @@ export const FACTOR_DEFINITIONS = {
       sourcePath: 'docs/list/tail_top5.csv',
       csvText: tailTop5Text,
       metaTexts: [tailTop5Markdown, tailSummaryText],
+    },
+  },
+  leader: {
+    key: 'leader',
+    title: '龙头抱团-盘后版',
+    subtitle: '查看龙头抱团Top5候选，聚焦行业领涨龙头与机构抱团特征。',
+    description: '筛选行业内持续领先（20/60日收益率行业排名≥70%）且具备机构抱团特征（持续净流入、低波动上涨、均线多头）的中期标的，目标持有5-15个交易日。',
+    riskNote: '龙头抱团策略面向中期趋势持仓，当前未加入指数环境过滤、行业集中度约束和组合层仓位控制。Top5 应作为候选池参考，建议结合市场整体趋势研判后操作。',
+    emptyMessage: '未找到 `leader_top5*.csv` 数据文件。',
+    current: {
+      sourcePath: latestLeaderTop5History?.sourcePath || 'docs/list/leader_top5.csv',
+      csvText: latestLeaderTop5History?.text || leaderTop5Text,
+      metaTexts: [
+        latestLeaderTop5MarkdownHistory?.text || leaderTop5Markdown,
+        latestLeaderSummaryHistory?.text || leaderSummaryText,
+      ],
     },
   },
 };
