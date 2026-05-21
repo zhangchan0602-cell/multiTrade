@@ -37,6 +37,7 @@
 """
 
 import sys
+import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -553,6 +554,7 @@ def _write_outputs(
     total_universe: int,
     hard_pass_n: int,
     kline_ok_n: int,
+    copy_history: bool = True,
 ) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -622,6 +624,9 @@ def _write_outputs(
         f.write(f"- `docs/list/{OUTPUT_STEM}_top5.csv/md`\n")
         f.write(f"- `docs/list/{OUTPUT_STEM}_top20.csv/md`\n")
 
+    if not copy_history:
+        return
+
     # 历史快照
     snap_dir = OUTPUT_DIR / "history" / OUTPUT_STEM / trade_date
     snap_dir.mkdir(parents=True, exist_ok=True)
@@ -668,8 +673,13 @@ def _write_empty_outputs(run_ts: datetime, trade_date: str) -> None:
 
 # ── 主流程 ────────────────────────────────────────────────────────────────────
 
-def run_leader_screen(trade_date: Optional[str] = None) -> None:
-    run_ts = datetime.now()
+def run_leader_screen(
+    trade_date: Optional[str] = None,
+    run_ts: Optional[datetime] = None,
+    persist_outputs: bool = True,
+    copy_history: bool = True,
+) -> dict:
+    run_ts = run_ts or datetime.now()
     print(f"[{MODEL_NAME}] 开始运行: {run_ts.strftime('%Y-%m-%d %H:%M:%S')}")
 
     # ── Step 1：确定基准交易日 & 交易日历 ──────────────────────────────────
@@ -772,8 +782,9 @@ def run_leader_screen(trade_date: Optional[str] = None) -> None:
 
     if base.empty:
         print("[完成] 无符合条件标的，输出空文件")
-        _write_empty_outputs(run_ts, latest_trade_date)
-        return
+        if persist_outputs:
+            _write_empty_outputs(run_ts, latest_trade_date)
+        return {"trade_date": latest_trade_date, "scored": pd.DataFrame(), "merged": df}
 
     # ── Step 4：K 线特征 & 打分 ────────────────────────────────────────────
     # 按行业领先度预排序，取前 KLINE_CANDIDATE_LIMIT 只拉取 K 线
@@ -781,7 +792,11 @@ def run_leader_screen(trade_date: Optional[str] = None) -> None:
         ["sector_rank_20", "sector_rank_60", "amount_today"],
         ascending=False,
     ).reset_index(drop=True)
-    kline_codes = base["code"].head(KLINE_CANDIDATE_LIMIT).tolist()
+    kline_candidate_limit = max(
+        1,
+        int(os.environ.get("LEADER_KLINE_CANDIDATE_LIMIT", str(KLINE_CANDIDATE_LIMIT))),
+    )
+    kline_codes = base["code"].head(kline_candidate_limit).tolist()
     print(f"[3/4] 拉取 K 线特征，候选={len(kline_codes)} 只...")
 
     kf = fetch_leader_kline_features(kline_codes, end_trade_date=latest_trade_date)
@@ -826,8 +841,9 @@ def run_leader_screen(trade_date: Optional[str] = None) -> None:
 
         if valid.empty:
             print("[完成] 无通过 MA 多头排列条件的标的，输出空文件")
-            _write_empty_outputs(run_ts, latest_trade_date)
-            return
+            if persist_outputs:
+                _write_empty_outputs(run_ts, latest_trade_date)
+            return {"trade_date": latest_trade_date, "scored": pd.DataFrame(), "merged": merged}
 
         print(f"[4/4] 打分排名...")
         scored = score_leaders(valid)
@@ -837,7 +853,16 @@ def run_leader_screen(trade_date: Optional[str] = None) -> None:
     if "close" not in scored.columns or scored["close"].isna().all():
         scored["close"] = scored.get("close_today", np.nan)
 
-    _write_outputs(scored, run_ts, latest_trade_date, total_universe, hard_pass_n, kline_ok_n)
+    if persist_outputs:
+        _write_outputs(
+            scored,
+            run_ts,
+            latest_trade_date,
+            total_universe,
+            hard_pass_n,
+            kline_ok_n,
+            copy_history=copy_history,
+        )
 
     print(f"[完成] {run_ts.strftime('%H:%M:%S')}  最终通过={len(scored)}  Top{TOP_N}:")
     for _, row in scored.head(TOP_N).iterrows():
@@ -848,6 +873,7 @@ def run_leader_screen(trade_date: Optional[str] = None) -> None:
             f"  抱团={row.get('cluster_score', 0):.4f}"
             f"  综合={row.get('score_100', 0):.2f}"
         )
+    return {"trade_date": latest_trade_date, "scored": scored, "merged": df}
 
 
 if __name__ == "__main__":

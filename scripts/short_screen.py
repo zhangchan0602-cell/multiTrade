@@ -67,7 +67,7 @@ _SCREEN_CFG = _load_screen_config()
 
 
 SHORT_TOP_N = 5
-DEFAULT_KLINE_CANDIDATE_LIMIT = 0
+DEFAULT_KLINE_CANDIDATE_LIMIT = 1200
 DEFAULT_KLINE_CANDIDATE_MIN = 600
 DEFAULT_KLINE_CANDIDATE_MAX = 900
 DEFAULT_KLINE_CANDIDATE_RATIO = 0.20
@@ -1236,7 +1236,7 @@ def run_screen(
     require_real_kline = os.environ.get("SHORT_REQUIRE_REAL_KLINE", "1") != "0"
     quote_only_fallback = os.environ.get("SHORT_QUOTE_ONLY_FALLBACK", "1") != "0"
     quote_only_limit = max(SHORT_TOP_N, int(os.environ.get("SHORT_QUOTE_ONLY_LIMIT", "50")))
-    quote_source = "tushare"
+    quote_source = "auto" if _mode == "tail" else "tushare"
     kline_source = "tushare"
     tail_allow_daily_fallback = os.environ.get("SHORT_TAIL_ALLOW_DAILY_FALLBACK", "0") == "1"
 

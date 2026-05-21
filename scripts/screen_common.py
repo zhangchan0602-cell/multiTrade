@@ -234,11 +234,17 @@ def fetch_daily_basic_snapshot(trade_date: str) -> pd.DataFrame:
         except Exception:
             cache_path.unlink(missing_ok=True)
     pro = get_tushare_pro()
-    df = call_tushare_api(
-        pro.daily_basic,
-        trade_date=trade_date,
-        fields="ts_code,trade_date,turnover_rate_f,volume_ratio,pe_ttm,pb,total_mv,circ_mv",
-    )
+    try:
+        df = call_tushare_api(
+            pro.daily_basic,
+            trade_date=trade_date,
+            fields="ts_code,trade_date,turnover_rate_f,volume_ratio,pe_ttm,pb,total_mv,circ_mv",
+        )
+    except Exception as e:
+        # 无 daily_basic 权限时静默返回空，调用方已有 NaN 兜底
+        import warnings
+        warnings.warn(f"daily_basic 接口不可用（{e}），换手率/量比/市值等字段将置空", stacklevel=2)
+        return pd.DataFrame()
     df = df if df is not None else pd.DataFrame()
     if not df.empty:
         DAILY_BASIC_CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -543,6 +549,15 @@ def fetch_a_no_star_quotes(
     if source == "akshare":
         return _annotate_quote_meta(fetch_a_no_star_quotes_akshare(), actual_source="akshare", is_intraday=True)
 
+    # auto 模式：非历史回放时优先尝试 akshare 盘中快照，失败则降级 tushare 日线
+    if source == "auto" and not historical_mode:
+        try:
+            result = fetch_a_no_star_quotes_akshare()
+            return _annotate_quote_meta(result, actual_source="akshare", is_intraday=True)
+        except Exception as _ak_err:
+            fallback_reason = f"akshare failed: {_ak_err}"
+            # 继续走 tushare 日线路径
+
     # --- tushare 路径（daily + daily_basic + stock_basic，不依赖 bak_daily）---
     latest_trade_date = target_trade_date
     basic = fetch_stock_basic()
@@ -665,11 +680,15 @@ def fetch_org_info(
     if secucodes:
         bak = bak[bak["secucode"].isin(secucodes)].copy() if not bak.empty else bak
     if bak.empty:
-        # bak_daily 不可用，用 daily_basic 代替（仅 ts_code，industry 置空）
+        # bak_daily 不可用，先尝试 daily_basic，再回退到 daily 快照（仅 ts_code，industry 置空）
         db = fetch_daily_basic_snapshot(latest_trade_date)
-        if db.empty:
-            raise RuntimeError("empty org info")
-        bak = db[["ts_code"]].rename(columns={"ts_code": "secucode"}).drop_duplicates()
+        if not db.empty:
+            bak = db[["ts_code"]].rename(columns={"ts_code": "secucode"}).drop_duplicates()
+        else:
+            daily_snap = fetch_daily_snapshot(latest_trade_date)
+            if daily_snap.empty:
+                raise RuntimeError("empty org info")
+            bak = daily_snap[["ts_code"]].rename(columns={"ts_code": "secucode"}).drop_duplicates()
         if secucodes:
             bak = bak[bak["secucode"].isin(secucodes)].copy()
         bak["industry"] = "未知行业"

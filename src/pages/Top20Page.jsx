@@ -4,7 +4,9 @@ import { getFactorDefinition, loadFactorSnapshots } from '../lib/top20';
 const factorOptions = [
   { key: 'short', label: '盘后版Top5' },
   { key: 'tail', label: '尾盘版Top5' },
-  { key: 'leader', label: '龙头抱团Top5' },
+  { key: 'leader', label: '龙头抱团Top20' },
+  { key: 'rps90', label: 'RPS双90 Top10' },
+  { key: 'combined', label: '综合榜单' },
 ];
 
 function formatNumber(value, digits = 2) {
@@ -79,6 +81,8 @@ export default function Top20Page() {
     return previousSnapshot.items.filter((item) => !currentCodes.has(item.code)).slice(0, 8);
   }, [currentSnapshot, previousSnapshot]);
 
+  const isRps = factorKey === 'rps90';
+  const isCombined = factorKey === 'combined';
   const quoteOnly = currentSnapshot?.items?.some((item) => item.quoteOnlyFallbackUsed) || false;
 
   if (loading) {
@@ -156,20 +160,51 @@ export default function Top20Page() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>排名</th>
-                <th>代码</th>
-                <th>名称</th>
-                <th>行业</th>
-                <th>得分</th>
-                <th>启动</th>
-                <th>趋势</th>
-                <th>动量</th>
-                <th>活跃</th>
-                <th>稳定</th>
-                <th>流动</th>
-                <th>状态</th>
-              </tr>
+              {isCombined ? (
+                <tr>
+                  <th>排名</th>
+                  <th>代码</th>
+                  <th>名称</th>
+                  <th>行业</th>
+                  <th>综合分</th>
+                  <th>盘后分</th>
+                  <th>龙头分</th>
+                  <th>RPS分</th>
+                  <th>RPS20</th>
+                  <th>RPS90</th>
+                  <th>状态</th>
+                </tr>
+              ) : isRps ? (
+                <tr>
+                  <th>排名</th>
+                  <th>代码</th>
+                  <th>名称</th>
+                  <th>行业</th>
+                  <th>综合分</th>
+                  <th>RPS20</th>
+                  <th>RPS90</th>
+                  <th>20日涨幅%</th>
+                  <th>90日涨幅%</th>
+                  <th>收盘价</th>
+                  <th>成交额(亿)</th>
+                  <th>状态</th>
+                </tr>
+              ) : (
+                <tr>
+                  <th>排名</th>
+                  <th>代码</th>
+                  <th>名称</th>
+                  <th>行业</th>
+                  <th>得分</th>
+                  <th>启动</th>
+                  <th>趋势</th>
+                  <th>动量</th>
+                  <th>活跃</th>
+                  <th>稳定</th>
+                  <th>流动</th>
+                  <th>状态</th>
+                </tr>
+              )}
             </thead>
             <tbody>
               {currentSnapshot.items.map((item) => {
@@ -177,7 +212,40 @@ export default function Top20Page() {
                 const stateLabel = item.quoteOnlyFallbackUsed ? '降级' : isNew ? '新增' : '跟踪';
                 const stateClass = item.quoteOnlyFallbackUsed ? 'badge-flat' : isNew ? 'badge-new' : 'badge-up';
 
-                return (
+                return isCombined ? (
+                  <tr key={makeRowKey(item)}>
+                    <td>{item.rank}</td>
+                    <td>{item.code}</td>
+                    <td>{item.name}</td>
+                    <td className="industry-col">{item.industry}</td>
+                    <td>{formatNumber(item.score100)}</td>
+                    <td>{formatNumber(item.shortScore100)}</td>
+                    <td>{formatNumber(item.leaderScore100)}</td>
+                    <td>{formatNumber(item.rps90Score100)}</td>
+                    <td>{formatNumber(item.rps20)}</td>
+                    <td>{formatNumber(item.rps90)}</td>
+                    <td>
+                      <span className={`badge ${stateClass}`}>{stateLabel}</span>
+                    </td>
+                  </tr>
+                ) : isRps ? (
+                  <tr key={makeRowKey(item)}>
+                    <td>{item.rank}</td>
+                    <td>{item.code}</td>
+                    <td>{item.name}</td>
+                    <td className="industry-col">{item.industry}</td>
+                    <td>{formatNumber(item.score100)}</td>
+                    <td>{formatNumber(item.rps20)}</td>
+                    <td>{formatNumber(item.rps90)}</td>
+                    <td>{formatNumber(item.ret20dPct)}</td>
+                    <td>{formatNumber(item.ret90dPct)}</td>
+                    <td>{formatNumber(item.closePx)}</td>
+                    <td>{item.amountToday != null ? (item.amountToday / 1e8).toFixed(2) : '-'}</td>
+                    <td>
+                      <span className={`badge ${stateClass}`}>{stateLabel}</span>
+                    </td>
+                  </tr>
+                ) : (
                   <tr key={makeRowKey(item)}>
                     <td>{item.rank}</td>
                     <td>{item.code}</td>

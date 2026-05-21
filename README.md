@@ -78,6 +78,21 @@ npm run preview
 | `docs/list/short_t3_history.csv` | 历史各交易日 Top5 及 T+3 结算收益（CSV） |
 | `docs/list/short_t3_history.md` | 同上，Markdown 格式，含汇总统计 |
 
+### 统一组合历史回测（`strategy_backtest.py --portfolio`）
+
+```bash
+npm run backtest:portfolio
+```
+
+组合回测会按历史交易日使用 Tushare 数据重跑策略信号，当前支持 `rps90`、`short`、`tail`、`leader`，并按以下规则模拟：单票 10 万预算、整百股交易、最多同时持有 3 只、不限制持有期限、涨停即出、未涨停时单日回撤 5% 即出、跌破 5 日线止损。
+
+| 文件 | 说明 |
+|------|------|
+| `docs/list/strategy_portfolio_backtest_trades.csv` | 已平仓交易明细 |
+| `docs/list/strategy_portfolio_backtest_equity.csv` | 每日现金、持仓市值与权益曲线 |
+| `docs/list/strategy_portfolio_backtest_open_positions.csv` | 回测结束时仍未平仓持仓 |
+| `docs/list/strategy_portfolio_backtest_summary.md` | 策略汇总统计 |
+
 ### 买入清单与结算（`buylist_io.py` / `buylist_settlement.py`）
 
 | 文件 | 说明 |

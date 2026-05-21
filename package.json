@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build --base ./",
     "preview": "vite preview",
-    "backtest:short": "${OPS_PYTHON:-python3} scripts/postclose_t3_history.py"
+    "backtest:short": "${OPS_PYTHON:-python3} scripts/postclose_t3_history.py",
+    "backtest:portfolio": "${OPS_PYTHON:-python3} scripts/strategy_backtest.py --portfolio"
   },
   "dependencies": {
     "react": "^18.3.1",
