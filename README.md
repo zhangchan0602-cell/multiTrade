@@ -11,7 +11,7 @@ npm run api   # 启动本地 API，默认 http://127.0.0.1:8787
 npm run dev
 ```
 
-Python 脚本和本地 API 都会读取 `TUSHARE_TOKEN`，未设置时无法抓取最新股票数据。
+Python 脚本和本地 API 都会读取 `TUSHARE_TOKEN`，未设置时无法抓取最新股票数据。ok
 
 **定时任务（crontab）**
 
