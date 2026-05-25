@@ -43,3 +43,11 @@ export function runOpsJob(jobKey) {
 export function fetchOpsTop5(jobKey) {
   return request(`/api/top5/${jobKey}`);
 }
+
+export function fetchCombinedBoard() {
+  return request('/api/combined');
+}
+
+export function generateCombinedBoard() {
+  return request('/api/combined/generate', { method: 'POST' });
+}

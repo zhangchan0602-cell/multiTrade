@@ -1,24 +1,17 @@
 import { parseCsv } from './csv';
-import shortTop5Text from '../../docs/list/short_top5.csv?raw';
-import shortTop5Markdown from '../../docs/list/short_top5.md?raw';
 import shortSummaryText from '../../docs/list/short_summary.md?raw';
 import shortTop20Text from '../../docs/list/short_top20.csv?raw';
-import tailTop5Text from '../../docs/list/tail_top5.csv?raw';
-import tailTop5Markdown from '../../docs/list/tail_top5.md?raw';
+import shortTop20Markdown from '../../docs/list/short_top20.md?raw';
 import tailSummaryText from '../../docs/list/tail_summary.md?raw';
+import tailTop20Text from '../../docs/list/tail_top20.csv?raw';
+import tailTop20Markdown from '../../docs/list/tail_top20.md?raw';
 import leaderTop20Text from '../../docs/list/leader_top20.csv?raw';
 import leaderSummaryText from '../../docs/list/leader_summary.md?raw';
 import rps90Top20Text from '../../docs/list/rps90_top20.csv?raw';
 import rps90SummaryText from '../../docs/list/rps90_summary.md?raw';
 import historySeed from '../data/top20_history.json';
 
-const shortTop5HistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top5.csv', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-
-const shortTop5MarkdownHistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top5.md', {
+const shortTop20MarkdownHistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top20.md', {
   eager: true,
   query: '?raw',
   import: 'default',
@@ -52,8 +45,7 @@ function selectLatestShortHistoryModule(modules) {
   return entries.at(-1) || null;
 }
 
-const latestShortTop5History = selectLatestShortHistoryModule(shortTop5HistoryModules);
-const latestShortTop5MarkdownHistory = selectLatestShortHistoryModule(shortTop5MarkdownHistoryModules);
+const latestShortTop20MarkdownHistory = selectLatestShortHistoryModule(shortTop20MarkdownHistoryModules);
 const latestShortSummaryHistory = selectLatestShortHistoryModule(shortSummaryHistoryModules);
 
 const shortTop20HistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top20.csv', {
@@ -133,15 +125,16 @@ export const FACTOR_DEFINITIONS = {
   short: {
     key: 'short',
     title: '短线多因子-盘后版',
-    subtitle: '查看盘后Top5候选，并按记录日期回看榜单与新增/移除变化。',
+    subtitle: '查看盘后Top10候选，并按记录日期回看榜单与新增/移除变化。',
     description: '聚焦次日可交易的短期启动、活跃度、单票过滤与流动性，目标持有后续2-3个交易日。',
-    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。Top5 更适合作为候选池参考，不等同于可直接等权执行的组合。',
-    emptyMessage: '未找到 `short_top5*.csv` 数据文件。',
+    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。Top10 更适合作为候选池参考，不等同于可直接等权执行的组合。',
+    displayLimit: 10,
+    emptyMessage: '未找到 `short_top20*.csv` 数据文件。',
     current: {
-      sourcePath: latestShortTop5History?.sourcePath || 'docs/list/short_top5.csv',
-      csvText: latestShortTop5History?.text || shortTop5Text,
+      sourcePath: latestShortTop20History?.sourcePath || 'docs/list/short_top20.csv',
+      csvText: latestShortTop20History?.text || shortTop20Text,
       metaTexts: [
-        latestShortTop5MarkdownHistory?.text || shortTop5Markdown,
+        latestShortTop20MarkdownHistory?.text || shortTop20Markdown,
         latestShortSummaryHistory?.text || shortSummaryText,
       ],
     },
@@ -149,14 +142,15 @@ export const FACTOR_DEFINITIONS = {
   tail: {
     key: 'tail',
     title: '短线多因子-尾盘版',
-    subtitle: '查看尾盘Top5候选，并按记录日期回看榜单与新增/移除变化。',
+    subtitle: '查看尾盘Top10候选，并按记录日期回看榜单与新增/移除变化。',
     description: '使用尾盘版独立权重与过滤器，偏重当日量能爆发和短期启动，输出尾盘场景候选。',
-    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。尾盘 Top5 可能出现同题材或同风格集中，适合作为候选池参考。',
-    emptyMessage: '未找到 `tail_top5*.csv` 数据文件。',
+    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。尾盘 Top10 可能出现同题材或同风格集中，适合作为候选池参考。',
+    displayLimit: 10,
+    emptyMessage: '未找到 `tail_top20*.csv` 数据文件。',
     current: {
-      sourcePath: 'docs/list/tail_top5.csv',
-      csvText: tailTop5Text,
-      metaTexts: [tailTop5Markdown, tailSummaryText],
+      sourcePath: 'docs/list/tail_top20.csv',
+      csvText: tailTop20Text,
+      metaTexts: [tailTop20Markdown, tailSummaryText],
     },
   },
   leader: {
@@ -175,10 +169,10 @@ export const FACTOR_DEFINITIONS = {
   rps90: {
     key: 'rps90',
     title: 'RPS双90-盘后版',
-    subtitle: '查看RPS双90 Top10候选，聚焦20日和90日相对强度均≥90的强势股。',
-    description: '筛选20日RPS≥90且90日RPS≥90的高相对强度股票，按综合评分排名，展示前10支。',
-    riskNote: 'RPS策略聚焦强者恒强动量效应，未加入指数环境过滤和组合层控制。Top10 适合作为趋势跟踪候选池，高RPS股票追高风险较大，建议结合个股K线形态判断。',
-    displayLimit: 10,
+    subtitle: '查看RPS双90 Top20候选，聚焦20日和90日相对强度均≥90的强势股。',
+    description: '筛选20日RPS≥90且90日RPS≥90的高相对强度股票，按综合评分排名，展示前20支。',
+    riskNote: 'RPS策略聚焦强者恒强动量效应，未加入指数环境过滤和组合层控制。Top20 适合作为趋势跟踪候选池，高RPS股票追高风险较大，建议结合个股K线形态判断。',
+    displayLimit: 20,
     emptyMessage: '未找到 `rps90_top20*.csv` 数据文件。',
     current: {
       sourcePath: latestRps90Top20History?.sourcePath || 'docs/list/rps90_top20.csv',
@@ -192,7 +186,7 @@ export const FACTOR_DEFINITIONS = {
     title: '综合榜单',
     subtitle: '同时入选龙头抱团Top20、盘后版Top10、RPS双90 Top20的交集标的。',
     description: '三种策略共同认可：龙头抱团前20 ∩ 盘后版评分前10 ∩ RPS双90前20。综合分为三策略 score_100 均均。',
-    riskNote: '综合榜单仅反映当日多策略共识，不构成买入建议。交集刘出候选数量可能较少，甚至为空。',
+    riskNote: '综合榜单仅反映当日多策略共识，不构成买入建议。交集产出候选数量可能较少，甚至为空。',
     emptyMessage: '当前无股票同时满足三个策略条件。',
     sources: {
       short: { csvText: latestShortTop20History?.text || shortTop20Text, limit: 10 },
@@ -238,10 +232,16 @@ function normalizeCode(code) {
 function normalizeRow(row = {}) {
   return {
     rank: toNumber(readValue(row, ['rank'])),
+    shortRank: toNumber(readValue(row, ['shortRank', 'short_rank'])),
+    leaderRank: toNumber(readValue(row, ['leaderRank', 'leader_rank'])),
+    rpsRank: toNumber(readValue(row, ['rpsRank', 'rps_rank'])),
     code: normalizeCode(readValue(row, ['code'])),
     name: readValue(row, ['name']),
     industry: readValue(row, ['industry']),
     score100: toNumber(readValue(row, ['score100', 'score_100'])),
+    shortScore100: toNumber(readValue(row, ['shortScore100', 'short_score_100'])),
+    leaderScore100: toNumber(readValue(row, ['leaderScore100', 'leader_score_100'])),
+    rps90Score100: toNumber(readValue(row, ['rps90Score100', 'rps90_score_100'])),
     scoreRaw: toNumber(readValue(row, ['scoreRaw', 'score_raw'])),
     valueScore: toNumber(readValue(row, ['valueScore', 'value_score'])),
     qualityScore: toNumber(readValue(row, ['qualityScore', 'quality_score'])),
@@ -392,6 +392,23 @@ function buildCombinedSnapshot(definition) {
     .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
   return buildSnapshotBase(items, {}, 'combined');
+}
+
+export function buildCombinedSnapshotFromPayload(payload) {
+  if (!payload?.exists) {
+    return null;
+  }
+
+  const items = parseCsv(payload.csvText)
+    .map(normalizeRow)
+    .sort((a, b) => (a.rank || 0) - (b.rank || 0));
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  const generatedAt = extractGeneratedAt(payload.markdown) || payload.updatedAt || null;
+  return buildSnapshotBase(items, { generatedAt }, payload.sourcePath || 'docs/list/combined_top20.csv');
 }
 
 function buildCurrentSnapshot(definition) {

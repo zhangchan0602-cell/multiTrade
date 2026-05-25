@@ -1,15 +1,19 @@
 import { createServer } from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, statSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseCsv } from './src/lib/csv.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = __dirname;
 const HOST = process.env.OPS_HOST || '127.0.0.1';
 const PORT = Number(process.env.OPS_PORT || 8787);
+const COMBINED_RULE_TEXT = '当天同时进入短线盘后版 Top10、RPS双90 Top20、龙头抱团 Top20 三榜';
+const COMBINED_CURRENT_CSV_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_top20.csv');
+const COMBINED_CURRENT_MD_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_top20.md');
 
 function resolvePythonCandidates(candidates) {
   const seen = new Set();
@@ -136,6 +140,247 @@ function resolveTop5Paths(job) {
   return {
     csvPath: job.top5CsvPath,
     mdPath: job.top5MdPath,
+  };
+}
+
+function resolveShortListPath(fileName) {
+  const latestShortDir = resolveLatestShortOutputDir();
+  if (latestShortDir) {
+    const datedPath = path.join(latestShortDir, fileName);
+    if (existsSync(datedPath)) {
+      return datedPath;
+    }
+  }
+
+  return path.join(ROOT_DIR, 'docs', 'list', fileName);
+}
+
+function normalizeCode(code) {
+  return String(code || '').trim().padStart(6, '0');
+}
+
+function toNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function normalizeTradeDate(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  return digits.length === 8 ? digits : null;
+}
+
+function formatTradeDateLabel(tradeDate) {
+  const normalized = normalizeTradeDate(tradeDate);
+  if (!normalized) {
+    return '-';
+  }
+  return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}`;
+}
+
+function csvEscape(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  const text = String(value);
+  if (!/[",\n]/.test(text)) {
+    return text;
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function parseRankedRows(csvText, label, limit) {
+  const rows = parseCsv(csvText)
+    .map((row) => ({
+      ...row,
+      code: normalizeCode(row.code),
+      rank: toNumber(row.rank),
+      score_100: toNumber(row.score_100),
+      rps20: toNumber(row.rps20),
+      rps90: toNumber(row.rps90),
+      trade_date: normalizeTradeDate(row.trade_date),
+    }))
+    .filter((row) => row.code)
+    .sort((left, right) => (left.rank || 0) - (right.rank || 0))
+    .slice(0, limit);
+
+  if (rows.length === 0) {
+    throw new Error(`${label}榜单为空，无法生成综合榜`);
+  }
+
+  return rows;
+}
+
+function getSingleTradeDate(rows, label) {
+  const values = [...new Set(rows.map((row) => row.trade_date).filter(Boolean))];
+  if (values.length !== 1) {
+    throw new Error(`${label}榜单 trade_date 不唯一，无法按“当天三榜交集”生成综合榜`);
+  }
+  return values[0];
+}
+
+function buildCombinedMarkdown(items, generatedAt, tradeDate) {
+  const lines = [
+    '# 综合榜 Top 20',
+    '',
+    `- 生成时间: ${generatedAt}`,
+    `- 交易日期: ${formatTradeDateLabel(tradeDate)}`,
+    `- 入榜规则: ${COMBINED_RULE_TEXT}`,
+    '- 排序规则: 综合分 = (盘后版 score_100 + 龙头抱团 score_100 + RPS双90 score_100) / 3',
+    '',
+    '| 排名 | 代码 | 名称 | 行业 | 综合分 | 盘后分 | 龙头分 | RPS分 | RPS20 | RPS90 |',
+    '|---:|---:|---|---|---:|---:|---:|---:|---:|---:|',
+  ];
+
+  items.forEach((item) => {
+    lines.push(
+      `| ${item.rank} | ${item.code} | ${item.name} | ${item.industry} | ${item.score_100.toFixed(2)} | ${item.short_score_100.toFixed(2)} | ${item.leader_score_100.toFixed(2)} | ${item.rps90_score_100.toFixed(2)} | ${item.rps20.toFixed(2)} | ${item.rps90.toFixed(2)} |`
+    );
+  });
+
+  if (items.length === 0) {
+    lines.push('| - | - | 当前无交集标的 | - | - | - | - | - | - | - |');
+  }
+
+  return `${lines.join('\n')}\n`;
+}
+
+async function readCombinedBoard() {
+  const csvExists = existsSync(COMBINED_CURRENT_CSV_PATH);
+  const mdExists = existsSync(COMBINED_CURRENT_MD_PATH);
+  const exists = csvExists || mdExists;
+
+  if (!exists) {
+    return {
+      exists: false,
+      csvText: '',
+      markdown: '',
+      updatedAt: null,
+      sourcePath: 'docs/list/combined_top20.csv',
+    };
+  }
+
+  const [csvText, markdown] = await Promise.all([
+    csvExists ? readFile(COMBINED_CURRENT_CSV_PATH, 'utf8') : Promise.resolve(''),
+    mdExists ? readFile(COMBINED_CURRENT_MD_PATH, 'utf8') : Promise.resolve(''),
+  ]);
+
+  const latestPath = mdExists ? COMBINED_CURRENT_MD_PATH : COMBINED_CURRENT_CSV_PATH;
+  return {
+    exists: true,
+    csvText,
+    markdown,
+    updatedAt: statSync(latestPath).mtime.toISOString(),
+    sourcePath: 'docs/list/combined_top20.csv',
+  };
+}
+
+async function generateCombinedBoard() {
+  const [shortCsvText, leaderCsvText, rps90CsvText] = await Promise.all([
+    readFile(resolveShortListPath('short_top20.csv'), 'utf8'),
+    readFile(path.join(ROOT_DIR, 'docs', 'list', 'leader_top20.csv'), 'utf8'),
+    readFile(path.join(ROOT_DIR, 'docs', 'list', 'rps90_top20.csv'), 'utf8'),
+  ]);
+
+  const shortRows = parseRankedRows(shortCsvText, '短线盘后版', 10);
+  const leaderRows = parseRankedRows(leaderCsvText, '龙头抱团', 20);
+  const rps90Rows = parseRankedRows(rps90CsvText, 'RPS双90', 20);
+
+  const shortTradeDate = getSingleTradeDate(shortRows, '短线盘后版');
+  const leaderTradeDate = getSingleTradeDate(leaderRows, '龙头抱团');
+  const rps90TradeDate = getSingleTradeDate(rps90Rows, 'RPS双90');
+
+  if (shortTradeDate !== leaderTradeDate || shortTradeDate !== rps90TradeDate) {
+    throw new Error(
+      `三榜交易日不一致：盘后=${formatTradeDateLabel(shortTradeDate)}，RPS=${formatTradeDateLabel(rps90TradeDate)}，龙头=${formatTradeDateLabel(leaderTradeDate)}`
+    );
+  }
+
+  const shortByCode = new Map(shortRows.map((row) => [row.code, row]));
+  const leaderByCode = new Map(leaderRows.map((row) => [row.code, row]));
+  const rps90ByCode = new Map(rps90Rows.map((row) => [row.code, row]));
+
+  const commonCodes = shortRows
+    .map((row) => row.code)
+    .filter((code) => leaderByCode.has(code) && rps90ByCode.has(code));
+
+  const items = commonCodes
+    .map((code) => {
+      const shortRow = shortByCode.get(code);
+      const leaderRow = leaderByCode.get(code);
+      const rps90Row = rps90ByCode.get(code);
+      const shortScore = toNumber(shortRow?.score_100) ?? 0;
+      const leaderScore = toNumber(leaderRow?.score_100) ?? 0;
+      const rpsScore = toNumber(rps90Row?.score_100) ?? 0;
+      const score = (shortScore + leaderScore + rpsScore) / 3;
+
+      return {
+        rank: 0,
+        code,
+        name: shortRow?.name || leaderRow?.name || rps90Row?.name || code,
+        industry: shortRow?.industry || leaderRow?.industry || rps90Row?.industry || '',
+        score_100: score,
+        short_score_100: shortScore,
+        leader_score_100: leaderScore,
+        rps90_score_100: rpsScore,
+        short_rank: shortRow?.rank ?? null,
+        leader_rank: leaderRow?.rank ?? null,
+        rps_rank: rps90Row?.rank ?? null,
+        rps20: toNumber(rps90Row?.rps20) ?? 0,
+        rps90: toNumber(rps90Row?.rps90) ?? 0,
+        trade_date: shortTradeDate,
+      };
+    })
+    .sort((left, right) => {
+      const scoreDiff = (right.score_100 || 0) - (left.score_100 || 0);
+      if (scoreDiff !== 0) {
+        return scoreDiff;
+      }
+      return (left.short_rank || 9999) - (right.short_rank || 9999);
+    })
+    .map((item, index) => ({ ...item, rank: index + 1 }));
+
+  const headers = [
+    'rank',
+    'code',
+    'name',
+    'industry',
+    'score_100',
+    'short_score_100',
+    'leader_score_100',
+    'rps90_score_100',
+    'short_rank',
+    'leader_rank',
+    'rps_rank',
+    'rps20',
+    'rps90',
+    'trade_date',
+  ];
+  const csvText = [
+    headers.join(','),
+    ...items.map((item) => headers.map((header) => csvEscape(item[header])).join(',')),
+  ].join('\n');
+
+  const generatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const markdown = buildCombinedMarkdown(items, generatedAt, shortTradeDate);
+  const historyDir = path.join(ROOT_DIR, 'docs', 'list', 'history', 'combined', formatTradeDateLabel(shortTradeDate));
+
+  await mkdir(historyDir, { recursive: true });
+  await Promise.all([
+    writeFile(COMBINED_CURRENT_CSV_PATH, `${csvText}\n`, 'utf8'),
+    writeFile(COMBINED_CURRENT_MD_PATH, markdown, 'utf8'),
+    writeFile(path.join(historyDir, 'combined_top20.csv'), `${csvText}\n`, 'utf8'),
+    writeFile(path.join(historyDir, 'combined_top20.md'), markdown, 'utf8'),
+  ]);
+
+  return {
+    exists: true,
+    csvText: `${csvText}\n`,
+    markdown,
+    updatedAt: new Date().toISOString(),
+    sourcePath: 'docs/list/combined_top20.csv',
+    itemCount: items.length,
+    tradeDate: shortTradeDate,
+    rule: COMBINED_RULE_TEXT,
   };
 }
 
@@ -321,6 +566,26 @@ const server = createServer(async (req, res) => {
       json(res, 200, payload);
     } catch (error) {
       json(res, 500, { error: error.message || 'read-top5-failed' });
+    }
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/combined') {
+    try {
+      const payload = await readCombinedBoard();
+      json(res, 200, payload);
+    } catch (error) {
+      json(res, 500, { error: error.message || 'read-combined-failed' });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/combined/generate') {
+    try {
+      const payload = await generateCombinedBoard();
+      json(res, 200, payload);
+    } catch (error) {
+      json(res, 500, { error: error.message || 'generate-combined-failed' });
     }
     return;
   }
