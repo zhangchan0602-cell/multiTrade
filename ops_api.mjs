@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = __dirname;
 const HOST = process.env.OPS_HOST || '127.0.0.1';
 const PORT = Number(process.env.OPS_PORT || 8787);
-const COMBINED_RULE_TEXT = '当天同时进入短线盘后版 Top10、RPS双90 Top20、龙头抱团 Top20 三榜';
+const COMBINED_RULE_TEXT = '当天同时进入短线盘后版 Top10、RPS双90 Top20、龙头抱团 Top20 中的任意两个榜单';
 const COMBINED_CURRENT_CSV_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_top20.csv');
 const COMBINED_CURRENT_MD_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_top20.md');
 
@@ -213,9 +213,13 @@ function parseRankedRows(csvText, label, limit) {
 function getSingleTradeDate(rows, label) {
   const values = [...new Set(rows.map((row) => row.trade_date).filter(Boolean))];
   if (values.length !== 1) {
-    throw new Error(`${label}榜单 trade_date 不唯一，无法按“当天三榜交集”生成综合榜`);
+    throw new Error(`${label}榜单 trade_date 不唯一，无法按“当天任意两榜重叠”生成综合榜`);
   }
   return values[0];
+}
+
+function formatScore(value) {
+  return Number.isFinite(value) ? value.toFixed(2) : '-';
 }
 
 function buildCombinedMarkdown(items, generatedAt, tradeDate) {
@@ -225,7 +229,7 @@ function buildCombinedMarkdown(items, generatedAt, tradeDate) {
     `- 生成时间: ${generatedAt}`,
     `- 交易日期: ${formatTradeDateLabel(tradeDate)}`,
     `- 入榜规则: ${COMBINED_RULE_TEXT}`,
-    '- 排序规则: 综合分 = (盘后版 score_100 + 龙头抱团 score_100 + RPS双90 score_100) / 3',
+    '- 排序规则: 综合分 = 命中榜单的 score_100 均值',
     '',
     '| 排名 | 代码 | 名称 | 行业 | 综合分 | 盘后分 | 龙头分 | RPS分 | RPS20 | RPS90 |',
     '|---:|---:|---|---|---:|---:|---:|---:|---:|---:|',
@@ -233,12 +237,12 @@ function buildCombinedMarkdown(items, generatedAt, tradeDate) {
 
   items.forEach((item) => {
     lines.push(
-      `| ${item.rank} | ${item.code} | ${item.name} | ${item.industry} | ${item.score_100.toFixed(2)} | ${item.short_score_100.toFixed(2)} | ${item.leader_score_100.toFixed(2)} | ${item.rps90_score_100.toFixed(2)} | ${item.rps20.toFixed(2)} | ${item.rps90.toFixed(2)} |`
+      `| ${item.rank} | ${item.code} | ${item.name} | ${item.industry} | ${formatScore(item.score_100)} | ${formatScore(item.short_score_100)} | ${formatScore(item.leader_score_100)} | ${formatScore(item.rps90_score_100)} | ${formatScore(item.rps20)} | ${formatScore(item.rps90)} |`
     );
   });
 
   if (items.length === 0) {
-    lines.push('| - | - | 当前无交集标的 | - | - | - | - | - | - | - |');
+    lines.push('| - | - | 当前无满足任意两榜条件的标的 | - | - | - | - | - | - | - |');
   }
 
   return `${lines.join('\n')}\n`;
@@ -299,19 +303,24 @@ async function generateCombinedBoard() {
   const leaderByCode = new Map(leaderRows.map((row) => [row.code, row]));
   const rps90ByCode = new Map(rps90Rows.map((row) => [row.code, row]));
 
-  const commonCodes = shortRows
-    .map((row) => row.code)
-    .filter((code) => leaderByCode.has(code) && rps90ByCode.has(code));
+  const commonCodes = [...new Set([...shortRows, ...leaderRows, ...rps90Rows].map((row) => row.code))]
+    .filter(
+      (code) =>
+        [shortByCode.has(code), leaderByCode.has(code), rps90ByCode.has(code)].filter(Boolean).length >= 2
+    );
 
   const items = commonCodes
     .map((code) => {
       const shortRow = shortByCode.get(code);
       const leaderRow = leaderByCode.get(code);
       const rps90Row = rps90ByCode.get(code);
-      const shortScore = toNumber(shortRow?.score_100) ?? 0;
-      const leaderScore = toNumber(leaderRow?.score_100) ?? 0;
-      const rpsScore = toNumber(rps90Row?.score_100) ?? 0;
-      const score = (shortScore + leaderScore + rpsScore) / 3;
+      const shortScore = toNumber(shortRow?.score_100);
+      const leaderScore = toNumber(leaderRow?.score_100);
+      const rpsScore = toNumber(rps90Row?.score_100);
+      const validScores = [shortScore, leaderScore, rpsScore].filter((value) => value != null);
+      const score = validScores.length > 0
+        ? validScores.reduce((sum, value) => sum + value, 0) / validScores.length
+        : null;
 
       return {
         rank: 0,
@@ -325,8 +334,8 @@ async function generateCombinedBoard() {
         short_rank: shortRow?.rank ?? null,
         leader_rank: leaderRow?.rank ?? null,
         rps_rank: rps90Row?.rank ?? null,
-        rps20: toNumber(rps90Row?.rps20) ?? 0,
-        rps90: toNumber(rps90Row?.rps90) ?? 0,
+        rps20: toNumber(rps90Row?.rps20),
+        rps90: toNumber(rps90Row?.rps90),
         trade_date: shortTradeDate,
       };
     })

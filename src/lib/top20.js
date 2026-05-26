@@ -184,10 +184,10 @@ export const FACTOR_DEFINITIONS = {
     key: 'combined',
     type: 'combined',
     title: '综合榜单',
-    subtitle: '同时入选龙头抱团Top20、盘后版Top10、RPS双90 Top20的交集标的。',
-    description: '三种策略共同认可：龙头抱团前20 ∩ 盘后版评分前10 ∩ RPS双90前20。综合分为三策略 score_100 均均。',
-    riskNote: '综合榜单仅反映当日多策略共识，不构成买入建议。交集产出候选数量可能较少，甚至为空。',
-    emptyMessage: '当前无股票同时满足三个策略条件。',
+    subtitle: '入选龙头抱团Top20、盘后版Top10、RPS双90 Top20中任意两个榜单的重叠标的。',
+    description: '三种策略两两共识：至少同时出现在龙头抱团前20、盘后版评分前10、RPS双90前20中的两个榜单。综合分为命中榜单 score_100 的均值。',
+    riskNote: '综合榜单仅反映当日多策略共识，不构成买入建议。两榜重叠产出候选数量仍可能较少。',
+    emptyMessage: '当前无股票同时满足任意两个策略条件。',
     sources: {
       short: { csvText: latestShortTop20History?.text || shortTop20Text, limit: 10 },
       leader: { csvText: latestLeaderTop20History?.text || leaderTop20Text, limit: 20 },
@@ -352,9 +352,11 @@ function buildCombinedSnapshot(definition) {
   const leaderByCode = new Map(leaderItems.map((i) => [i.code, i]));
   const rps90ByCode = new Map(rps90Items.map((i) => [i.code, i]));
 
-  const commonCodes = shortItems
-    .map((i) => i.code)
-    .filter((c) => leaderByCode.has(c) && rps90ByCode.has(c));
+  const commonCodes = [...new Set([...shortItems, ...leaderItems, ...rps90Items].map((item) => item.code))]
+    .filter(
+      (code) =>
+        [shortByCode.has(code), leaderByCode.has(code), rps90ByCode.has(code)].filter(Boolean).length >= 2
+    );
 
   if (commonCodes.length === 0) return null;
 

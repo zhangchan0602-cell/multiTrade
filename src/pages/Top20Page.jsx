@@ -150,7 +150,7 @@ export default function Top20Page() {
           <p>{definition.subtitle}</p>
           <p className="panel-meta-line">{definition.description}</p>
           <p className="panel-meta-line">{definition.riskNote}</p>
-          {isCombined && <p className="panel-meta-line">入榜规则：当天同时进入短线盘后版 Top10、RPS双90 Top20、龙头抱团 Top20。</p>}
+          {isCombined && <p className="panel-meta-line">入榜规则：当天同时进入短线盘后版 Top10、RPS双90 Top20、龙头抱团 Top20 中的任意两个榜单。</p>}
           {isCombined && combinedStatus && <p className="panel-meta-line">{combinedStatus}</p>}
         </div>
         <div className="history-tools">

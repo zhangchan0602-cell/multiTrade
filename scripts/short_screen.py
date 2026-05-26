@@ -15,6 +15,19 @@
 - docs/list/history/short/YYYY-MM-DD/short_top20.csv
 - docs/list/history/short/YYYY-MM-DD/short_top20.md
 - docs/list/history/short/YYYY-MM-DD/short_summary.md
+- docs/list/history/short/YYYY-MM-DD/runs/HHMM/short_top5.md
+- docs/list/history/short/YYYY-MM-DD/runs/HHMM/short_top20.csv
+- docs/list/history/short/YYYY-MM-DD/runs/HHMM/short_summary.md
+- docs/list/history/tail/YYYY-MM-DD/tail_passed.csv
+- docs/list/history/tail/YYYY-MM-DD/tail_passed.md
+- docs/list/history/tail/YYYY-MM-DD/tail_top5.csv
+- docs/list/history/tail/YYYY-MM-DD/tail_top5.md
+- docs/list/history/tail/YYYY-MM-DD/tail_top20.csv
+- docs/list/history/tail/YYYY-MM-DD/tail_top20.md
+- docs/list/history/tail/YYYY-MM-DD/tail_summary.md
+- docs/list/history/tail/YYYY-MM-DD/runs/HHMM/tail_top5.md
+- docs/list/history/tail/YYYY-MM-DD/runs/HHMM/tail_top20.csv
+- docs/list/history/tail/YYYY-MM-DD/runs/HHMM/tail_summary.md
 """
 
 import json
@@ -1010,9 +1023,15 @@ def write_rank_table(f, rows: pd.DataFrame, title: str, run_ts: datetime) -> Non
             )
         )
 def build_output_dir(output_stem: str, run_ts: datetime) -> Path:
-    if output_stem == DEFAULT_OUTPUT_STEM:
-        return OUTPUT_DIR / "history" / "short" / run_ts.strftime("%Y-%m-%d")
+    if output_stem in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
+        return OUTPUT_DIR / "history" / output_stem / run_ts.strftime("%Y-%m-%d")
     return OUTPUT_DIR
+
+
+def build_snapshot_dir(output_stem: str, run_ts: datetime) -> Optional[Path]:
+    if output_stem not in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
+        return None
+    return build_output_dir(output_stem, run_ts) / "runs" / run_ts.strftime("%H%M")
 
 
 def build_output_path(output_stem: str, suffix: str, run_ts: Optional[datetime] = None) -> Path:
@@ -1190,14 +1209,15 @@ def write_outputs(
         f.write("- 百分制得分: 按原始综合分在全样本中的线性排名换算到0-100\n")
 
     if copy_history:
-        # 保留带时间戳的历史副本，方便跨日比较（top5 + top20 + summary）
-        _history_dir = OUTPUT_DIR / "history"
+        # 保留带时间戳的历史副本，避免同日多次运行覆盖。
+        _history_dir = build_snapshot_dir(output_stem, run_ts)
+        if _history_dir is None:
+            _history_dir = OUTPUT_DIR / "history"
         _history_dir.mkdir(parents=True, exist_ok=True)
-        _ts_tag = run_ts.strftime("%Y%m%d-%H%M")
         for _suf in ["top5.md", "top20.csv", "summary.md"]:
             _src = build_output_path(output_stem, _suf, run_ts)
             if _src.exists():
-                shutil.copy2(_src, _history_dir / f"{output_stem}_{_ts_tag}_{_suf}")
+                shutil.copy2(_src, _history_dir / f"{output_stem}_{_suf}")
 
 
 def run_screen(

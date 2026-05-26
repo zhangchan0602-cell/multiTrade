@@ -5,7 +5,7 @@
 原有模式支持策略：
   rps90  : 重新计算历史 RPS双90 Top5（同 rps90_backtest.py 框架）
   short  : 读取 docs/list/history/short/YYYY-MM-DD/ 已存档盘后版信号
-  tail   : 读取 docs/list/history/tail_*_top20.csv 已存档尾盘版信号
+    tail   : 读取 docs/list/history/tail/YYYY-MM-DD/ 及 runs/HHMM/ 已存档尾盘版信号
   all    : 三策略全部回测
 
 原有模式止盈止损规则：
@@ -385,8 +385,36 @@ def load_short_signals(top_n: int = 5) -> pd.DataFrame:
 
 
 def load_tail_signals(top_n: int = 5) -> pd.DataFrame:
-    """读取 docs/list/history/tail_*_top20.csv。"""
+    """读取 docs/list/history/tail/YYYY-MM-DD/ 及旧版扁平 tail_*_top20.csv。"""
     records = []
+    tail_dir = HISTORY_DIR / "tail"
+    if tail_dir.exists():
+        for date_dir in sorted(tail_dir.iterdir()):
+            if not date_dir.is_dir():
+                continue
+            signal_date = _normalize_date(date_dir.name)
+            if not signal_date:
+                continue
+            direct_csv = date_dir / "tail_top5.csv"
+            if not direct_csv.exists():
+                direct_csv = date_dir / "tail_top20.csv"
+            if direct_csv.exists():
+                records.extend(_load_csv_signals("tail", direct_csv, signal_date, top_n))
+                continue
+
+            runs_dir = date_dir / "runs"
+            if not runs_dir.exists():
+                continue
+            for run_dir in sorted(runs_dir.iterdir()):
+                if not run_dir.is_dir():
+                    continue
+                csv_path = run_dir / "tail_top5.csv"
+                if not csv_path.exists():
+                    csv_path = run_dir / "tail_top20.csv"
+                if not csv_path.exists():
+                    continue
+                records.extend(_load_csv_signals("tail", csv_path, signal_date, top_n))
+
     # 根目录下的旧格式文件
     for csv_path in sorted(HISTORY_DIR.glob("tail_*_top20.csv")):
         stem = csv_path.stem  # e.g. tail_20260514-1351_top20
