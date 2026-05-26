@@ -53,7 +53,7 @@ from screen_common import (
     get_latest_trade_date,
     ts_code_to_code,
 )
-from leader_screen import run_leader_screen
+from leader_screen import KLINE_CANDIDATE_LIMIT as LEADER_DEFAULT_KLINE_CANDIDATE_LIMIT, run_leader_screen
 from short_screen import (
     DEFAULT_MODEL_NAME as SHORT_MODEL_NAME,
     DEFAULT_OUTPUT_STEM as SHORT_OUTPUT_STEM,
@@ -1006,7 +1006,12 @@ def main() -> None:
     parser.add_argument("--cash-per-stock", type=float, default=100_000.0, help="组合回测单票预算，默认 100000")
     parser.add_argument("--max-positions", type=int, default=3, help="组合回测最大同时持仓数，默认 3")
     parser.add_argument("--kline-candidate-limit", type=int, default=80, help="组合回测 short/tail 每日 K 线候选数，默认 80")
-    parser.add_argument("--leader-kline-candidate-limit", type=int, default=300, help="组合回测 leader 每日 K 线候选数，默认 300")
+    parser.add_argument(
+        "--leader-kline-candidate-limit",
+        type=int,
+        default=LEADER_DEFAULT_KLINE_CANDIDATE_LIMIT,
+        help=f"组合回测 leader 每日 K 线候选数，默认 {LEADER_DEFAULT_KLINE_CANDIDATE_LIMIT}",
+    )
     parser.add_argument("--stop-loss",     type=float, default=8.0,  help="止损百分比（默认 8）")
     parser.add_argument("--retracement",   type=float, default=5.0,  help="单日回撤止盈百分比（默认 5）")
     parser.add_argument("--max-hold",      type=int,   default=60,   help="最大持有交易日数（默认 60）")

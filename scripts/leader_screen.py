@@ -72,7 +72,12 @@ PRICE_MIN        = 5.0           # 最低收盘价（元），机构偏好绝对
 AMOUNT_MIN       = 50_000_000    # 最低成交额（元）：5000 万
 CAL_DAYS_MIN     = 90            # 上市自然日最低要求
 INDUSTRY_RANK_MIN = 70.0         # 行业内收益率百分位门槛（%）
+INDUSTRY_MIN_MEMBERS = 10        # 行业样本深度门槛，避免小行业分位失真
 MA_BULL_MIN      = 0.0           # MA20/MA60 多头排列（MA20 ≥ MA60）
+TREND_SCORE_MIN  = 0.0           # 趋势质量最低得分地板
+CLUSTER_SCORE_MIN = 0.0          # 抱团强度最低得分地板
+STABILITY_SCORE_MIN = 0.0        # 稳定性最低得分地板
+MAX_PER_INDUSTRY = 4             # 最终通过名单单行业上限，抑制行业拥挤
 
 # K线候选数量
 KLINE_CANDIDATE_LIMIT = 4000      # 最多拉取 K 线的候选数量
@@ -514,6 +519,58 @@ def score_leaders(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def apply_leader_selection_guards(df: pd.DataFrame) -> tuple[pd.DataFrame, Dict[str, float]]:
+    df = df.copy()
+    trend_score_min = float(os.environ.get("LEADER_TREND_SCORE_MIN", str(TREND_SCORE_MIN)))
+    cluster_score_min = float(os.environ.get("LEADER_CLUSTER_SCORE_MIN", str(CLUSTER_SCORE_MIN)))
+    stability_score_min = float(os.environ.get("LEADER_STABILITY_SCORE_MIN", str(STABILITY_SCORE_MIN)))
+    max_per_industry = max(1, int(os.environ.get("LEADER_MAX_PER_INDUSTRY", str(MAX_PER_INDUSTRY))))
+
+    df["pass_trend_score"] = pd.to_numeric(df["trend_score"], errors="coerce").ge(trend_score_min)
+    df["pass_cluster_score"] = pd.to_numeric(df["cluster_score"], errors="coerce").ge(cluster_score_min)
+    df["pass_stability_score"] = pd.to_numeric(df["stability_score"], errors="coerce").ge(stability_score_min)
+    df["pass_quality_floor"] = (
+        df["pass_trend_score"]
+        & df["pass_cluster_score"]
+        & df["pass_stability_score"]
+    )
+
+    quality_pass_n = int(df["pass_quality_floor"].sum())
+    df = df[df["pass_quality_floor"]].copy()
+    if df.empty:
+        return df, {
+            "trend_score_min": trend_score_min,
+            "cluster_score_min": cluster_score_min,
+            "stability_score_min": stability_score_min,
+            "max_per_industry": float(max_per_industry),
+            "quality_pass_n": float(quality_pass_n),
+            "industry_cap_pass_n": 0.0,
+        }
+
+    df = df.sort_values(["score", "leadership_score", "amount_today"], ascending=False).reset_index(drop=True)
+    df["industry_rank"] = df.groupby("industry").cumcount() + 1
+    df["pass_industry_cap"] = df["industry_rank"] <= max_per_industry
+    industry_cap_pass_n = int(df["pass_industry_cap"].sum())
+    df = df[df["pass_industry_cap"]].copy().reset_index(drop=True)
+
+    df["rank"] = np.arange(1, len(df) + 1)
+    if len(df) > 1:
+        df["score_100"] = (len(df) - df["rank"]) / (len(df) - 1) * 100.0
+    elif len(df) == 1:
+        df["score_100"] = 100.0
+    else:
+        df["score_100"] = np.nan
+
+    return df, {
+        "trend_score_min": trend_score_min,
+        "cluster_score_min": cluster_score_min,
+        "stability_score_min": stability_score_min,
+        "max_per_industry": float(max_per_industry),
+        "quality_pass_n": float(quality_pass_n),
+        "industry_cap_pass_n": float(industry_cap_pass_n),
+    }
+
+
 # ── 输出 ──────────────────────────────────────────────────────────────────────
 
 def _write_md_table(df: pd.DataFrame, title: str, run_ts: datetime, path: Path) -> None:
@@ -554,6 +611,7 @@ def _write_outputs(
     total_universe: int,
     hard_pass_n: int,
     kline_ok_n: int,
+    filter_stats: Optional[Dict[str, float]] = None,
     copy_history: bool = True,
 ) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -600,6 +658,9 @@ def _write_outputs(
         f.write(f"- 全A（不含科创板）宇宙: {total_universe}\n")
         f.write(f"- 硬过滤后样本: {hard_pass_n}\n")
         f.write(f"- 成功拉取 K 线: {kline_ok_n}\n")
+        if filter_stats:
+            f.write(f"- 分数地板通过样本: {int(filter_stats.get('quality_pass_n', 0))}\n")
+            f.write(f"- 行业拥挤约束后样本: {int(filter_stats.get('industry_cap_pass_n', 0))}\n")
         f.write(f"- 最终通过标的: {len(passed)}\n")
         f.write(f"\n## 策略特征\n\n")
         f.write(f"- 策略类型: 龙头抱团（行业龙头 + 机构抱团特征）\n")
@@ -609,9 +670,15 @@ def _write_outputs(
         f.write(f"- 收盘价 ≥ {PRICE_MIN} 元\n")
         f.write(f"- 成交额 ≥ {AMOUNT_MIN / 1e6:.0f} 百万元\n")
         f.write(f"- 上市 ≥ {CAL_DAYS_MIN} 自然日\n")
+        f.write(f"- 行业样本数 ≥ {INDUSTRY_MIN_MEMBERS}（避免小行业分位失真）\n")
         f.write(f"- 行业内 20/60 日涨幅百分位 ≥ {INDUSTRY_RANK_MIN:.0f}%（行业龙头）\n")
         f.write(f"- MA20/MA60 多头排列（MA20 ≥ MA60）\n")
         f.write(f"- 剔除 ST/*ST，不含科创板\n")
+        if filter_stats:
+            f.write(f"- 趋势分 ≥ {filter_stats.get('trend_score_min', TREND_SCORE_MIN):.2f}\n")
+            f.write(f"- 抱团分 ≥ {filter_stats.get('cluster_score_min', CLUSTER_SCORE_MIN):.2f}\n")
+            f.write(f"- 稳定分 ≥ {filter_stats.get('stability_score_min', STABILITY_SCORE_MIN):.2f}\n")
+            f.write(f"- 最终名单单行业 ≤ {int(filter_stats.get('max_per_industry', MAX_PER_INDUSTRY))} 只\n")
         f.write(f"\n## 综合打分公式\n\n")
         f.write(
             "```\ncomposite_score = 0.30 × 行业领先得分（sector_leadership_score）\n"
@@ -743,6 +810,10 @@ def run_leader_screen(
     df["listing_date"] = pd.to_datetime(df["listing_date"], errors="coerce")
 
     total_universe = len(df)
+    industry_min_members = max(
+        1,
+        int(os.environ.get("LEADER_INDUSTRY_MIN_MEMBERS", str(INDUSTRY_MIN_MEMBERS))),
+    )
 
     # 计算涨幅
     df["ret_20_raw"] = df["close_today"] / df["close_20d"] - 1.0
@@ -750,6 +821,7 @@ def run_leader_screen(
 
     # 行业内百分位排名（0-100）
     df["industry"] = df["industry"].fillna("未知行业")
+    df["industry_member_count"] = df.groupby("industry")["ts_code"].transform("size")
     df["sector_rank_20"] = (
         df.groupby("industry")["ret_20_raw"]
         .rank(pct=True, ascending=True, na_option="bottom") * 100.0
@@ -766,10 +838,11 @@ def run_leader_screen(
     df["pass_listing"]      = df["calendar_days"] >= CAL_DAYS_MIN
     df["pass_price"]        = df["close"].fillna(0) >= PRICE_MIN
     df["pass_amount"]       = df["amount_today"] >= AMOUNT_MIN
+    df["pass_industry_depth"] = df["industry_member_count"] >= industry_min_members
     df["pass_sector_rank"]  = (df["sector_rank_20"] >= INDUSTRY_RANK_MIN) & (df["sector_rank_60"] >= INDUSTRY_RANK_MIN)
     df["hard_pass"]         = (
         df["pass_st"] & df["pass_listing"] & df["pass_price"]
-        & df["pass_amount"] & df["pass_sector_rank"]
+        & df["pass_amount"] & df["pass_industry_depth"] & df["pass_sector_rank"]
     )
 
     base = df[df["hard_pass"]].copy()
@@ -777,7 +850,7 @@ def run_leader_screen(
     print(
         f"[2/4] 全A={total_universe}  硬过滤后={hard_pass_n}  "
         f"（价格={df['pass_price'].sum()}, 成交额={df['pass_amount'].sum()}, "
-        f"行业排名≥{INDUSTRY_RANK_MIN:.0f}%={df['pass_sector_rank'].sum()}）"
+        f"行业样本深度={df['pass_industry_depth'].sum()}, 行业排名≥{INDUSTRY_RANK_MIN:.0f}%={df['pass_sector_rank'].sum()}）"
     )
 
     if base.empty:
@@ -825,6 +898,7 @@ def run_leader_screen(
         else:
             base["score_100"] = 100.0
         scored = base
+        filter_stats = None
     else:
         merged = base.merge(kf, on="code", how="left")
         merged["ret_20"] = merged["ret_20"].where(merged["ret_20"].notna(), merged["ret_20_raw"])
@@ -847,6 +921,17 @@ def run_leader_screen(
 
         print(f"[4/4] 打分排名...")
         scored = score_leaders(valid)
+        scored, filter_stats = apply_leader_selection_guards(scored)
+        print(
+            f"[4/4] 分数地板后={int(filter_stats.get('quality_pass_n', 0))}  "
+            f"行业上限后={int(filter_stats.get('industry_cap_pass_n', 0))}"
+        )
+
+        if scored.empty:
+            print("[完成] 无通过质量地板与行业拥挤约束的标的，输出空文件")
+            if persist_outputs:
+                _write_empty_outputs(run_ts, latest_trade_date)
+            return {"trade_date": latest_trade_date, "scored": pd.DataFrame(), "merged": merged}
 
     scored["trade_date"] = latest_trade_date
     # 确保 close 列使用正确收盘价
@@ -861,6 +946,7 @@ def run_leader_screen(
             total_universe,
             hard_pass_n,
             kline_ok_n,
+            filter_stats=filter_stats,
             copy_history=copy_history,
         )
 
