@@ -55,6 +55,7 @@ from screen_common import (
 )
 from leader_screen import KLINE_CANDIDATE_LIMIT as LEADER_DEFAULT_KLINE_CANDIDATE_LIMIT, run_leader_screen
 from short_screen import (
+    DEFAULT_KLINE_CANDIDATE_LIMIT,
     DEFAULT_MODEL_NAME as SHORT_MODEL_NAME,
     DEFAULT_OUTPUT_STEM as SHORT_OUTPUT_STEM,
     DEFAULT_TAIL_MODEL_NAME,
@@ -1033,7 +1034,12 @@ def main() -> None:
     parser.add_argument("--signal-interval", type=int, default=1, help="组合回测信号日间隔，默认每个交易日")
     parser.add_argument("--cash-per-stock", type=float, default=100_000.0, help="组合回测单票预算，默认 100000")
     parser.add_argument("--max-positions", type=int, default=3, help="组合回测最大同时持仓数，默认 3")
-    parser.add_argument("--kline-candidate-limit", type=int, default=80, help="组合回测 short/tail 每日 K 线候选数，默认 80")
+    parser.add_argument(
+        "--kline-candidate-limit",
+        type=int,
+        default=DEFAULT_KLINE_CANDIDATE_LIMIT,
+        help=f"组合回测 short/tail 每日 K 线候选数，默认 {DEFAULT_KLINE_CANDIDATE_LIMIT}",
+    )
     parser.add_argument(
         "--leader-kline-candidate-limit",
         type=int,

@@ -1,6 +1,6 @@
 # React 看板项目
 
-全A短线多因子选股系统，含盘后版与尾盘版筛选、T+3 历史回测、买入清单结算，以及 React 看板展示。
+全A短线多因子选股系统，含盘后版与尾盘版筛选、T+5 历史回测、买入清单结算，以及 React 看板展示。
 
 ## 启动
 
@@ -68,15 +68,17 @@ npm run preview
 | 路径 | 说明 |
 |------|------|
 | `docs/list/history/short_YYYYMMDD-HHMM_*.{csv,md}` | 盘后版各次运行历史快照 |
-| `docs/list/history/short/YYYY-MM-DD/short_*.{csv,md}` | 盘后版按交易日归档（供 T+3 回测扫描） |
+| `docs/list/history/short/YYYY-MM-DD/short_*.{csv,md}` | 盘后版按交易日归档（供 T+5 历史回测扫描） |
 | `docs/list/history/tail_YYYYMMDD-HHMM_*.{csv,md}` | 尾盘版各次运行历史快照 |
 
-### T+3 回测（`postclose_t3_history.py`）
+### T+5 历史回测（`postclose_t3_history.py`，兼容旧脚本名）
 
 | 文件 | 说明 |
 |------|------|
-| `docs/list/short_t3_history.csv` | 历史各交易日 Top5 及 T+3 结算收益（CSV） |
-| `docs/list/short_t3_history.md` | 同上，Markdown 格式，含汇总统计 |
+| `docs/list/short_t5_history_trades.csv` | 历史已平仓交易明细（CSV） |
+| `docs/list/short_t5_history_equity.csv` | 历史每日权益曲线（CSV） |
+| `docs/list/short_t5_history_open_positions.csv` | 回测截止日仍未平仓持仓（CSV） |
+| `docs/list/short_t5_history.md` | T+5 口径摘要与规则说明（Markdown） |
 
 ### 统一组合历史回测（`strategy_backtest.py --portfolio`）
 

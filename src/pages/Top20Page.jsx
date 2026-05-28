@@ -105,6 +105,25 @@ export default function Top20Page() {
     [previousSnapshot]
   );
 
+  // 计算当前榜单每只股票的连续上榜次数
+  const streakMap = useMemo(() => {
+    if (!currentSnapshot || snapshots.length <= 1) return new Map();
+    const currentIndex = snapshots.findIndex((snapshot) => snapshot.date === currentSnapshot.date);
+    const result = new Map();
+    for (const item of currentSnapshot.items) {
+      let streak = 1;
+      for (let i = currentIndex - 1; i >= 0; i--) {
+        if (snapshots[i].items.some((s) => s.code === item.code)) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+      result.set(item.code, streak);
+    }
+    return result;
+  }, [currentSnapshot, snapshots]);
+
   const removedItems = useMemo(() => {
     if (!previousSnapshot || !currentSnapshot) {
       return [];
@@ -272,8 +291,21 @@ export default function Top20Page() {
                 <tbody>
                   {currentSnapshot.items.map((item) => {
                     const isNew = previousSnapshot && !previousCodes.has(item.code);
-                    const stateLabel = item.quoteOnlyFallbackUsed ? '降级' : isNew ? '新增' : '跟踪';
-                    const stateClass = item.quoteOnlyFallbackUsed ? 'badge-flat' : isNew ? 'badge-new' : 'badge-up';
+                    const streak = streakMap.get(item.code) || 1;
+                    const stateLabel = item.quoteOnlyFallbackUsed
+                      ? '降级'
+                      : streak >= 2
+                        ? `连续${streak}日`
+                        : isNew
+                          ? '新增'
+                          : '跟踪';
+                    const stateClass = item.quoteOnlyFallbackUsed
+                      ? 'badge-flat'
+                      : streak >= 2
+                        ? 'badge-streak'
+                        : isNew
+                          ? 'badge-new'
+                          : 'badge-up';
 
                     return isCombined ? (
                       <tr key={makeRowKey(item)}>

@@ -1,0 +1,4 @@
+﻿strategy,code,ts_code,name,industry,rank,entry_date,entry_price,shares,buy_amount,exit_date,exit_price,sell_amount,exit_reason,hold_days,ma5,pct_chg,ret_pct,win
+short,300041,300041.SZ,回天新材,化工原料,49,20260515,12.4,8000,99200.0,20260518,12.12,96960.0,ma5_stop,1,12.146,-2.2581,-2.2581,0
+short,002643,002643.SZ,万润股份,化工原料,56,20260515,18.08,5500,99440.0,20260521,16.83,92565.0,retracement_5pct,4,17.814,-7.6796,-6.9137,0
+short,301555,301555.SZ,惠柏新材,化工原料,42,20260518,41.8,2300,96140.0,20260521,39.42,90666.0,retracement_5pct,3,41.106,-6.5877,-5.6938,0

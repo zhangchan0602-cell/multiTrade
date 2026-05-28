@@ -188,7 +188,7 @@
 #### 总分
 
 ```
-score = 0.25 × launch + 0.26 × trend + 0.29 × activity + 0.14 × stability + 0.06 × liquidity
+score = 0.22 × launch + 0.25 × trend + 0.23 × activity + 0.24 × stability + 0.06 × liquidity
 ```
 
 ---
@@ -199,10 +199,10 @@ score = 0.25 × launch + 0.26 × trend + 0.29 × activity + 0.14 × stability + 
 
 | 维度 | 盘后版总权重 | 尾盘版总权重 | 变化 |
 |------|-----------|-----------|------|
-| 启动（launch） | 25% | **28%** | ↑ |
-| 趋势（trend） | 26% | **18%** | ↓↓ |
-| 活跃（activity） | 29% | **34%** | ↑ |
-| 稳定（stability） | 14% | 14% | = |
+| 启动（launch） | 22% | **28%** | ↑ |
+| 趋势（trend） | 25% | **18%** | ↓ |
+| 活跃（activity） | 23% | **34%** | ↑↑ |
+| 稳定（stability） | 24% | 14% | ↓ |
 | 流动（liquidity） | 6% | 6% | = |
 
 动量分内部：`launch:trend = 0.68:0.32`（盘后版为 0.56:0.44），更强调短线冲量。
@@ -305,6 +305,6 @@ Barra 类模型核心是风险模型，目标是最小化组合残差风险，�
 | `scripts/tail_screen.py` | 尾盘版入口（调用 `run_tail_screen()`） |
 | `scripts/config.toml` | 各维度权重配置（可热修改） |
 | `scripts/screen_common.py` | 数据拉取、Winsorize、行业 z-score 等公共函数 |
-| `scripts/postclose_t3_history.py` | T+3 历史回测 |
+| `scripts/postclose_t3_history.py` | T+5 口径历史回测（兼容旧脚本名） |
 | `docs/postclose_spec.md` | 早期版本技术规格参考（权重可能已过时） |
 | `docs/postclose_model.md` | 执行模型说明文档 |
