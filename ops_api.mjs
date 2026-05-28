@@ -52,14 +52,14 @@ const SETTLEMENT_SUMMARY_PREFIX = '[tail-settle-summary]';
 const jobs = {
   postclose: {
     key: 'postclose',
-    label: '策略-多因子尾盘',
+    label: '策略-多因子盘后',
     scriptPath: path.join(ROOT_DIR, 'scripts', 'short_screen.py'),
     top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'short_top5.csv'),
     top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'short_top5.md'),
   },
   tail: {
     key: 'tail',
-    label: '策略-多因子盘中',
+    label: '策略-多因子尾盘',
     scriptPath: path.join(ROOT_DIR, 'scripts', 'tail_screen.py'),
     top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'tail_top5.csv'),
     top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'tail_top5.md'),

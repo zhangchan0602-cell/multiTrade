@@ -48,10 +48,10 @@ chip_tightness_20   = 0.34
 upper_shadow_5      = 0.08
 
 [postclose.score]
-launch    = 0.25
-trend     = 0.26
-activity  = 0.29
-stability = 0.14
+launch    = 0.22
+trend     = 0.25
+activity  = 0.23
+stability = 0.24
 liquidity = 0.06
 
 # ────────────────────────────────────────────────────────────

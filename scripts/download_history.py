@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-一次性预下载历史数据到本地缓存，供 postclose_t3_history.py 回测使用。
+一次性预下载历史数据到本地缓存，供 postclose_t3_history.py 的 T+5 历史回测使用。
 
 下载内容：
   - 交易日历（全量，一个文件）
   - 每交易日：pro.daily / pro.daily_basic / pro.adj_factor（全市场截面）
   - K 线缓存（--include-klines：从已下载截面零 API 调用重建，无需额外请求）
 
-下载完成后，运行盘后/尾盘选股及 T+3 回测将不再发起任何 Tushare API 请求。
+下载完成后，运行盘后/尾盘选股及 T+5 历史回测将不再发起任何 Tushare API 请求。
 
 用法示例：
   # 下载近一年（默认，含往前 90 自然日以保证 ret_60d 所需历史）

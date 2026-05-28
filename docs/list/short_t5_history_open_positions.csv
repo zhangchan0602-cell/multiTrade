@@ -1,0 +1,4 @@
+﻿strategy,code,ts_code,name,industry,rank,entry_date,entry_price,shares,buy_amount,last_date,last_close,market_value,unrealized_ret_pct
+short,300786,300786.SZ,国林科技,环境保护,26,20260515,18.52,5300,98156.0,20260521,19.28,102184.0,4.1037
+short,600999,600999.SH,招商证券,证券,2,20260521,17.43,5700,99351.0,20260521,17.43,99351.0,0.0
+short,600888,600888.SH,新疆众和,铝,3,20260521,9.37,9300,87141.0,20260521,9.37,87141.0,0.0

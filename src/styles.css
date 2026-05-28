@@ -257,6 +257,13 @@ tbody tr:hover {
   border-color: #decdab;
 }
 
+.badge-streak {
+  background: #eef3ff;
+  color: #3b5bdb;
+  border-color: #a5b4fc;
+  font-weight: 600;
+}
+
 .ops-intro {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
