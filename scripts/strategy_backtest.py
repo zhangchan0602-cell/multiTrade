@@ -79,6 +79,7 @@ RPS_TOP_N    = 5
 _snap_cache: Dict[str, pd.DataFrame] = {}
 # rps90 信号计算专用缓存（仅含 close/amount，与 _snap_cache 独立）
 _rps_snap_cache: Dict[str, pd.DataFrame] = {}
+_history_signal_cache: Dict[str, pd.DataFrame] = {}
 
 
 def _get_snap(trade_date: str) -> pd.DataFrame:
@@ -446,6 +447,32 @@ def load_leader_signals(top_n: int = 5) -> pd.DataFrame:
     return pd.DataFrame(records) if records else pd.DataFrame()
 
 
+def _get_history_signals(strategy: str, top_n: int) -> pd.DataFrame:
+    cache_key = f"{strategy}:{top_n}"
+    if cache_key not in _history_signal_cache:
+        if strategy == "short":
+            _history_signal_cache[cache_key] = load_short_signals(top_n=top_n)
+        elif strategy == "tail":
+            _history_signal_cache[cache_key] = load_tail_signals(top_n=top_n)
+        elif strategy == "leader":
+            _history_signal_cache[cache_key] = load_leader_signals(top_n=top_n)
+        else:
+            _history_signal_cache[cache_key] = pd.DataFrame()
+    return _history_signal_cache[cache_key]
+
+
+def _get_cached_strategy_signals(strategy: str, trade_date: str, top_n: int) -> List[Dict]:
+    df = _get_history_signals(strategy, top_n)
+    if df.empty or "signal_date" not in df.columns:
+        return []
+    matched = df[df["signal_date"] == trade_date].copy()
+    if matched.empty:
+        return []
+    if "rank" in matched.columns:
+        matched = matched.sort_values("rank")
+    return matched.head(top_n).to_dict("records")
+
+
 # ── 组合级统一回测（按历史日重跑策略）───────────────────────────────────────
 PORTFOLIO_LABELS = {
     "rps90": "RPS双90",
@@ -531,6 +558,9 @@ def _compute_strategy_signals(
             return _signals_from_scored(strategy, trade_date, scored, top_n)
 
         if strategy == "short":
+            cached = _get_cached_strategy_signals(strategy, trade_date, top_n)
+            if cached:
+                return cached
             result = run_short_screen(
                 model_name=SHORT_MODEL_NAME,
                 output_stem=SHORT_OUTPUT_STEM,

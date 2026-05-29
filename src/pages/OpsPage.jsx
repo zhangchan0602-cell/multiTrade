@@ -11,6 +11,19 @@ const JOB_PRESETS = {
 
 const JOB_PRIORITY = ['postclose', 'tail', 'rps90', 'leader'];
 
+function hasBuySignal(row) {
+  const signalValue = row.buy_signal_flag || row.buySignalFlag || row.signal_flag || row.signalFlag;
+  if (signalValue) {
+    return signalValue;
+  }
+
+  const passMomentumFloor = String(row.pass_momentum_floor || row.passMomentumFloor || '').toLowerCase();
+  const passSetup = String(row.pass_next_2_3d_setup || row.passNext23dSetup || '').toLowerCase();
+  const truthy = new Set(['true', '1', 'yes']);
+
+  return truthy.has(passMomentumFloor) && truthy.has(passSetup) ? '可买入' : '-';
+}
+
 function normalizeJobMeta(job) {
   const preset = JOB_PRESETS[job.key] || {};
   return {
@@ -223,6 +236,7 @@ export default function OpsPage() {
           const state = jobs[job.key] || { status: 'idle', output: [], running: false, settlementSummary: null };
           const top5 = top5Map[job.key] || { exists: false, csvText: '', markdown: '' };
           const rows = parseCsv(top5.csvText).slice(0, 5);
+          const showBuySignal = job.key === 'postclose';
           const generatedAt = extractMeta(top5.markdown, '生成时间');
           const dataState = extractMeta(top5.markdown, '数据状态');
           const tradeDate = rows[0]?.trade_date || rows[0]?.tradeDate || '-';
@@ -367,6 +381,7 @@ export default function OpsPage() {
                             <th>代码</th>
                             <th>名称</th>
                             <th>行业</th>
+                            {showBuySignal ? <th>信号标记</th> : null}
                             <th>得分</th>
                           </tr>
                         </thead>
@@ -377,6 +392,7 @@ export default function OpsPage() {
                               <td>{row.code}</td>
                               <td>{row.name}</td>
                               <td className="industry-col">{row.industry}</td>
+                              {showBuySignal ? <td>{hasBuySignal(row)}</td> : null}
                               <td>{row.score_100 || row.score100 || '-'}</td>
                             </tr>
                           ))}

@@ -995,33 +995,72 @@ def score_quote_only_candidates(df: pd.DataFrame, limit: int = 50) -> pd.DataFra
     return out
 
 
-def write_rank_table(f, rows: pd.DataFrame, title: str, run_ts: datetime) -> None:
+def build_buy_signal_flag(rows: pd.DataFrame) -> pd.Series:
+    pass_momentum = rows.get("pass_momentum_floor", pd.Series(False, index=rows.index)).fillna(False).astype(bool)
+    pass_setup = rows.get("pass_next_2_3d_setup", pd.Series(False, index=rows.index)).fillna(False).astype(bool)
+    return pd.Series(np.where(pass_momentum & pass_setup, "可买入", "-"), index=rows.index, dtype="object")
+
+
+def write_rank_table(
+    f,
+    rows: pd.DataFrame,
+    title: str,
+    run_ts: datetime,
+    show_buy_signal: bool = False,
+) -> None:
     f.write(f"# {title}\n\n")
     f.write(f"- 生成时间: {run_ts.strftime('%Y-%m-%d %H:%M:%S')}\n")
     if rows.get("quote_only_fallback_used", pd.Series(False, index=rows.index)).fillna(False).any():
         f.write("- 数据状态: 历史K线不可用，当前为纯行情降级候选，置信度低于真实K线模型\n")
-    f.write("| 排名 | 代码 | 名称 | 百分制得分 | 原始分 | 启动 | 趋势 | 动量 | 活跃 | 稳定 | 流动 |\n")
-    f.write("|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|\n")
+    if show_buy_signal:
+        f.write("| 排名 | 代码 | 名称 | 信号标记 | 百分制得分 | 原始分 | 启动 | 趋势 | 动量 | 活跃 | 稳定 | 流动 |\n")
+        f.write("|---:|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|\n")
+    else:
+        f.write("| 排名 | 代码 | 名称 | 百分制得分 | 原始分 | 启动 | 趋势 | 动量 | 活跃 | 稳定 | 流动 |\n")
+        f.write("|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|\n")
     for _, r in rows.iterrows():
-        f.write(
-            (
-                "| {rank} | {code} | {name} | {score100:.2f} | {score_raw:.4f} | "
-                "{launch:.4f} | {trend:.4f} | {momentum:.4f} | {activity:.4f} | "
-                "{stability:.4f} | {liquidity:.4f} |\n"
-            ).format(
-                rank=int(r["rank"]),
-                code=r["code"],
-                name=r["name"],
-                score100=float(r["score_100"]),
-                score_raw=float(r["score_raw"]),
-                launch=float(r["launch_score"]),
-                trend=float(r["trend_score"]),
-                momentum=float(r["momentum_score"]),
-                activity=float(r["activity_score"]),
-                stability=float(r["stability_score"]),
-                liquidity=float(r["liquidity_score"]),
+        buy_signal = r.get("buy_signal_flag", "-") if show_buy_signal else None
+        if show_buy_signal:
+            f.write(
+                (
+                    "| {rank} | {code} | {name} | {buy_signal} | {score100:.2f} | {score_raw:.4f} | "
+                    "{launch:.4f} | {trend:.4f} | {momentum:.4f} | {activity:.4f} | "
+                    "{stability:.4f} | {liquidity:.4f} |\n"
+                ).format(
+                    rank=int(r["rank"]),
+                    code=r["code"],
+                    name=r["name"],
+                    buy_signal=buy_signal,
+                    score100=float(r["score_100"]),
+                    score_raw=float(r["score_raw"]),
+                    launch=float(r["launch_score"]),
+                    trend=float(r["trend_score"]),
+                    momentum=float(r["momentum_score"]),
+                    activity=float(r["activity_score"]),
+                    stability=float(r["stability_score"]),
+                    liquidity=float(r["liquidity_score"]),
+                )
             )
-        )
+        else:
+            f.write(
+                (
+                    "| {rank} | {code} | {name} | {score100:.2f} | {score_raw:.4f} | "
+                    "{launch:.4f} | {trend:.4f} | {momentum:.4f} | {activity:.4f} | "
+                    "{stability:.4f} | {liquidity:.4f} |\n"
+                ).format(
+                    rank=int(r["rank"]),
+                    code=r["code"],
+                    name=r["name"],
+                    score100=float(r["score_100"]),
+                    score_raw=float(r["score_raw"]),
+                    launch=float(r["launch_score"]),
+                    trend=float(r["trend_score"]),
+                    momentum=float(r["momentum_score"]),
+                    activity=float(r["activity_score"]),
+                    stability=float(r["stability_score"]),
+                    liquidity=float(r["liquidity_score"]),
+                )
+            )
 def build_output_dir(output_stem: str, run_ts: datetime) -> Path:
     if output_stem in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
         return OUTPUT_DIR / "history" / output_stem / run_ts.strftime("%Y-%m-%d")
@@ -1064,12 +1103,14 @@ def write_outputs(
         scored["quote_only_fallback_used"] = False
     if "pass_momentum_floor" not in scored.columns:
         scored["pass_momentum_floor"] = True
+    scored["buy_signal_flag"] = build_buy_signal_flag(scored)
 
     export_cols = [
         "rank",
         "code",
         "name",
         "industry",
+        "buy_signal_flag",
         "score_100",
         "score_raw",
         "launch_score",
@@ -1137,7 +1178,13 @@ def write_outputs(
     top5[export_cols].to_csv(build_output_path(output_stem, "top5.csv", run_ts), index=False, encoding="utf-8-sig")
 
     with build_output_path(output_stem, "top5.md", run_ts).open("w", encoding="utf-8") as f:
-        write_rank_table(f, top5, f"全A（不含科创板）{model_name}模型 Top 5", run_ts)
+        write_rank_table(
+            f,
+            top5,
+            f"全A（不含科创板）{model_name}模型 Top 5",
+            run_ts,
+            show_buy_signal=output_stem == DEFAULT_OUTPUT_STEM,
+        )
 
     top20 = scored.head(20).copy()
     top20[export_cols].to_csv(build_output_path(output_stem, "top20.csv", run_ts), index=False, encoding="utf-8-sig")
