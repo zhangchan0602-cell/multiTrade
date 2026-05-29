@@ -558,9 +558,10 @@ def _compute_strategy_signals(
             return _signals_from_scored(strategy, trade_date, scored, top_n)
 
         if strategy == "short":
-            cached = _get_cached_strategy_signals(strategy, trade_date, top_n)
-            if cached:
-                return cached
+            if os.environ.get("SHORT_BACKTEST_FORCE_RECOMPUTE", "0") != "1":
+                cached = _get_cached_strategy_signals(strategy, trade_date, top_n)
+                if cached:
+                    return cached
             result = run_short_screen(
                 model_name=SHORT_MODEL_NAME,
                 output_stem=SHORT_OUTPUT_STEM,

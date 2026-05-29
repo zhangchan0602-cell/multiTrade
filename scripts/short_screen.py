@@ -1084,6 +1084,33 @@ def build_output_display_path(output_stem: str, suffix: str, run_ts: datetime) -
     return output_path.relative_to(project_root).as_posix()
 
 
+def apply_industry_cap(scored: pd.DataFrame, max_per_industry: int) -> pd.DataFrame:
+    """按行业分散重排：单行业占满上限后，其余同行业个股顺延到分散名单之后。
+
+    保留全部个股，但把行业拥挤的个股下沉，使 Top5/Top20 头部行业更分散，
+    降低同涨同跌的相关性回撤，提升组合层面的胜率稳定性。重排后重算 rank 与百分制得分。
+    """
+    if scored.empty or max_per_industry <= 0 or "industry" not in scored.columns:
+        return scored
+    ordered = scored.sort_values("score", ascending=False).reset_index(drop=True)
+    counts: dict[str, int] = {}
+    primary_idx: list[int] = []
+    overflow_idx: list[int] = []
+    for i, ind in enumerate(ordered["industry"].fillna("未知").astype(str)):
+        if counts.get(ind, 0) < max_per_industry:
+            counts[ind] = counts.get(ind, 0) + 1
+            primary_idx.append(i)
+        else:
+            overflow_idx.append(i)
+    out = ordered.iloc[primary_idx + overflow_idx].copy().reset_index(drop=True)
+    out["rank"] = np.arange(1, len(out) + 1)
+    if len(out) > 1:
+        out["score_100"] = (len(out) - out["rank"]) / (len(out) - 1) * 100.0
+    elif len(out) == 1:
+        out["score_100"] = 100.0
+    return out
+
+
 def write_outputs(
     scored: pd.DataFrame,
     merged: pd.DataFrame,
@@ -1447,6 +1474,11 @@ def run_screen(
         )
         scored["pass_next_2_3d_setup"] = scored["pass_next_2_3d_setup"].fillna(False)
         scored = scored[scored["pass_next_2_3d_setup"] & scored["pass_momentum_floor"]].copy()
+        if _mode != "tail" and not scored.empty:
+            _sel_cfg = _SCREEN_CFG.get("postclose", {}).get("selection", {})
+            _max_per_ind = int(_sel_cfg.get("max_per_industry", 0) or 0)
+            if _max_per_ind > 0:
+                scored = apply_industry_cap(scored, _max_per_ind)
 
     if scored.empty and quote_only_fallback:
         print("[3/3] no real-kline final candidates, use quote-only fallback candidates")
