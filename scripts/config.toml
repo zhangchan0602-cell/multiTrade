@@ -48,15 +48,22 @@ chip_tightness_20   = 0.34
 upper_shadow_5      = 0.08
 
 [postclose.score]
-launch    = 0.18
-trend     = 0.28
-activity  = 0.20
-stability = 0.28
+launch    = 0.16
+trend     = 0.22
+activity  = 0.16
+stability = 0.40
 liquidity = 0.06
 
 [postclose.selection]
 # 最终名单单行业上限：抑制行业拥挤、降低同涨同跌的相关性回撤（借鉴龙头抱团版）
 max_per_industry = 2
+
+[postclose.market_filter]
+# 盘后短线环境闸门：弱市退潮时宁可少出/不出 Top5，避免在次日承接继续转弱时硬追启动。
+enabled = true
+min_up_ratio = 0.28
+min_median_change = -2.0
+max_down5_ratio = 0.08
 
 # ────────────────────────────────────────────────────────────
 # 尾盘版（14:30-14:45 运行，当日 14:50 操作）
@@ -118,15 +125,15 @@ liquidity = 0.06
 [postclose.filters]
 # 当日涨幅 & 振幅（change_rate_max 由 9.8 降至 7.0，避免在接近涨停处追高、规避次日均值回归）
 change_rate_min        = -4.0
-change_rate_max        = 7.0
+change_rate_max        = 6.5
 amp_max                = 16.0
 # 近期动量窗口（收窄上沿，避免买在短期过度拉升后）
 ret_3_min              = -0.02
-ret_3_max              = 0.10
+ret_3_max              = 0.08
 ret_5_min              = -0.01
-ret_5_max              = 0.15
+ret_5_max              = 0.13
 ret_20_min             = -0.08
-ret_20_max             = 0.35
+ret_20_max             = 0.25
 accel_min              = -0.05
 # 突破形态（price_vs_ma20 = MA5/MA20-1，非收盘/MA20）
 # high_breakout_20_max 由 0.12 收至 0.06：只接受刚突破/贴近 20 日高点，不追远离新高的个股
@@ -135,7 +142,7 @@ close_position_20_max  = 1.05
 high_breakout_20_min   = -0.04
 high_breakout_20_max   = 0.06
 price_vs_ma20_min      = -0.03
-price_vs_ma20_max      = 0.08
+price_vs_ma20_max      = 0.065
 # 要求 MA20 真正在 MA60 之上（确认多头趋势，而非震荡/起步期）
 ma_bull_20_60_min      = 0.01
 # 活跃度（资金偏置与价量同步门槛上调，要求真实放量上行）
@@ -144,12 +151,12 @@ amount_ratio_3_20_max  = 3.50
 amount_ratio_5_20_min  = 0.95
 amount_ratio_5_20_max  = 3.00
 turnover_5_min         = 1.50
-turnover_5_max         = 18.00
+turnover_5_max         = 15.00
 money_flow_bias_20_min = 0.08
 price_volume_sync_10_min = 0.05
 # 风险（上影线与回撤阈值收紧，剔除抛压明显/波动过大的标的）
-vol_20_max             = 0.08
-max_drawdown_20_min    = -0.15
+vol_20_max             = 0.06
+max_drawdown_20_min    = -0.13
 upper_shadow_5_max     = 0.35
 
 [tail.filters]

@@ -51,3 +51,7 @@ export function fetchCombinedBoard() {
 export function generateCombinedBoard() {
   return request('/api/combined/generate', { method: 'POST' });
 }
+
+export function refreshKechuangIndex() {
+  return request('/api/kechuang/refresh', { method: 'POST' });
+}

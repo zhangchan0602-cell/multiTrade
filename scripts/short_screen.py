@@ -759,6 +759,44 @@ def add_next_2_3d_trade_filters(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def add_postclose_market_filter(df: pd.DataFrame) -> pd.DataFrame:
+    """Add a same-day breadth gate for post-close short-term signals.
+
+    The post-close model is most fragile when market breadth is already poor at
+    the close. Use the quote universe already loaded by the screen so this gate
+    does not introduce an extra data dependency.
+    """
+    df = df.copy()
+    cfg = _SCREEN_CFG.get("postclose", {}).get("market_filter", {})
+    enabled = bool(cfg.get("enabled", False))
+
+    change_rate = pd.to_numeric(df.get("change_rate"), errors="coerce")
+    valid = change_rate.dropna()
+    if valid.empty:
+        up_ratio = np.nan
+        median_change = np.nan
+        down5_ratio = np.nan
+        pass_market = True
+    else:
+        up_ratio = float((valid > 0).mean())
+        median_change = float(valid.median())
+        down5_ratio = float((valid <= -5.0).mean())
+        pass_market = (
+            (not enabled)
+            or (
+                up_ratio >= float(cfg.get("min_up_ratio", 0.28))
+                and median_change >= float(cfg.get("min_median_change", -2.0))
+                and down5_ratio <= float(cfg.get("max_down5_ratio", 0.08))
+            )
+        )
+
+    df["market_up_ratio"] = up_ratio
+    df["market_median_change"] = median_change
+    df["market_down5_ratio"] = down5_ratio
+    df["pass_market_env"] = bool(pass_market)
+    return df
+
+
 def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
     """尾盘版（14:30-14:45 运行）打分函数。
     面向当日 14:50 操作，偏重近期短期冲量与当日量能爆发，降低长期趋势权重。
@@ -1180,6 +1218,10 @@ def write_outputs(
         "avg_amount_20_used",
         "close",
         "trade_date",
+        "market_up_ratio",
+        "market_median_change",
+        "market_down5_ratio",
+        "pass_market_env",
         "kline_fallback_used",
         "quote_only_fallback_used",
         "pass_momentum_floor",
@@ -1231,6 +1273,21 @@ def write_outputs(
     quote_source_requested = str(merged.get("quote_source_requested", pd.Series(["unknown"], index=merged.index[:1])).iloc[0]) if not merged.empty else "unknown"
     quote_is_intraday = bool(merged.get("quote_is_intraday", pd.Series([False], index=merged.index[:1])).iloc[0]) if not merged.empty else False
     quote_fallback_reason = str(merged.get("quote_fallback_reason", pd.Series([""], index=merged.index[:1])).iloc[0]) if not merged.empty else ""
+    market_up_ratio = pd.to_numeric(
+        merged.get("market_up_ratio", pd.Series([np.nan], index=merged.index[:1])),
+        errors="coerce",
+    ).iloc[0] if not merged.empty else np.nan
+    market_median_change = pd.to_numeric(
+        merged.get("market_median_change", pd.Series([np.nan], index=merged.index[:1])),
+        errors="coerce",
+    ).iloc[0] if not merged.empty else np.nan
+    market_down5_ratio = pd.to_numeric(
+        merged.get("market_down5_ratio", pd.Series([np.nan], index=merged.index[:1])),
+        errors="coerce",
+    ).iloc[0] if not merged.empty else np.nan
+    pass_market_env = bool(
+        merged.get("pass_market_env", pd.Series([True], index=merged.index[:1])).iloc[0]
+    ) if not merged.empty else True
     with build_output_path(output_stem, "summary.md", run_ts).open("w", encoding="utf-8") as f:
         f.write(f"# 全A（不含科创板）{model_name}筛选统计\n\n")
         f.write(f"- 生成时间: {run_ts.strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -1239,6 +1296,14 @@ def write_outputs(
         f.write(f"- 行情快照是否盘中: {'是' if quote_is_intraday else '否'}\n")
         if quote_fallback_reason:
             f.write(f"- 行情快照降级原因: {quote_fallback_reason}\n")
+        if output_stem == DEFAULT_OUTPUT_STEM:
+            f.write(
+                "- 盘后市场环境: "
+                f"{'通过' if pass_market_env else '未通过'}"
+                f"（上涨家数占比 {market_up_ratio:.1%}, "
+                f"中位涨跌幅 {market_median_change:.2f}%, "
+                f"跌超5%占比 {market_down5_ratio:.1%}）\n"
+            )
         f.write(f"- 全A（沪主板+深主板+创业板）初始样本: {len(merged)}\n")
         f.write(f"- K线候选样本: {kline_candidates}\n")
         f.write(f"- K线成功样本: {kline_ok}\n")
@@ -1424,6 +1489,7 @@ def run_screen(
         df = add_tail_trade_filters(df)
     else:
         df = add_next_2_3d_trade_filters(df)
+        df = add_postclose_market_filter(df)
 
     base = df[df["hard_pass"]].copy()
     raw_cols = [
@@ -1473,18 +1539,30 @@ def run_screen(
             & (scored["launch_score"] > launch_score_floor)
         )
         scored["pass_next_2_3d_setup"] = scored["pass_next_2_3d_setup"].fillna(False)
-        scored = scored[scored["pass_next_2_3d_setup"] & scored["pass_momentum_floor"]].copy()
+        if "pass_market_env" not in scored.columns:
+            scored["pass_market_env"] = True
+        scored = scored[
+            scored["pass_next_2_3d_setup"]
+            & scored["pass_momentum_floor"]
+            & scored["pass_market_env"].fillna(True)
+        ].copy()
         if _mode != "tail" and not scored.empty:
             _sel_cfg = _SCREEN_CFG.get("postclose", {}).get("selection", {})
             _max_per_ind = int(_sel_cfg.get("max_per_industry", 0) or 0)
             if _max_per_ind > 0:
                 scored = apply_industry_cap(scored, _max_per_ind)
 
-    if scored.empty and quote_only_fallback:
+    postclose_market_ok = True
+    if _mode != "tail" and "pass_market_env" in df.columns and not df.empty:
+        postclose_market_ok = bool(df["pass_market_env"].fillna(True).iloc[0])
+
+    if scored.empty and quote_only_fallback and postclose_market_ok:
         print("[3/3] no real-kline final candidates, use quote-only fallback candidates")
         quote_scored = score_quote_only_candidates(df, limit=quote_only_limit)
         if not quote_scored.empty:
             scored = quote_scored
+    elif scored.empty and quote_only_fallback and not postclose_market_ok:
+        print("[3/3] postclose market breadth gate failed, skip quote-only fallback")
     if persist_outputs:
         write_outputs(
             scored,

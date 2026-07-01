@@ -1,7 +1,7 @@
 # 短线多因子-盘后版打分规则技术规格
 
-> 版本：v2  
-> 更新日期：2026-05-11  
+> 版本：v2.2
+> 更新日期：2026-06-29
 > 适用场景：全A（不含科创板）短线轮动候选池筛选，可用于 Spark 批处理打分
 
 ---
@@ -157,10 +157,10 @@ liquidity_score =
 
 ```
 score =
-  0.42 × launch_score
-+ 0.18 × trend_score
-+ 0.24 × activity_score
-+ 0.10 × stability_score
+  0.16 × launch_score
++ 0.22 × trend_score
++ 0.16 × activity_score
++ 0.40 × stability_score
 + 0.06 × liquidity_score
 ```
 
@@ -172,15 +172,26 @@ score =
 
 所有条件均需同时满足，输出字段 `pass_next_2_3d_setup = true`。
 
-另外增加一个最终执行地板：`momentum_score > 0` 且 `launch_score > -0.10`，用于剔除纯流动性驱动但启动不足的标的。
+另外增加两个最终执行地板：
+
+- `momentum_score > 0` 且 `launch_score > -0.10`，用于剔除纯流动性驱动但启动不足的标的
+- 盘后市场环境闸门通过；若未通过，不输出可交易 Top5，且不启用纯行情降级候选
+
+盘后市场环境闸门：
+
+| 指标 | 条件 |
+|------|------|
+| 全A上涨家数占比 | ≥ 28% |
+| 全A中位涨跌幅 | ≥ -2% |
+| 全A跌超5%占比 | ≤ 8% |
 
 | 过滤维度 | 条件 |
 |----------|------|
-| **当日行情** | `change_rate` ∈ [-4%, 9.8%] 且 `amp` ≤ 16% |
-| **启动窗口** | `ret_3` ∈ [-2%, 12%]<br>`ret_5` ∈ [-1%, 18%]<br>`ret_20` ∈ [-8%, 35%]<br>`accel` ≥ -5% |
-| **突破形态** | `close_position_20` ∈ [55%, 105%]<br>`high_breakout_20` ∈ [-4%, 12%]<br>`price_vs_ma20` ∈ [-2%, 18%] |
-| **活跃形态** | `amount_ratio_3_20` ∈ [1.05, 3.5]<br>`amount_ratio_5_20` ∈ [0.95, 3.0]<br>`turnover_5` ∈ [1.5%, 18%] |
-| **风险控制** | `vol_20` ≤ 8%<br>`max_drawdown_20` ≥ -18%<br>`upper_shadow_5` ≤ 42% |
+| **当日行情** | `change_rate` ∈ [-4%, 6.5%] 且 `amp` ≤ 16% |
+| **启动窗口** | `ret_3` ∈ [-2%, 8%]<br>`ret_5` ∈ [-1%, 13%]<br>`ret_20` ∈ [-8%, 25%]<br>`accel` ≥ -5% |
+| **突破形态** | `close_position_20` ∈ [60%, 105%]<br>`high_breakout_20` ∈ [-4%, 6%]<br>`price_vs_ma20` ∈ [-3%, 6.5%] |
+| **活跃形态** | `amount_ratio_3_20` ∈ [1.05, 3.5]<br>`amount_ratio_5_20` ∈ [0.95, 3.0]<br>`turnover_5` ∈ [1.5%, 15%] |
+| **风险控制** | `vol_20` ≤ 6%<br>`max_drawdown_20` ≥ -13%<br>`upper_shadow_5` ≤ 35% |
 
 ---
 
@@ -197,6 +208,10 @@ score =
 | `stability_score` | 稳定分组得分 |
 | `liquidity_score` | 流动分组得分 |
 | `pass_next_2_3d_setup` | 是否通过交易执行过滤（布尔） |
+| `pass_market_env` | 是否通过盘后市场环境闸门（布尔） |
+| `market_up_ratio` | 当日全A上涨家数占比 |
+| `market_median_change` | 当日全A涨跌幅中位数 |
+| `market_down5_ratio` | 当日全A跌超5%占比 |
 | `kline_fallback_used` | 是否使用了代理因子兜底（布尔） |
 
 ---

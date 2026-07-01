@@ -14,6 +14,9 @@ const PORT = Number(process.env.OPS_PORT || 8787);
 const COMBINED_RULE_TEXT = '当天同时进入短线盘后版 Top10、RPS双90 Top20、龙头抱团 Top20 中的任意两个榜单';
 const COMBINED_CURRENT_CSV_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_top20.csv');
 const COMBINED_CURRENT_MD_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_top20.md');
+const KECHUANG_INDEX_CODE = '000688.SH';
+const KECHUANG_INDEX_CSV_PATH = path.join(ROOT_DIR, 'scripts', '.cache', 'index', '000688.csv');
+const KECHUANG_DOWNLOAD_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'download_kechuang_index.py');
 
 function resolvePythonCandidates(candidates) {
   const seen = new Set();
@@ -186,6 +189,23 @@ function csvEscape(value) {
     return text;
   }
   return `"${text.replace(/"/g, '""')}"`;
+}
+
+function normalizeIndexDate(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length !== 8) {
+    return null;
+  }
+  return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+}
+
+function resolveCsvLatestDate(csvText) {
+  const rows = parseCsv(csvText);
+  return rows
+    .map((row) => normalizeIndexDate(row.trade_date || row.date))
+    .filter(Boolean)
+    .sort()
+    .at(-1) || null;
 }
 
 function parseRankedRows(csvText, label, limit) {
@@ -393,6 +413,68 @@ async function generateCombinedBoard() {
   };
 }
 
+function runScript(scriptPath, args = []) {
+  return new Promise((resolve, reject) => {
+    const pythonBin = DEFAULT_PYTHON_BIN;
+    const output = [];
+    const child = spawn(pythonBin, [scriptPath, ...args], {
+      cwd: ROOT_DIR,
+      env: {
+        ...process.env,
+        PYTHONUTF8: '1',
+      },
+    });
+
+    const collect = (chunk) => {
+      const lines = String(chunk || '')
+        .replace(/\r/g, '')
+        .split('\n')
+        .filter(Boolean);
+      output.push(...lines);
+      if (output.length > 120) {
+        output.splice(0, output.length - 120);
+      }
+    };
+
+    child.stdout.on('data', collect);
+    child.stderr.on('data', collect);
+    child.on('error', (error) => {
+      error.output = output;
+      reject(error);
+    });
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve({ code, output, pythonBin });
+        return;
+      }
+      const error = new Error(`${path.basename(scriptPath)} exited with ${code}`);
+      error.output = output;
+      error.code = code;
+      reject(error);
+    });
+  });
+}
+
+async function refreshKechuangIndex() {
+  const run = await runScript(KECHUANG_DOWNLOAD_SCRIPT_PATH);
+  const csvText = await readFile(KECHUANG_INDEX_CSV_PATH, 'utf8');
+  const latestTradeDate = resolveCsvLatestDate(csvText);
+
+  if (!latestTradeDate) {
+    throw new Error('科创指数日线为空，无法读取最新交易日');
+  }
+
+  return {
+    ok: true,
+    indexCode: KECHUANG_INDEX_CODE,
+    csvText,
+    latestTradeDate,
+    updatedAt: statSync(KECHUANG_INDEX_CSV_PATH).mtime.toISOString(),
+    output: run.output,
+    pythonBin: run.pythonBin,
+  };
+}
+
 function appendOutput(state, chunk) {
   const text = String(chunk || '').replace(/\r/g, '');
   const lines = text.split('\n').filter(Boolean);
@@ -595,6 +677,19 @@ const server = createServer(async (req, res) => {
       json(res, 200, payload);
     } catch (error) {
       json(res, 500, { error: error.message || 'generate-combined-failed' });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/kechuang/refresh') {
+    try {
+      const payload = await refreshKechuangIndex();
+      json(res, 200, payload);
+    } catch (error) {
+      json(res, 500, {
+        error: error.message || 'refresh-kechuang-failed',
+        output: Array.isArray(error.output) ? error.output : [],
+      });
     }
     return;
   }
