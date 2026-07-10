@@ -17,6 +17,8 @@ const COMBINED_CURRENT_MD_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_t
 const KECHUANG_INDEX_CODE = '000688.SH';
 const KECHUANG_INDEX_CSV_PATH = path.join(ROOT_DIR, 'scripts', '.cache', 'index', '000688.csv');
 const KECHUANG_DOWNLOAD_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'download_kechuang_index.py');
+const INDUSTRY_TREND_RANK_PATH = path.join(ROOT_DIR, 'docs', 'list', 'industry_trend_rank.json');
+const INDUSTRY_TREND_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'industry_trend_rank.py');
 
 function resolvePythonCandidates(candidates) {
   const seen = new Set();
@@ -62,7 +64,7 @@ const jobs = {
   },
   tail: {
     key: 'tail',
-    label: '策略-多因子尾盘',
+    label: '策略-收盘资金多因子',
     scriptPath: path.join(ROOT_DIR, 'scripts', 'tail_screen.py'),
     top5CsvPath: path.join(ROOT_DIR, 'docs', 'list', 'tail_top5.csv'),
     top5MdPath: path.join(ROOT_DIR, 'docs', 'list', 'tail_top5.md'),
@@ -475,6 +477,25 @@ async function refreshKechuangIndex() {
   };
 }
 
+async function readIndustryTrendRank() {
+  if (!existsSync(INDUSTRY_TREND_RANK_PATH)) {
+    return { exists: false, industries: [], updatedAt: null, tradeDate: null };
+  }
+
+  const payload = JSON.parse(await readFile(INDUSTRY_TREND_RANK_PATH, 'utf8'));
+  return {
+    exists: true,
+    ...payload,
+    updatedAt: payload.updatedAt || statSync(INDUSTRY_TREND_RANK_PATH).mtime.toISOString(),
+  };
+}
+
+async function refreshIndustryTrendRank() {
+  const run = await runScript(INDUSTRY_TREND_SCRIPT_PATH, ['--output', INDUSTRY_TREND_RANK_PATH]);
+  const payload = await readIndustryTrendRank();
+  return { ...payload, output: run.output, pythonBin: run.pythonBin };
+}
+
 function appendOutput(state, chunk) {
   const text = String(chunk || '').replace(/\r/g, '');
   const lines = text.split('\n').filter(Boolean);
@@ -688,6 +709,27 @@ const server = createServer(async (req, res) => {
     } catch (error) {
       json(res, 500, {
         error: error.message || 'refresh-kechuang-failed',
+        output: Array.isArray(error.output) ? error.output : [],
+      });
+    }
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/api/industry-trends') {
+    try {
+      json(res, 200, await readIndustryTrendRank());
+    } catch (error) {
+      json(res, 500, { error: error.message || 'read-industry-trends-failed' });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/industry-trends/refresh') {
+    try {
+      json(res, 200, await refreshIndustryTrendRank());
+    } catch (error) {
+      json(res, 500, {
+        error: error.message || 'refresh-industry-trends-failed',
         output: Array.isArray(error.output) ? error.output : [],
       });
     }

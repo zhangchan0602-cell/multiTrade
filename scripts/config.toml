@@ -3,7 +3,7 @@
 # 注意：每个小节内各权重之和应为 1.0，否则评分尺度会偏移。
 
 # ────────────────────────────────────────────────────────────
-# 盘后版（15:30-20:00 运行，次日 2-3 交易日持有）
+# 盘后版（15:30后运行，次日 2-3 交易日持有）
 # ────────────────────────────────────────────────────────────
 
 [postclose.launch]
@@ -34,8 +34,9 @@ amount_ratio_3_20    = 0.18
 amount_ratio_5_20    = 0.06
 turnover_5           = 0.10
 turnover_accel_5_20  = 0.06
-volume_ratio        = 0.10
-money_flow_bias_20  = 0.22
+volume_ratio         = 0.10
+money_flow_bias_20   = 0.14
+main_money_flow_bias_20 = 0.08
 price_volume_sync_10 = 0.18
 
 [postclose.stability]
@@ -48,11 +49,25 @@ chip_tightness_20   = 0.34
 upper_shadow_5      = 0.08
 
 [postclose.score]
-launch    = 0.16
-trend     = 0.22
-activity  = 0.16
-stability = 0.40
-liquidity = 0.06
+launch         = 0.15
+trend          = 0.20
+activity       = 0.15
+stability      = 0.35
+liquidity      = 0.05
+industry_trend = 0.10
+
+# 行业板块趋势：衡量所属行业的整体上涨动能和扩散度。
+# 行业收益使用行业内个股收益中位数，避免单只大涨股扭曲板块热度。
+[postclose.industry_trend]
+ret_5      = 0.25
+ret_10     = 0.25
+ret_20     = 0.20
+breadth_5  = 0.15
+breadth_10 = 0.15
+
+[postclose.probability]
+# 行业趋势分对个股三日上涨概率 logit 的修正系数；保持为辅助确认，避免追逐过热板块。
+industry_trend_logit = 0.22
 
 [postclose.selection]
 # 最终名单单行业上限：抑制行业拥挤、降低同涨同跌的相关性回撤（借鉴龙头抱团版）
@@ -66,7 +81,7 @@ min_median_change = -2.0
 max_down5_ratio = 0.08
 
 # ────────────────────────────────────────────────────────────
-# 尾盘版（14:30-14:45 运行，当日 14:50 操作）
+# 收盘资金版（每日收盘后运行，结合收盘价与资金流）
 # ────────────────────────────────────────────────────────────
 
 [tail.launch]
@@ -98,7 +113,8 @@ amount_ratio_5_20    = 0.04
 turnover_5           = 0.08
 turnover_accel_5_20  = 0.04
 volume_ratio         = 0.08
-money_flow_bias_20   = 0.28
+money_flow_bias_20   = 0.20
+main_money_flow_bias_20 = 0.08
 price_volume_sync_10 = 0.18
 
 [tail.stability]
@@ -111,11 +127,22 @@ chip_tightness_20   = 0.30
 upper_shadow_5      = 0.14
 
 [tail.score]
-launch    = 0.28
-trend     = 0.18
-activity  = 0.34
-stability = 0.14
-liquidity = 0.06
+launch         = 0.25
+trend          = 0.16
+activity       = 0.30
+stability      = 0.13
+liquidity      = 0.06
+industry_trend = 0.10
+
+[tail.industry_trend]
+ret_5      = 0.25
+ret_10     = 0.25
+ret_20     = 0.20
+breadth_5  = 0.15
+breadth_10 = 0.15
+
+[tail.probability]
+industry_trend_logit = 0.22
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 过滤器阈值（对应 add_next_2_3d_trade_filters / add_tail_trade_filters）
@@ -153,6 +180,9 @@ amount_ratio_5_20_max  = 3.00
 turnover_5_min         = 1.50
 turnover_5_max         = 15.00
 money_flow_bias_20_min = 0.08
+money_flow_net_ratio_5_min = -0.03
+main_money_flow_net_ratio_5_min = -0.03
+money_flow_net_amount_1_min = -30000000
 price_volume_sync_10_min = 0.05
 # 风险（上影线与回撤阈值收紧，剔除抛压明显/波动过大的标的）
 vol_20_max             = 0.06
@@ -187,6 +217,9 @@ amount_ratio_3_20_max  = 3.50
 turnover_5_min         = 2.00
 turnover_5_max         = 18.00
 money_flow_bias_20_min = 0.10
+money_flow_net_ratio_5_min = -0.03
+main_money_flow_net_ratio_5_min = -0.03
+money_flow_net_amount_1_min = -30000000
 price_volume_sync_10_min = 0.0
 # 风险
 vol_20_max             = 0.075

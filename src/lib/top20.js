@@ -124,10 +124,10 @@ const latestRps90SummaryHistory = selectLatestRps90HistoryModule(rps90SummaryHis
 export const FACTOR_DEFINITIONS = {
   short: {
     key: 'short',
-    title: '短线多因子-盘后版',
-    subtitle: '查看盘后Top10候选，并按记录日期回看榜单与新增/移除变化。',
-    description: '聚焦次日可交易的短期启动、活跃度、单票过滤与流动性，目标持有后续2-3个交易日。',
-    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。Top10 更适合作为候选池参考，不等同于可直接等权执行的组合。',
+    title: '短线三日上涨概率-盘后版',
+    subtitle: '查看盘后三日上涨概率Top10候选，并按记录日期回看榜单与新增/移除变化。',
+    description: '盘后使用三日上涨概率模型估计未来3个交易日收盘上涨可能性，输出概率最高的候选。',
+    riskNote: '当前盘后版保留单票层过滤和市场环境闸门，但尚未加入市场风格切换、行业集中度约束和组合层仓位控制。Top10 更适合作为候选池参考，不等同于可直接等权执行的组合。',
     displayLimit: 10,
     emptyMessage: '未找到 `short_top20*.csv` 数据文件。',
     current: {
@@ -141,10 +141,10 @@ export const FACTOR_DEFINITIONS = {
   },
   tail: {
     key: 'tail',
-    title: '短线多因子-尾盘版',
-    subtitle: '查看尾盘Top10候选，并按记录日期回看榜单与新增/移除变化。',
-    description: '使用尾盘版独立权重与过滤器，偏重当日量能爆发和短期启动，输出尾盘场景候选。',
-    riskNote: '当前后端主要做单票层过滤与打分，暂未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。尾盘 Top10 可能出现同题材或同风格集中，适合作为候选池参考。',
+    title: '短线三日上涨概率-收盘资金版',
+    subtitle: '查看收盘资金三日上涨概率Top10候选，并按记录日期回看榜单与新增/移除变化。',
+    description: '使用收盘价、成交量和资金流入流出估计未来3个交易日收盘上涨可能性，输出概率最高的候选。',
+    riskNote: '当前收盘资金版主要做单票层概率排序，尚未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。Top10 可能出现同题材或同风格集中，适合作为候选池参考。',
     displayLimit: 10,
     emptyMessage: '未找到 `tail_top20*.csv` 数据文件。',
     current: {
@@ -184,8 +184,8 @@ export const FACTOR_DEFINITIONS = {
     key: 'combined',
     type: 'combined',
     title: '综合榜单',
-    subtitle: '入选龙头抱团Top20、盘后版Top10、RPS双90 Top20中任意两个榜单的重叠标的。',
-    description: '三种策略两两共识：至少同时出现在龙头抱团前20、盘后版评分前10、RPS双90前20中的两个榜单。综合分为命中榜单 score_100 的均值。',
+    subtitle: '入选龙头抱团Top20、盘后概率Top10、RPS双90 Top20中任意两个榜单的重叠标的。',
+    description: '三种策略两两共识：至少同时出现在龙头抱团前20、盘后三日上涨概率前10、RPS双90前20中的两个榜单。综合分为命中榜单 score_100 的均值。',
     riskNote: '综合榜单仅反映当日多策略共识，不构成买入建议。两榜重叠产出候选数量仍可能较少。',
     emptyMessage: '当前无股票同时满足任意两个策略条件。',
     sources: {
@@ -253,6 +253,9 @@ function normalizeRow(row = {}) {
     activityScore: toNumber(readValue(row, ['activityScore', 'activity_score', 'cluster_score'])),
     stabilityScore: toNumber(readValue(row, ['stabilityScore', 'stability_score'])),
     liquidityScore: toNumber(readValue(row, ['liquidityScore', 'liquidity_score'])),
+    upProb3d: toNumber(readValue(row, ['upProb3d', 'up_prob_3d'])),
+    expectedRet3d: toNumber(readValue(row, ['expectedRet3d', 'expected_ret_3d'])),
+    upProb3dConfidence: toNumber(readValue(row, ['upProb3dConfidence', 'up_prob_3d_confidence'])),
     quoteOnlyFallbackUsed: toBoolean(readValue(row, ['quoteOnlyFallbackUsed', 'quote_only_fallback_used'])),
     klineFallbackUsed: toBoolean(readValue(row, ['klineFallbackUsed', 'kline_fallback_used'])),
     reportDate: readValue(row, ['reportDate', 'report_date']),

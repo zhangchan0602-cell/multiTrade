@@ -3,8 +3,8 @@ import { fetchCombinedBoard, generateCombinedBoard } from '../lib/opsApi';
 import { buildCombinedSnapshotFromPayload, getFactorDefinition, loadFactorSnapshots } from '../lib/top20';
 
 const factorOptions = [
-  { key: 'short', label: '盘后版Top10' },
-  { key: 'tail', label: '尾盘版Top10' },
+  { key: 'short', label: '盘后概率Top10' },
+  { key: 'tail', label: '收盘资金Top10' },
   { key: 'leader', label: '龙头抱团Top20' },
   { key: 'rps90', label: 'RPS双90 Top20' },
   { key: 'combined', label: '综合榜单' },
@@ -12,6 +12,10 @@ const factorOptions = [
 
 function formatNumber(value, digits = 2) {
   return Number.isFinite(value) ? value.toFixed(digits) : '-';
+}
+
+function formatPctValue(value, digits = 2) {
+  return Number.isFinite(value) ? `${(value * 100).toFixed(digits)}%` : '-';
 }
 
 function makeRowKey(item) {
@@ -134,6 +138,7 @@ export default function Top20Page() {
 
   const isRps = factorKey === 'rps90';
   const isCombined = factorKey === 'combined';
+  const isProbabilityModel = factorKey === 'short' || factorKey === 'tail';
   const quoteOnly = currentSnapshot?.items?.some((item) => item.quoteOnlyFallbackUsed) || false;
 
   async function handleGenerateCombined() {
@@ -169,7 +174,7 @@ export default function Top20Page() {
           <p>{definition.subtitle}</p>
           <p className="panel-meta-line">{definition.description}</p>
           <p className="panel-meta-line">{definition.riskNote}</p>
-          {isCombined && <p className="panel-meta-line">入榜规则：当天同时进入短线盘后版 Top10、RPS双90 Top20、龙头抱团 Top20 中的任意两个榜单。</p>}
+          {isCombined && <p className="panel-meta-line">入榜规则：当天同时进入盘后三日上涨概率 Top10、RPS双90 Top20、龙头抱团 Top20 中的任意两个榜单。</p>}
           {isCombined && combinedStatus && <p className="panel-meta-line">{combinedStatus}</p>}
         </div>
         <div className="history-tools">
@@ -271,6 +276,20 @@ export default function Top20Page() {
                       <th>成交额(亿)</th>
                       <th>状态</th>
                     </tr>
+                  ) : isProbabilityModel ? (
+                    <tr>
+                      <th>排名</th>
+                      <th>代码</th>
+                      <th>名称</th>
+                      <th>行业</th>
+                      <th>三日上涨概率</th>
+                      <th>预期3日收益</th>
+                      <th>置信度</th>
+                      <th>启动</th>
+                      <th>趋势</th>
+                      <th>活跃</th>
+                      <th>状态</th>
+                    </tr>
                   ) : (
                     <tr>
                       <th>排名</th>
@@ -336,6 +355,22 @@ export default function Top20Page() {
                         <td>{formatNumber(item.ret90dPct)}</td>
                         <td>{formatNumber(item.closePx)}</td>
                         <td>{item.amountToday != null ? (item.amountToday / 1e8).toFixed(2) : '-'}</td>
+                        <td>
+                          <span className={`badge ${stateClass}`}>{stateLabel}</span>
+                        </td>
+                      </tr>
+                    ) : isProbabilityModel ? (
+                      <tr key={makeRowKey(item)}>
+                        <td>{item.rank}</td>
+                        <td>{item.code}</td>
+                        <td>{item.name}</td>
+                        <td className="industry-col">{item.industry}</td>
+                        <td>{formatPctValue(item.upProb3d)}</td>
+                        <td>{formatPctValue(item.expectedRet3d)}</td>
+                        <td>{formatPctValue(item.upProb3dConfidence)}</td>
+                        <td>{formatNumber(item.launchScore)}</td>
+                        <td>{formatNumber(item.trendScore)}</td>
+                        <td>{formatNumber(item.activityScore)}</td>
                         <td>
                           <span className={`badge ${stateClass}`}>{stateLabel}</span>
                         </td>

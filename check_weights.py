@@ -8,7 +8,8 @@ def check_weights():
         
         sections = [
             "postclose.trend", "postclose.activity", "postclose.stability", "postclose.score",
-            "tail.trend", "tail.activity", "tail.stability", "tail.score"
+            "postclose.industry_trend",
+            "tail.trend", "tail.activity", "tail.stability", "tail.score", "tail.industry_trend"
         ]
         
         results = []

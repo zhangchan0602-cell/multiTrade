@@ -30,6 +30,26 @@ function riskLabel(probability) {
   return '偏低';
 }
 
+function upsideClass(probability) {
+  if (probability >= 0.62) {
+    return 'upside-high';
+  }
+  if (probability >= 0.46) {
+    return 'upside-mid';
+  }
+  return 'upside-low';
+}
+
+function upsideLabel(probability) {
+  if (probability >= 0.62) {
+    return '偏强';
+  }
+  if (probability >= 0.46) {
+    return '中性';
+  }
+  return '偏弱';
+}
+
 function MiniTrendChart({ points }) {
   const path = useMemo(() => {
     if (!points?.length) {
@@ -105,8 +125,8 @@ export default function KechuangPage() {
       <article className="panel panel-intro kc-intro">
         <div>
           <h2>科创</h2>
-          <p>基于本地科创50指数日线，计算当前回撤概率与本轮趋势压力位。</p>
-          <p className="panel-meta-line">回撤概率采用历史相似市场状态模型：动量、波动、量能、均线偏离与20日回撤共同参与匹配。</p>
+          <p>基于本地科创50指数日线，计算当前上涨概率、回撤概率与本轮趋势压力位。</p>
+          <p className="panel-meta-line">概率模型采用历史相似市场状态：动量、波动、量能、均线偏离与20日回撤共同参与匹配。</p>
         </div>
         <button type="button" className="action-button action-primary" onClick={handleCalculate} disabled={calculating}>
           {calculating ? '拉取并计算...' : '计算'}
@@ -118,7 +138,7 @@ export default function KechuangPage() {
       {!result && !error && (
         <article className="panel kc-empty">
           <h3>模块一</h3>
-          <p>点击“计算”后输出科创50指数模型下 3 / 5 / 10 天内回撤发生概率，并同步给出本次趋势的多个压力位。</p>
+          <p>点击“计算”后输出科创50指数模型下 1 / 3 / 5 / 10 天上涨概率、3 / 5 / 10 天内回撤发生概率，并同步给出本次趋势的多个压力位。</p>
         </article>
       )}
 
@@ -152,6 +172,28 @@ export default function KechuangPage() {
               </div>
             </div>
             <MiniTrendChart points={result.chart} />
+          </article>
+
+          <article className="panel">
+            <div className="ops-card-head">
+              <div>
+                <h3>上涨概率</h3>
+                <p className="panel-meta-line">输出为未来 N 个交易日后，收盘价高于当前收盘价的概率。</p>
+              </div>
+              <span className="status-chip status-success">方向模型</span>
+            </div>
+            <div className="kc-prob-grid kc-upside-grid">
+              {result.model.upsideProbabilities.map((item) => (
+                <div key={item.horizon} className={`kc-prob-card ${upsideClass(item.probability)}`}>
+                  <span>{item.horizon}天后</span>
+                  <strong>{formatPct(item.probability, 1)}</strong>
+                  <small>
+                    {upsideLabel(item.probability)} · 收盘上涨
+                  </small>
+                  <small>相似样本 {item.sampleCount}，中位收益 {formatPct(item.medianForwardReturn)}</small>
+                </div>
+              ))}
+            </div>
           </article>
 
           <article className="panel">

@@ -3,8 +3,8 @@ import { parseCsv } from '../lib/csv';
 import { fetchOpsHealth, fetchOpsJobs, fetchOpsTop5, getOpsApiBase, runOpsJob } from '../lib/opsApi';
 
 const JOB_PRESETS = {
-  postclose: { key: 'postclose', title: '短线多因子-盘后版', hint: '运行盘后版筛选，并刷新当天 Top5 候选。' },
-  tail: { key: 'tail', title: '短线多因子-尾盘版', hint: '运行尾盘版筛选，并刷新当天 Top5 候选。' },
+  postclose: { key: 'postclose', title: '三日上涨概率-盘后版', hint: '运行盘后三日上涨概率模型，并刷新当天 Top5 候选。' },
+  tail: { key: 'tail', title: '三日上涨概率-收盘资金版', hint: '运行收盘资金三日上涨概率模型，并刷新当天 Top5 候选。' },
   rps90: { key: 'rps90', title: '策略-RPS双90', hint: '运行 RPS 双90 筛选，并刷新当天 Top5 候选。' },
   leader: { key: 'leader', title: '策略-龙头抱团', hint: '运行龙头抱团模型筛选，歌加行业领先与抱团特征标的。' },
 };
@@ -75,6 +75,11 @@ function statusClass(status) {
     default:
       return 'status-chip status-idle';
   }
+}
+
+function formatPct(value, digits = 1) {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${(number * 100).toFixed(digits)}%` : '-';
 }
 
 export default function OpsPage() {
@@ -236,7 +241,8 @@ export default function OpsPage() {
           const state = jobs[job.key] || { status: 'idle', output: [], running: false, settlementSummary: null };
           const top5 = top5Map[job.key] || { exists: false, csvText: '', markdown: '' };
           const rows = parseCsv(top5.csvText).slice(0, 5);
-          const showBuySignal = job.key === 'postclose';
+          const showProbability = job.key === 'postclose' || job.key === 'tail';
+          const showBuySignal = false;
           const generatedAt = extractMeta(top5.markdown, '生成时间');
           const dataState = extractMeta(top5.markdown, '数据状态');
           const tradeDate = rows[0]?.trade_date || rows[0]?.tradeDate || '-';
@@ -382,7 +388,9 @@ export default function OpsPage() {
                             <th>名称</th>
                             <th>行业</th>
                             {showBuySignal ? <th>信号标记</th> : null}
-                            <th>得分</th>
+                            {showProbability ? <th>三日上涨概率</th> : null}
+                            {showProbability ? <th>预期3日收益</th> : null}
+                            <th>{showProbability ? '概率分' : '得分'}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -393,6 +401,8 @@ export default function OpsPage() {
                               <td>{row.name}</td>
                               <td className="industry-col">{row.industry}</td>
                               {showBuySignal ? <td>{hasBuySignal(row)}</td> : null}
+                              {showProbability ? <td>{formatPct(row.up_prob_3d ?? row.upProb3d)}</td> : null}
+                              {showProbability ? <td>{formatPct(row.expected_ret_3d ?? row.expectedRet3d)}</td> : null}
                               <td>{row.score_100 || row.score100 || '-'}</td>
                             </tr>
                           ))}

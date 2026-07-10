@@ -1,6 +1,6 @@
 # React 看板项目
 
-全A短线多因子选股系统，含盘后版与尾盘版筛选、T+5 历史回测、买入清单结算，以及 React 看板展示。
+全A短线多因子选股系统，含盘后版与收盘资金版筛选、T+5 历史回测、买入清单结算，以及 React 看板展示。
 
 ## 启动
 
@@ -16,11 +16,11 @@ Python 脚本和本地 API 都会读取 `TUSHARE_TOKEN`，未设置时无法抓�
 **定时任务（crontab）**
 
 ```cron
-# 14:30 跑尾盘版
-30 14 * * 1-5  cd /path/to/multitrade/scripts && python3 tail_screen.py
-
 # 15:30 跑盘后版
 30 15 * * 1-5  cd /path/to/multitrade/scripts && python3 short_screen.py
+
+# 15:40 跑收盘资金版
+40 15 * * 1-5  cd /path/to/multitrade/scripts && python3 tail_screen.py
 ```
 
 ## 构建
@@ -34,7 +34,7 @@ npm run preview
 
 ## 页面说明
 
-- `#/ops`：操作界面，可从统一入口选择盘后版、尾盘版、RPS双90并查看当天 Top5
+- `#/ops`：操作界面，可从统一入口选择盘后版、收盘资金版、RPS双90并查看当天 Top5
 - `#/top20`：展示最新 `docs/list/history/short/YYYY-MM-DD/short_top5*.csv` 与 `docs/list/tail_top5*.csv`
   - 支持评分历史（按日期）
   - 自动标记新增项
@@ -52,14 +52,14 @@ npm run preview
 | `docs/list/history/short/YYYY-MM-DD/short_top5.csv / .md` | 当天盘后版综合评分前 5 名，作为次日择机买入参考 |
 | `docs/list/history/short/YYYY-MM-DD/short_summary.md` | 当天盘后版筛选摘要（数据口径、因子权重、运行时间等） |
 
-### 尾盘版（`tail_screen.py`，14:30 运行）
+### 收盘资金版（`tail_screen.py`，15:40 运行）
 
 | 文件 | 说明 |
 |------|------|
 | `docs/list/tail_passed.csv / .md` | 通过全部过滤条件的股票完整列表 |
 | `docs/list/tail_top20.csv / .md` | 综合评分前 20 名 |
-| `docs/list/tail_top5.csv / .md` | 综合评分前 5 名，作为当日 14:50 操作参考 |
-| `docs/list/tail_summary.md` | 本次筛选摘要（含盘中快照口径与是否降级说明） |
+| `docs/list/tail_top5.csv / .md` | 综合评分前 5 名，结合收盘价与资金流入流出 |
+| `docs/list/tail_summary.md` | 本次筛选摘要（含收盘行情与资金流口径说明） |
 
 ### 历史快照
 
@@ -69,7 +69,7 @@ npm run preview
 |------|------|
 | `docs/list/history/short_YYYYMMDD-HHMM_*.{csv,md}` | 盘后版各次运行历史快照 |
 | `docs/list/history/short/YYYY-MM-DD/short_*.{csv,md}` | 盘后版按交易日归档（供 T+5 历史回测扫描） |
-| `docs/list/history/tail_YYYYMMDD-HHMM_*.{csv,md}` | 尾盘版各次运行历史快照 |
+| `docs/list/history/tail_YYYYMMDD-HHMM_*.{csv,md}` | 收盘资金版各次运行历史快照 |
 
 ### T+5 历史回测（`postclose_t3_history.py`，兼容旧脚本名）
 
@@ -111,7 +111,7 @@ npm run backtest:portfolio
 `Top20` 页默认加载：
 
 - `docs/list/history/short/YYYY-MM-DD/short_top5.csv`（当前盘后版，自动取最新日期目录）
-- `docs/list/tail_top5.csv`（当前尾盘版）
+- `docs/list/tail_top5.csv`（当前收盘资金版）
 - `src/data/top20_history.json`（历史快照）
 
 `top20_history.json` 结构示例：

@@ -19,6 +19,7 @@ KLINE_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "kline"
 DAILY_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "daily"
 DAILY_BASIC_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "daily_basic"
 ADJ_FACTOR_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "adj_factor"
+MONEYFLOW_CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "moneyflow"
 TRADE_CAL_CACHE = Path(__file__).resolve().parent / ".cache" / "trade_cal.csv"
 _TUSHARE_CALL_LOCK = threading.Lock()
 _LAST_TUSHARE_CALL_TS = 0.0
@@ -248,6 +249,36 @@ def fetch_daily_basic_snapshot(trade_date: str) -> pd.DataFrame:
     df = df if df is not None else pd.DataFrame()
     if not df.empty:
         DAILY_BASIC_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        df.to_csv(cache_path, index=False)
+    return df
+
+
+def fetch_moneyflow_snapshot(trade_date: str) -> pd.DataFrame:
+    """获取指定交易日个股资金流向快照，缺权限时返回空表并让调用方降级。"""
+    cache_path = MONEYFLOW_CACHE_DIR / f"{trade_date}.csv"
+    if cache_path.exists():
+        try:
+            return pd.read_csv(cache_path, dtype=str)
+        except Exception:
+            cache_path.unlink(missing_ok=True)
+    pro = get_tushare_pro()
+    try:
+        df = call_tushare_api(
+            pro.moneyflow,
+            trade_date=trade_date,
+            fields=(
+                "ts_code,trade_date,buy_sm_amount,sell_sm_amount,"
+                "buy_md_amount,sell_md_amount,buy_lg_amount,sell_lg_amount,"
+                "buy_elg_amount,sell_elg_amount,net_mf_amount"
+            ),
+        )
+    except Exception as e:
+        import warnings
+        warnings.warn(f"moneyflow 接口不可用（{e}），真实资金流字段将置空", stacklevel=2)
+        return pd.DataFrame()
+    df = df if df is not None else pd.DataFrame()
+    if not df.empty:
+        MONEYFLOW_CACHE_DIR.mkdir(parents=True, exist_ok=True)
         df.to_csv(cache_path, index=False)
     return df
 

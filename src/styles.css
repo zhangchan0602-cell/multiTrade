@@ -535,6 +535,10 @@ tbody tr:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.kc-upside-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .kc-prob-card {
   display: grid;
   gap: 4px;
@@ -567,6 +571,21 @@ tbody tr:hover {
 .risk-high {
   border-color: #f1b9b6;
   background: #fff1ef;
+}
+
+.upside-low {
+  border-color: #e5b1ab;
+  background: #fff4f1;
+}
+
+.upside-mid {
+  border-color: #decdab;
+  background: #fffaf0;
+}
+
+.upside-high {
+  border-color: #9bd1af;
+  background: #eefaf3;
 }
 
 .kc-chart {
@@ -614,6 +633,90 @@ tbody tr:hover {
   min-width: 720px;
 }
 
+.industry-intro {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.industry-empty,
+.industry-overview {
+  display: grid;
+  gap: 14px;
+}
+
+.industry-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.meta-value-small {
+  font-size: 14px;
+}
+
+.industry-table {
+  min-width: 1180px;
+}
+
+.industry-data-cell {
+  display: grid;
+  gap: 2px;
+}
+
+.industry-data-cell small {
+  color: var(--ink-soft);
+}
+
+.industry-event-cell {
+  min-width: 210px;
+  white-space: normal;
+}
+
+.industry-event-cell .badge {
+  margin: 2px 4px 2px 0;
+}
+
+.heat-meter {
+  position: relative;
+  width: 112px;
+  height: 24px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: #f3eee3;
+}
+
+.heat-meter span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #a8cdb8;
+}
+
+.heat-meter strong {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  height: 100%;
+  place-items: center;
+  font-size: 12px;
+}
+
+.heat-hot span { background: #df9b4a; }
+.heat-warm span { background: #d8c46d; }
+.heat-cool span { background: #9fc9b8; }
+
+.prob-pair {
+  display: grid;
+  gap: 2px;
+  min-width: 78px;
+  font-size: 12px;
+}
+
+.prob-pair span:first-child { color: var(--up); }
+.prob-pair span:last-child { color: var(--down); }
+.prob-positive span:first-child { font-weight: 700; }
+.prob-risk span:last-child { font-weight: 700; }
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -647,8 +750,10 @@ tbody tr:hover {
   }
 
   .kc-intro,
+  .industry-intro,
   .kc-stat-grid,
-  .kc-prob-grid {
+  .kc-prob-grid,
+  .industry-stat-grid {
     grid-template-columns: 1fr;
   }
 }

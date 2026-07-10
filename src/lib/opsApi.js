@@ -55,3 +55,11 @@ export function generateCombinedBoard() {
 export function refreshKechuangIndex() {
   return request('/api/kechuang/refresh', { method: 'POST' });
 }
+
+export function fetchIndustryTrendRank() {
+  return request('/api/industry-trends');
+}
+
+export function refreshIndustryTrendRank() {
+  return request('/api/industry-trends/refresh', { method: 'POST' });
+}

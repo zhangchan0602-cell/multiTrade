@@ -30,7 +30,6 @@
 - docs/list/history/tail/YYYY-MM-DD/runs/HHMM/tail_summary.md
 """
 
-import json
 import os
 import shutil
 import time
@@ -42,12 +41,13 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from buylist_settlement import SETTLEMENT_SUMMARY_PREFIX, auto_settle_due_buylists
 from screen_common import (
     OUTPUT_DIR,
     fetch_a_no_star_quotes,
     fetch_kline_frame,
+    fetch_moneyflow_snapshot,
     fetch_org_info,
+    fetch_trade_cal_dates,
     fetch_tushare_kline_frame,
     industry_zscore,
     winsorize,
@@ -86,16 +86,20 @@ DEFAULT_KLINE_CANDIDATE_MAX = 900
 DEFAULT_KLINE_CANDIDATE_RATIO = 0.20
 DEFAULT_MOMENTUM_SCORE_FLOOR = 0.0
 DEFAULT_LAUNCH_SCORE_FLOOR = -0.10
-DEFAULT_MODEL_NAME = "策略-多因子盘后"
+DEFAULT_MODEL_NAME = "策略-三日上涨概率盘后"
 DEFAULT_OUTPUT_STEM = "short"
-DEFAULT_TRADE_TARGET_TEXT = "盘后运行，次日择机买入Top5，目标持有后续2-3个交易日"
+DEFAULT_TRADE_TARGET_TEXT = "盘后运行，次日择机买入Top5，目标选出未来3个交易日上涨概率最高的5支"
 
-# 尾盘版专用常量（14:30-14:45 运行，面向当日 14:50 操作）
+# 收盘资金版专用常量（基于每日收盘价与真实资金流）
 DEFAULT_TAIL_MOMENTUM_SCORE_FLOOR = 0.05
 DEFAULT_TAIL_LAUNCH_SCORE_FLOOR = 0.02
-DEFAULT_TAIL_MODEL_NAME = "策略-多因子尾盘"
+DEFAULT_TAIL_MODEL_NAME = "策略-收盘资金多因子"
 DEFAULT_TAIL_OUTPUT_STEM = "tail"
-DEFAULT_TAIL_TRADE_TARGET_TEXT = "尾盘14:30-14:45运行，当日14:50前后买入，参考持有至次日"
+DEFAULT_TAIL_TRADE_TARGET_TEXT = "每日收盘后运行，结合收盘价与资金流入流出，目标选出未来3个交易日上涨概率最高的5支"
+
+
+def sigmoid(value):
+    return 1.0 / (1.0 + np.exp(-np.clip(value, -12.0, 12.0)))
 
 
 def pct_change_from(values: np.ndarray, periods: int) -> float:
@@ -435,6 +439,140 @@ def fetch_short_kline_features(
     return pd.DataFrame(out)
 
 
+SHORT_MONEYFLOW_COLUMNS = [
+    "code",
+    "real_moneyflow_ok",
+    "money_flow_net_amount_1",
+    "money_flow_net_amount_3",
+    "money_flow_net_amount_5",
+    "money_flow_net_amount_20",
+    "main_money_flow_net_amount_1",
+    "main_money_flow_net_amount_3",
+    "main_money_flow_net_amount_5",
+    "main_money_flow_net_amount_20",
+    "money_flow_net_ratio_1",
+    "money_flow_net_ratio_3",
+    "money_flow_net_ratio_5",
+    "money_flow_net_ratio_20",
+    "main_money_flow_net_ratio_1",
+    "main_money_flow_net_ratio_3",
+    "main_money_flow_net_ratio_5",
+    "main_money_flow_net_ratio_20",
+    "real_money_flow_bias_20",
+    "main_money_flow_bias_20",
+]
+
+
+def empty_short_moneyflow_features(codes: List[str]) -> pd.DataFrame:
+    df = pd.DataFrame({"code": codes})
+    for c in SHORT_MONEYFLOW_COLUMNS:
+        if c not in df.columns:
+            df[c] = np.nan
+    df["real_moneyflow_ok"] = 0
+    return df[SHORT_MONEYFLOW_COLUMNS]
+
+
+def fetch_short_moneyflow_features(codes: List[str], end_trade_date: Optional[str] = None) -> pd.DataFrame:
+    if not codes:
+        return empty_short_moneyflow_features([])
+
+    anchor = pd.to_datetime(end_trade_date, format="%Y%m%d", errors="coerce") if end_trade_date else pd.Timestamp.now()
+    if pd.isna(anchor):
+        anchor = pd.Timestamp.now()
+    end_date = anchor.strftime("%Y%m%d")
+    start_date = (anchor - pd.Timedelta(days=70)).strftime("%Y%m%d")
+    trade_dates = fetch_trade_cal_dates(start_date, end_date)[-20:]
+    if not trade_dates:
+        return empty_short_moneyflow_features(codes)
+
+    code_set = set(str(c).zfill(6) for c in codes)
+    frames = []
+    failed_dates = 0
+    for d in trade_dates:
+        try:
+            snap = fetch_moneyflow_snapshot(d)
+        except Exception:
+            failed_dates += 1
+            continue
+        if snap.empty or "ts_code" not in snap.columns:
+            failed_dates += 1
+            continue
+        snap = snap.copy()
+        snap["code"] = snap["ts_code"].astype(str).str.split(".").str[0].str.zfill(6)
+        snap = snap[snap["code"].isin(code_set)].copy()
+        if not snap.empty:
+            frames.append(snap)
+
+    if not frames:
+        if failed_dates:
+            print(f"[moneyflow] no usable real moneyflow snapshots, failed_or_empty_dates={failed_dates}/{len(trade_dates)}")
+        return empty_short_moneyflow_features(codes)
+
+    mf = pd.concat(frames, ignore_index=True)
+    amount_cols = [
+        "buy_sm_amount",
+        "sell_sm_amount",
+        "buy_md_amount",
+        "sell_md_amount",
+        "buy_lg_amount",
+        "sell_lg_amount",
+        "buy_elg_amount",
+        "sell_elg_amount",
+        "net_mf_amount",
+    ]
+    for col in amount_cols:
+        if col not in mf.columns:
+            mf[col] = np.nan
+        mf[col] = pd.to_numeric(mf[col], errors="coerce") * 10_000.0
+
+    mf["trade_date"] = mf["trade_date"].astype(str)
+    mf["total_moneyflow_amount"] = mf[
+        [
+            "buy_sm_amount",
+            "sell_sm_amount",
+            "buy_md_amount",
+            "sell_md_amount",
+            "buy_lg_amount",
+            "sell_lg_amount",
+            "buy_elg_amount",
+            "sell_elg_amount",
+        ]
+    ].sum(axis=1, min_count=1)
+    mf["main_money_flow_net_amount"] = (
+        mf["buy_lg_amount"].fillna(0.0)
+        + mf["buy_elg_amount"].fillna(0.0)
+        - mf["sell_lg_amount"].fillna(0.0)
+        - mf["sell_elg_amount"].fillna(0.0)
+    )
+    mf = mf.sort_values(["code", "trade_date"])
+
+    rows = []
+    for code, part in mf.groupby("code", sort=False):
+        row = {"code": code, "real_moneyflow_ok": 1}
+        for window in (1, 3, 5, 20):
+            tail = part.tail(window)
+            net = float(tail["net_mf_amount"].sum(skipna=True))
+            main_net = float(tail["main_money_flow_net_amount"].sum(skipna=True))
+            total = float(tail["total_moneyflow_amount"].sum(skipna=True))
+            row[f"money_flow_net_amount_{window}"] = net
+            row[f"main_money_flow_net_amount_{window}"] = main_net
+            row[f"money_flow_net_ratio_{window}"] = safe_ratio(net, total)
+            row[f"main_money_flow_net_ratio_{window}"] = safe_ratio(main_net, total)
+        row["real_money_flow_bias_20"] = row["money_flow_net_ratio_20"]
+        row["main_money_flow_bias_20"] = row["main_money_flow_net_ratio_20"]
+        rows.append(row)
+
+    out = empty_short_moneyflow_features(codes)
+    real = pd.DataFrame(rows)
+    out = out.drop(columns=[c for c in real.columns if c != "code"], errors="ignore").merge(real, on="code", how="left")
+    for col in SHORT_MONEYFLOW_COLUMNS:
+        if col not in out.columns:
+            out[col] = np.nan
+    out["real_moneyflow_ok"] = out["real_moneyflow_ok"].fillna(0).astype(int)
+    print(f"[moneyflow] dates={len(trade_dates)}, rows={len(mf)}, success_codes={int(out['real_moneyflow_ok'].sum())}/{len(codes)}")
+    return out[SHORT_MONEYFLOW_COLUMNS]
+
+
 def add_fast_prefilter_columns(df: pd.DataFrame, as_of) -> pd.DataFrame:
     df = df.copy()
     df["industry"] = df["industry"].fillna("未知行业")
@@ -581,6 +719,69 @@ def apply_short_kline_fallback(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _cross_section_zscore(series: pd.Series) -> pd.Series:
+    """Return a stable whole-universe z-score for industry-level measures."""
+    values = pd.to_numeric(series, errors="coerce")
+    mean = values.mean(skipna=True)
+    std = values.std(skipna=True, ddof=0)
+    if pd.isna(mean) or pd.isna(std) or std <= 1e-12:
+        return pd.Series(0.0, index=series.index)
+    return ((values - mean) / std).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+
+
+def add_industry_trend_features(df: pd.DataFrame, config: Optional[dict] = None) -> pd.DataFrame:
+    """Add industry heat, breadth, and a short-horizon direction estimate.
+
+    The stock factors are industry-neutralized later in the pipeline, so this
+    separate group-level signal restores information about whether the whole
+    industry is trending up. Median returns and positive-return breadth make
+    the signal robust to a small number of extreme constituent moves.
+    """
+    df = df.copy()
+    cfg = config or {}
+    industry = df.get("industry", pd.Series("未知行业", index=df.index)).fillna("未知行业").astype(str)
+    df["industry"] = industry
+
+    metrics = pd.DataFrame({"industry": industry}, index=df.index)
+    for window in (5, 10, 20):
+        returns = pd.to_numeric(df.get(f"ret_{window}"), errors="coerce")
+        metrics[f"ret_{window}"] = returns
+        metrics[f"up_{window}"] = returns.gt(0).where(returns.notna())
+
+    grouped = metrics.groupby("industry", dropna=False)
+    trend = grouped.agg(
+        industry_member_count=("ret_5", "count"),
+        industry_ret_5=("ret_5", "median"),
+        industry_ret_10=("ret_10", "median"),
+        industry_ret_20=("ret_20", "median"),
+        industry_breadth_5=("up_5", "mean"),
+        industry_breadth_10=("up_10", "mean"),
+    )
+
+    weights = {
+        "ret_5": float(cfg.get("ret_5", 0.25)),
+        "ret_10": float(cfg.get("ret_10", 0.25)),
+        "ret_20": float(cfg.get("ret_20", 0.20)),
+        "breadth_5": float(cfg.get("breadth_5", 0.15)),
+        "breadth_10": float(cfg.get("breadth_10", 0.15)),
+    }
+    trend["industry_trend_score"] = (
+        weights["ret_5"] * _cross_section_zscore(trend["industry_ret_5"])
+        + weights["ret_10"] * _cross_section_zscore(trend["industry_ret_10"])
+        + weights["ret_20"] * _cross_section_zscore(trend["industry_ret_20"])
+        + weights["breadth_5"] * _cross_section_zscore(trend["industry_breadth_5"])
+        + weights["breadth_10"] * _cross_section_zscore(trend["industry_breadth_10"])
+    )
+    # Thin industries remain informative but are shrunk toward neutral.
+    reliability = (trend["industry_member_count"] / 10.0).clip(upper=1.0)
+    trend["industry_trend_score"] *= 0.5 + 0.5 * reliability
+    trend["industry_heat"] = (50.0 + 18.0 * trend["industry_trend_score"]).clip(0.0, 100.0)
+    trend["industry_up_prob_3d"] = sigmoid(-0.12 + 0.55 * trend["industry_trend_score"]).clip(0.15, 0.85)
+
+    trend = trend.reset_index()
+    return df.merge(trend, on="industry", how="left", validate="many_to_one")
+
+
 def score_factors(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
@@ -614,6 +815,9 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
         "amount_ratio_3_20",
         "amount_ratio_5_20",
         "money_flow_bias_20",
+        "main_money_flow_bias_20",
+        "money_flow_net_ratio_5",
+        "main_money_flow_net_ratio_5",
         "price_volume_sync_10",
         "turnover_5",
         "turnover_accel_5_20",
@@ -646,6 +850,10 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
     wa  = _SCREEN_CFG.get("postclose", {}).get("activity",  {})
     ws  = _SCREEN_CFG.get("postclose", {}).get("stability", {})
     wsc = _SCREEN_CFG.get("postclose", {}).get("score",     {})
+    wit = _SCREEN_CFG.get("postclose", {}).get("industry_trend", {})
+    wp = _SCREEN_CFG.get("postclose", {}).get("probability", {})
+
+    df = add_industry_trend_features(df, wit)
 
     df["launch_score"] = (
         wl.get("ret_3",              0.16) * df["ret_3_z"]
@@ -676,7 +884,10 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
         + wa.get("turnover_5",         0.10) * df["turnover_5_z"]
         + wa.get("turnover_accel_5_20", 0.06) * df["turnover_accel_5_20_z"]
         + wa.get("volume_ratio",       0.10) * df["volume_ratio_z"]
-        + wa.get("money_flow_bias_20", 0.22) * df["money_flow_bias_20_z"]
+        + wa.get("money_flow_bias_20", 0.14) * df["money_flow_bias_20_z"]
+        + wa.get("main_money_flow_bias_20", 0.08) * df["main_money_flow_bias_20_z"]
+        + wa.get("money_flow_net_ratio_5", 0.00) * df["money_flow_net_ratio_5_z"]
+        + wa.get("main_money_flow_net_ratio_5", 0.00) * df["main_money_flow_net_ratio_5_z"]
         + wa.get("price_volume_sync_10", 0.18) * df["price_volume_sync_10_z"]
     )
     df["stability_score"] = (
@@ -690,22 +901,20 @@ def score_factors(df: pd.DataFrame) -> pd.DataFrame:
     )
     df["liquidity_score"] = 0.55 * df["avg_amount_20_used_z"] + 0.45 * df["turnover_20_used_z"]
     df["score"] = (
-        wsc.get("launch",     0.25) * df["launch_score"]
-        + wsc.get("trend",    0.26) * df["trend_score"]
-        + wsc.get("activity", 0.29) * df["activity_score"]
-        + wsc.get("stability", 0.14) * df["stability_score"]
-        + wsc.get("liquidity", 0.06) * df["liquidity_score"]
+        wsc.get("launch",     0.15) * df["launch_score"]
+        + wsc.get("trend",    0.20) * df["trend_score"]
+        + wsc.get("activity", 0.15) * df["activity_score"]
+        + wsc.get("stability", 0.35) * df["stability_score"]
+        + wsc.get("liquidity", 0.05) * df["liquidity_score"]
+        + wsc.get("industry_trend", 0.10) * df["industry_trend_score"]
     )
+    df["industry_trend_logit_weight"] = float(wp.get("industry_trend_logit", 0.22))
 
-    df = df.sort_values("score", ascending=False).reset_index(drop=True)
+    df = apply_3d_upside_probability_model(df)
+    df = df.sort_values(["up_prob_3d", "expected_ret_3d", "score"], ascending=False).reset_index(drop=True)
     df["rank"] = np.arange(1, len(df) + 1)
-    df["score_raw"] = df["score"]
-    if len(df) > 1:
-        df["score_100"] = (len(df) - df["rank"]) / (len(df) - 1) * 100.0
-    elif len(df) == 1:
-        df["score_100"] = 100.0
-    else:
-        df["score_100"] = np.nan
+    df["score_raw"] = df["up_prob_3d"]
+    df["score_100"] = df["up_prob_3d"] * 100.0
     return df
 
 
@@ -798,8 +1007,8 @@ def add_postclose_market_filter(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
-    """尾盘版（14:30-14:45 运行）打分函数。
-    面向当日 14:50 操作，偏重近期短期冲量与当日量能爆发，降低长期趋势权重。
+    """收盘资金版打分函数。
+    基于每日收盘价、成交量和真实资金流，偏重近期短期冲量与资金确认。
     """
     df = df.copy()
 
@@ -822,7 +1031,9 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
         "breakout_20", "high_breakout_20", "close_position_20",
         "price_vs_ma20", "ma_alignment_20", "ma_bull_20_60", "trend_slope_20",
         "amount_ratio_1_20", "amount_ratio_3_20", "amount_ratio_5_20",
-        "money_flow_bias_20", "price_volume_sync_10",
+        "money_flow_bias_20", "main_money_flow_bias_20",
+        "money_flow_net_ratio_5", "main_money_flow_net_ratio_5",
+        "price_volume_sync_10",
         "turnover_5", "turnover_accel_5_20", "volume_ratio",
         "lowvol_10_raw", "lowvol_20_raw", "low_downside_vol_20_raw",
         "drawdown_20_raw", "win_rate_20", "avg_amount_20_used", "turnover_20_used",
@@ -835,13 +1046,17 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
         zc = f"{c}_z"
         df[zc] = industry_zscore(df[c], df["industry"]).replace([np.inf, -np.inf], np.nan).fillna(0.0)
 
-    # ── 尾盘版权重（14:30-14:45 运行，面向当日 14:50 操作）──
+    # ── 收盘资金版权重 ──
     wtl  = _SCREEN_CFG.get("tail", {}).get("launch",    {})
     wtt  = _SCREEN_CFG.get("tail", {}).get("trend",     {})
     wtm  = _SCREEN_CFG.get("tail", {}).get("momentum",  {})
     wta  = _SCREEN_CFG.get("tail", {}).get("activity",  {})
     wts  = _SCREEN_CFG.get("tail", {}).get("stability", {})
     wtsc = _SCREEN_CFG.get("tail", {}).get("score",     {})
+    wit = _SCREEN_CFG.get("tail", {}).get("industry_trend", {})
+    wp = _SCREEN_CFG.get("tail", {}).get("probability", {})
+
+    df = add_industry_trend_features(df, wit)
 
     # 启动：近3/5日冲量 + 加速度为核心，趋势站位权重降低
     df["launch_score"] = (
@@ -863,12 +1078,12 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
         + wtt.get("trend_slope_20",     0.08) * df["trend_slope_20_z"]
         + wtt.get("trend_efficiency_20", 0.06) * df["trend_efficiency_20_z"]
     )
-    # 动量：尾盘以"刚启动"为主，大幅偏向 launch
+    # 动量：以"刚启动"为主，大幅偏向 launch
     df["momentum_score"] = (
         wtm.get("launch", 0.68) * df["launch_score"]
         + wtm.get("trend", 0.32) * df["trend_score"]
     )
-    # 活跃度：当日量能爆发（amount_ratio_1_20）权重大幅提升；量比为实时量能佐证
+    # 活跃度：当日量能爆发 + 真实资金流入确认
     df["activity_score"] = (
         wta.get("amount_ratio_1_20",    0.20) * df["amount_ratio_1_20_z"]
         + wta.get("amount_ratio_3_20",  0.10) * df["amount_ratio_3_20_z"]
@@ -876,7 +1091,10 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
         + wta.get("turnover_5",         0.08) * df["turnover_5_z"]
         + wta.get("turnover_accel_5_20", 0.04) * df["turnover_accel_5_20_z"]
         + wta.get("volume_ratio",       0.08) * df["volume_ratio_z"]
-        + wta.get("money_flow_bias_20", 0.28) * df["money_flow_bias_20_z"]
+        + wta.get("money_flow_bias_20", 0.20) * df["money_flow_bias_20_z"]
+        + wta.get("main_money_flow_bias_20", 0.08) * df["main_money_flow_bias_20_z"]
+        + wta.get("money_flow_net_ratio_5", 0.00) * df["money_flow_net_ratio_5_z"]
+        + wta.get("main_money_flow_net_ratio_5", 0.00) * df["main_money_flow_net_ratio_5_z"]
         + wta.get("price_volume_sync_10", 0.18) * df["price_volume_sync_10_z"]
     )
     # 稳定性：近期低波动 + 底部整理紧密 + 上影线压力
@@ -892,27 +1110,133 @@ def score_factors_tail(df: pd.DataFrame) -> pd.DataFrame:
     df["liquidity_score"] = 0.55 * df["avg_amount_20_used_z"] + 0.45 * df["turnover_20_used_z"]
     # 综合：活跃度与启动并列最高权重，趋势降至最低
     df["score"] = (
-        wtsc.get("launch",     0.28) * df["launch_score"]
-        + wtsc.get("trend",    0.18) * df["trend_score"]
-        + wtsc.get("activity", 0.34) * df["activity_score"]
-        + wtsc.get("stability", 0.14) * df["stability_score"]
+        wtsc.get("launch",     0.25) * df["launch_score"]
+        + wtsc.get("trend",    0.16) * df["trend_score"]
+        + wtsc.get("activity", 0.30) * df["activity_score"]
+        + wtsc.get("stability", 0.13) * df["stability_score"]
         + wtsc.get("liquidity", 0.06) * df["liquidity_score"]
+        + wtsc.get("industry_trend", 0.10) * df["industry_trend_score"]
+    )
+    df["industry_trend_logit_weight"] = float(wp.get("industry_trend_logit", 0.22))
+
+    df = apply_3d_upside_probability_model(df)
+    df = df.sort_values(["up_prob_3d", "expected_ret_3d", "score"], ascending=False).reset_index(drop=True)
+    df["rank"] = np.arange(1, len(df) + 1)
+    df["score_raw"] = df["up_prob_3d"]
+    df["score_100"] = df["up_prob_3d"] * 100.0
+    return df
+
+
+def apply_3d_upside_probability_model(df: pd.DataFrame) -> pd.DataFrame:
+    """Estimate the probability that a candidate closes higher after 3 sessions.
+
+    This is a deterministic, interpretable scoring model built from the same
+    intraday/K-line factors already available to the tail screen. It favors
+    fresh strength with volume confirmation, and penalizes short-term overheat,
+    excessive volatility, drawdown pressure, and upper-shadow selling pressure.
+    """
+    df = df.copy()
+
+    def n(col: str, default: float = 0.0) -> pd.Series:
+        if col not in df.columns:
+            return pd.Series(default, index=df.index, dtype=float)
+        return pd.to_numeric(df[col], errors="coerce").fillna(default)
+
+    ret_3 = n("ret_3")
+    ret_5 = n("ret_5")
+    ret_10 = n("ret_10")
+    ret_20 = n("ret_20")
+    change_rate = n("change_rate") / 100.0
+    accel = n("accel")
+    vol_20 = n("vol_20", 0.055)
+    max_drawdown_20 = n("max_drawdown_20", -0.08)
+    upper_shadow_5 = n("upper_shadow_5", 0.28)
+    close_strength_5 = n("close_strength_5", 0.55)
+    amount_ratio_1_20 = n("amount_ratio_1_20", 1.0)
+    amount_ratio_3_20 = n("amount_ratio_3_20", 1.0)
+    turnover_5 = n("turnover_5", 4.0)
+    win_rate_20 = n("win_rate_20", 0.5)
+    trend_efficiency_20 = n("trend_efficiency_20")
+    high_breakout_20 = n("high_breakout_20")
+    price_vs_ma20 = n("price_vs_ma20")
+    money_flow_net_ratio_5 = n("money_flow_net_ratio_5")
+    main_money_flow_net_ratio_5 = n("main_money_flow_net_ratio_5")
+    money_flow_net_ratio_20 = n("money_flow_net_ratio_20")
+    real_moneyflow_ok = n("real_moneyflow_ok")
+    raw_missing_count = n("raw_missing_count")
+    industry_trend_score = n("industry_trend_score")
+    industry_trend_logit_weight = n("industry_trend_logit_weight", 0.22)
+
+    fresh_launch = np.exp(-np.square((ret_5 - 0.045) / 0.065))
+    volume_confirm = np.log1p(amount_ratio_1_20.clip(lower=0.1)) + 0.45 * np.log1p(amount_ratio_3_20.clip(lower=0.1))
+    turnover_confirm = np.log1p(turnover_5.clip(lower=0.0)) / np.log(13.0)
+    trend_confirm = (
+        0.40 * n("trend_score")
+        + 0.25 * n("launch_score")
+        + 0.20 * n("activity_score")
+        + 0.15 * n("stability_score")
     )
 
-    df = df.sort_values("score", ascending=False).reset_index(drop=True)
-    df["rank"] = np.arange(1, len(df) + 1)
-    df["score_raw"] = df["score"]
-    if len(df) > 1:
-        df["score_100"] = (len(df) - df["rank"]) / (len(df) - 1) * 100.0
-    elif len(df) == 1:
-        df["score_100"] = 100.0
-    else:
-        df["score_100"] = np.nan
+    overheat_penalty = (
+        8.0 * (ret_3 - 0.085).clip(lower=0.0)
+        + 6.0 * (ret_5 - 0.135).clip(lower=0.0)
+        + 4.0 * (ret_10 - 0.22).clip(lower=0.0)
+        + 2.5 * (ret_20 - 0.34).clip(lower=0.0)
+        + 7.5 * (change_rate - 0.082).clip(lower=0.0)
+    )
+    risk_penalty = (
+        7.0 * (vol_20 - 0.065).clip(lower=0.0)
+        + 4.5 * (-max_drawdown_20 - 0.15).clip(lower=0.0)
+        + 3.2 * (upper_shadow_5 - 0.34).clip(lower=0.0)
+        + 2.0 * (-trend_efficiency_20 - 0.05).clip(lower=0.0)
+        + 0.12 * raw_missing_count.clip(lower=0.0)
+    )
+
+    logit = (
+        -0.28
+        + 0.52 * trend_confirm
+        + 0.92 * (fresh_launch - 0.50)
+        + 0.46 * (volume_confirm - 1.05)
+        + 0.34 * (turnover_confirm - 0.55)
+        + 1.10 * (close_strength_5 - 0.55)
+        + 0.76 * (win_rate_20 - 0.50)
+        + 5.20 * accel.clip(-0.08, 0.12)
+        + 2.60 * high_breakout_20.clip(-0.05, 0.08)
+        + 2.20 * price_vs_ma20.clip(-0.04, 0.07)
+        + 1.15 * money_flow_net_ratio_5.clip(-0.12, 0.12)
+        + 0.95 * main_money_flow_net_ratio_5.clip(-0.12, 0.12)
+        + 0.45 * money_flow_net_ratio_20.clip(-0.10, 0.10)
+        + industry_trend_logit_weight.clip(0.0, 1.0) * industry_trend_score.clip(-2.0, 2.0)
+        - overheat_penalty
+        - risk_penalty
+    )
+
+    confidence = (
+        0.55
+        + 0.20 * (df.get("kline_ok", pd.Series(0, index=df.index)).fillna(0).astype(float).clip(0, 1))
+        + 0.08 * real_moneyflow_ok.clip(0, 1)
+        + 0.15 * (1.0 - (raw_missing_count / 6.0).clip(0, 1))
+        + 0.10 * df.get("pass_liquidity", pd.Series(False, index=df.index)).fillna(False).astype(float)
+    ).clip(0.35, 1.0)
+
+    df["up_prob_3d_logit"] = logit
+    df["up_prob_3d_confidence"] = confidence
+    df["up_prob_3d"] = (0.50 + (sigmoid(logit) - 0.50) * confidence).clip(0.05, 0.95)
+    df["expected_ret_3d"] = (
+        0.004
+        + 0.055 * (df["up_prob_3d"] - 0.50)
+        + 0.18 * accel.clip(-0.05, 0.08)
+        + 0.06 * trend_efficiency_20.clip(-0.20, 0.35)
+        - 0.12 * vol_20.clip(0.0, 0.12)
+        - 0.08 * upper_shadow_5.clip(0.0, 0.65)
+    ).clip(-0.08, 0.12)
+    df["upside_model_candidate"] = df["up_prob_3d"].notna() & confidence.ge(0.55)
+    df["tail_model_candidate"] = df["upside_model_candidate"]
     return df
 
 
 def add_tail_trade_filters(df: pd.DataFrame) -> pd.DataFrame:
-    """尾盘版（14:30-14:45 运行）交易过滤，面向当日 14:50 操作。"""
+    """收盘资金版交易过滤，基于收盘数据和真实资金流确认。"""
     df = df.copy()
     wf = _SCREEN_CFG.get("tail", {}).get("filters", {})
     change_rate = pd.to_numeric(df["change_rate"], errors="coerce")
@@ -945,8 +1269,23 @@ def add_tail_trade_filters(df: pd.DataFrame) -> pd.DataFrame:
         & pd.to_numeric(df["amount_ratio_3_20"], errors="coerce").between(wf.get("amount_ratio_3_20_min", 1.05), wf.get("amount_ratio_3_20_max", 3.50))
         & pd.to_numeric(df["turnover_5"],         errors="coerce").between(wf.get("turnover_5_min", 2.00),        wf.get("turnover_5_max", 18.00))
     )
+    has_real_flow = pd.to_numeric(df.get("real_moneyflow_ok", 0), errors="coerce").fillna(0).astype(int).eq(1)
+    real_flow_ok = (
+        pd.to_numeric(df.get("money_flow_net_ratio_5", np.nan), errors="coerce").ge(
+            wf.get("money_flow_net_ratio_5_min", -0.03)
+        )
+        & pd.to_numeric(df.get("main_money_flow_net_ratio_5", np.nan), errors="coerce").ge(
+            wf.get("main_money_flow_net_ratio_5_min", -0.03)
+        )
+        & pd.to_numeric(df.get("money_flow_net_amount_1", np.nan), errors="coerce").ge(
+            wf.get("money_flow_net_amount_1_min", -30_000_000)
+        )
+    )
+    proxy_flow_ok = pd.to_numeric(df["money_flow_bias_20"], errors="coerce").ge(
+        wf.get("money_flow_bias_20_min", 0.10)
+    )
     df["pass_flow_sync"] = (
-        pd.to_numeric(df["money_flow_bias_20"], errors="coerce").ge(wf.get("money_flow_bias_20_min", 0.10))
+        np.where(has_real_flow, real_flow_ok, proxy_flow_ok)
         & pd.to_numeric(df["price_volume_sync_10"], errors="coerce").ge(wf.get("price_volume_sync_10_min", 0.0))
     )
     # 风险：波动率和回撤更严格，上影线过大不买
@@ -1011,25 +1350,52 @@ def score_quote_only_candidates(df: pd.DataFrame, limit: int = 50) -> pd.DataFra
     out["stability_score"] = low_amp_z
     out["liquidity_score"] = amount_z
     out["momentum_score"] = 0.58 * out["launch_score"] + 0.42 * out["trend_score"]
+    # Quote-only fallback has no per-stock K-line history. Build conservative
+    # short-horizon return proxies so the industry trend fields remain usable.
+    out["ret_5"] = (q_change / 100.0 + q_ret60 / 1200.0).clip(-0.15, 0.15)
+    out["ret_10"] = (q_ret60 / 600.0).clip(-0.20, 0.20)
+    out["ret_20"] = (q_ret60 / 300.0).clip(-0.30, 0.30)
+    out = add_industry_trend_features(
+        out,
+        _SCREEN_CFG.get("postclose", {}).get("industry_trend", {}),
+    )
     out["score"] = (
         0.42 * out["launch_score"]
         + 0.18 * out["trend_score"]
         + 0.24 * out["activity_score"]
         + 0.10 * out["stability_score"]
         + 0.06 * out["liquidity_score"]
+        + 0.10 * out["industry_trend_score"]
         - chase_penalty
     )
-    out["score_raw"] = out["score"]
+    fallback_logit = (
+        -0.35
+        + 0.58 * out["score"]
+        + 0.10 * change_z.fillna(0.0)
+        + 0.12 * amount_z.fillna(0.0)
+        + 0.22 * out["industry_trend_score"].clip(-2.0, 2.0)
+        - 0.22 * q_amp.clip(0.0, 16.0).fillna(12.0) / 16.0
+    )
+    out["up_prob_3d_logit"] = fallback_logit
+    out["up_prob_3d_confidence"] = 0.45
+    out["up_prob_3d"] = (0.50 + (sigmoid(fallback_logit) - 0.50) * out["up_prob_3d_confidence"]).clip(0.05, 0.95)
+    out["expected_ret_3d"] = (
+        0.002
+        + 0.045 * (out["up_prob_3d"] - 0.50)
+        + 0.0008 * q_change.clip(-3.0, 7.5).fillna(0.0)
+        - 0.0007 * q_amp.clip(0.0, 16.0).fillna(10.0)
+    ).clip(-0.08, 0.12)
+    out["tail_model_candidate"] = True
+    out["upside_model_candidate"] = True
+    out["score"] = out["up_prob_3d"]
+    out["score_raw"] = out["up_prob_3d"]
     out["quote_only_fallback_used"] = True
     out["kline_fallback_used"] = False
     out["pass_momentum_floor"] = True
     out["pass_next_2_3d_setup"] = True
-    out = out.sort_values("score", ascending=False).head(limit).reset_index(drop=True)
+    out = out.sort_values(["up_prob_3d", "expected_ret_3d"], ascending=False).head(limit).reset_index(drop=True)
     out["rank"] = np.arange(1, len(out) + 1)
-    if len(out) > 1:
-        out["score_100"] = (len(out) - out["rank"]) / (len(out) - 1) * 100.0
-    else:
-        out["score_100"] = 100.0
+    out["score_100"] = out["up_prob_3d"] * 100.0
     return out
 
 
@@ -1046,10 +1412,43 @@ def write_rank_table(
     run_ts: datetime,
     show_buy_signal: bool = False,
 ) -> None:
+    def fmt_pct(value) -> str:
+        n = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+        return "-" if pd.isna(n) else f"{float(n):.2%}"
+
     f.write(f"# {title}\n\n")
     f.write(f"- 生成时间: {run_ts.strftime('%Y-%m-%d %H:%M:%S')}\n")
     if rows.get("quote_only_fallback_used", pd.Series(False, index=rows.index)).fillna(False).any():
         f.write("- 数据状态: 历史K线不可用，当前为纯行情降级候选，置信度低于真实K线模型\n")
+    show_up_prob = rows.get("up_prob_3d", pd.Series(np.nan, index=rows.index)).notna().any()
+    if show_up_prob:
+        f.write("| 排名 | 代码 | 名称 | 行业 | 行业热度 | 行业三日上涨概率 | 三日上涨概率 | 预期3日收益 | 置信度 | 5日净流入占比 | 主力5日净流入占比 | 启动 | 趋势 | 活跃 | 稳定 | 流动 |\n")
+        f.write("|---:|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n")
+        for _, r in rows.iterrows():
+            f.write(
+                (
+                    "| {rank} | {code} | {name} | {industry} | {heat:.1f} | {industry_prob:.2%} | {prob:.2%} | {expected:.2%} | {confidence:.2%} | {net5} | {main5} | "
+                    "{launch:.4f} | {trend:.4f} | {activity:.4f} | {stability:.4f} | {liquidity:.4f} |\n"
+                ).format(
+                    rank=int(r["rank"]),
+                    code=r["code"],
+                    name=r["name"],
+                    industry=r.get("industry", "未知行业"),
+                    heat=float(r.get("industry_heat", np.nan)),
+                    industry_prob=float(r.get("industry_up_prob_3d", np.nan)),
+                    prob=float(r.get("up_prob_3d", np.nan)),
+                    expected=float(r.get("expected_ret_3d", np.nan)),
+                    confidence=float(r.get("up_prob_3d_confidence", np.nan)),
+                    net5=fmt_pct(r.get("money_flow_net_ratio_5", np.nan)),
+                    main5=fmt_pct(r.get("main_money_flow_net_ratio_5", np.nan)),
+                    launch=float(r["launch_score"]),
+                    trend=float(r["trend_score"]),
+                    activity=float(r["activity_score"]),
+                    stability=float(r["stability_score"]),
+                    liquidity=float(r["liquidity_score"]),
+                )
+            )
+        return
     if show_buy_signal:
         f.write("| 排名 | 代码 | 名称 | 信号标记 | 百分制得分 | 原始分 | 启动 | 趋势 | 动量 | 活跃 | 稳定 | 流动 |\n")
         f.write("|---:|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|\n")
@@ -1184,6 +1583,19 @@ def write_outputs(
         "activity_score",
         "stability_score",
         "liquidity_score",
+        "industry_member_count",
+        "industry_ret_5",
+        "industry_ret_10",
+        "industry_ret_20",
+        "industry_breadth_5",
+        "industry_breadth_10",
+        "industry_trend_score",
+        "industry_heat",
+        "industry_up_prob_3d",
+        "up_prob_3d",
+        "expected_ret_3d",
+        "up_prob_3d_confidence",
+        "up_prob_3d_logit",
         "ret_3",
         "ret_5",
         "ret_10",
@@ -1199,6 +1611,26 @@ def write_outputs(
         "amount_ratio_3_20",
         "amount_ratio_5_20",
         "money_flow_bias_20",
+        "money_flow_bias_20_proxy",
+        "real_moneyflow_ok",
+        "money_flow_net_amount_1",
+        "money_flow_net_amount_3",
+        "money_flow_net_amount_5",
+        "money_flow_net_amount_20",
+        "main_money_flow_net_amount_1",
+        "main_money_flow_net_amount_3",
+        "main_money_flow_net_amount_5",
+        "main_money_flow_net_amount_20",
+        "money_flow_net_ratio_1",
+        "money_flow_net_ratio_3",
+        "money_flow_net_ratio_5",
+        "money_flow_net_ratio_20",
+        "main_money_flow_net_ratio_1",
+        "main_money_flow_net_ratio_3",
+        "main_money_flow_net_ratio_5",
+        "main_money_flow_net_ratio_20",
+        "real_money_flow_bias_20",
+        "main_money_flow_bias_20",
         "price_volume_sync_10",
         "turnover_5",
         "turnover_20_used",
@@ -1226,6 +1658,8 @@ def write_outputs(
         "quote_only_fallback_used",
         "pass_momentum_floor",
         "pass_next_2_3d_setup",
+        "upside_model_candidate",
+        "tail_model_candidate",
     ]
     for col in export_cols:
         if col not in scored.columns:
@@ -1267,6 +1701,8 @@ def write_outputs(
     scored_real_kline = int((scored["kline_ok"] == 1).sum()) if "kline_ok" in scored.columns else 0
     scored_fallback = int(scored.get("kline_fallback_used", pd.Series(False, index=scored.index)).fillna(False).sum())
     scored_quote_only = int(scored.get("quote_only_fallback_used", pd.Series(False, index=scored.index)).fillna(False).sum())
+    moneyflow_ok = int(pd.to_numeric(merged.get("real_moneyflow_ok", pd.Series(0, index=merged.index)), errors="coerce").fillna(0).sum())
+    scored_moneyflow_ok = int(pd.to_numeric(scored.get("real_moneyflow_ok", pd.Series(0, index=scored.index)), errors="coerce").fillna(0).sum())
     hard_pass = merged.get("hard_pass", pd.Series(False, index=merged.index)).fillna(False)
     setup_pass = int((hard_pass & merged.get("pass_next_2_3d_setup", pd.Series(False, index=merged.index)).fillna(False)).sum())
     quote_source_used = str(merged.get("quote_source_used", pd.Series(["unknown"], index=merged.index[:1])).iloc[0]) if not merged.empty else "unknown"
@@ -1304,14 +1740,20 @@ def write_outputs(
                 f"中位涨跌幅 {market_median_change:.2f}%, "
                 f"跌超5%占比 {market_down5_ratio:.1%}）\n"
             )
+            f.write("- 盘后市场环境用途: 三日上涨概率模型下仅作为诊断信息，不作为最终 Top5 硬闸门\n")
         f.write(f"- 全A（沪主板+深主板+创业板）初始样本: {len(merged)}\n")
         f.write(f"- K线候选样本: {kline_candidates}\n")
         f.write(f"- K线成功样本: {kline_ok}\n")
+        f.write(f"- 真实资金流成功样本: {moneyflow_ok}\n")
         f.write(f"- K线代理兜底样本: {kline_fallback_used}\n")
         f.write(f"- 硬过滤后样本: {int(hard_pass.sum())}\n")
-        f.write(f"- 次日2-3天交易形态样本: {setup_pass}\n")
+        if output_stem in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
+            f.write(f"- 旧形态过滤诊断样本: {setup_pass}\n")
+        else:
+            f.write(f"- 次日2-3天交易形态样本: {setup_pass}\n")
         f.write(f"- 最终符合样本: {len(scored)}\n\n")
         f.write(f"- 最终真实K线样本: {scored_real_kline}\n")
+        f.write(f"- 最终真实资金流样本: {scored_moneyflow_ok}\n")
         f.write(f"- 最终兜底样本: {scored_fallback}\n\n")
         f.write(f"- 最终纯行情降级样本: {scored_quote_only}\n\n")
         f.write("## 输出文件\n\n")
@@ -1329,23 +1771,53 @@ def write_outputs(
         f.write("- 执行流动性: 20日均成交额优先，缺失时回退到当日成交额\n")
         f.write("- 启动: 启动加速度（最高权重）、3日/5日收益、20日新高突破、20日区间收盘位置、站上20日均线、近5日收盘强度\n")
         f.write("- 趋势: 10日/20日收益、20日均线突破、均线排列、20/60日多头强度、20日斜率、趋势效率\n")
-        f.write("- 活跃度: 1日/3日/5日对20日成交额放大比、5日换手率、换手加速度、20日资金流向偏置、10日量价同步\n")
+        f.write("- 活跃度: 1日/3日/5日对20日成交额放大比、5日换手率、换手加速度、真实资金净流入/主力净流入、10日量价同步\n")
         f.write("- 稳定性: 筹码集中度（底部低波动+振幅收敛，最高权重）、10/20日波动率、下行波动、20日最大回撤、20日上涨胜率、近5日上影线\n")
-        f.write("- 选股流程: 先做硬过滤并在可交易样本内打分，再叠加次日2-3天交易过滤与动量地板\n")
+        f.write("- 行业板块趋势: 行业内个股5/10/20日收益中位数与5/10日上涨扩散度，合成为行业热度；小行业按样本数向中性收缩\n")
+        if output_stem in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
+            f.write("- 选股流程: 先做硬交易资格过滤，再用三日上涨概率模型排序，Top5 取概率最高的5支\n")
+            f.write("- 三日概率模型: 以未来3个交易日收盘上涨为目标，综合启动新鲜度、趋势确认、量能确认、收盘强度、20日胜率，并惩罚追高、波动、回撤和上影线压力\n")
+            f.write("- 行业三日上涨概率: 由行业趋势分映射的方向性估计，用于板块确认；个股最终概率仍以个股量价与风险因子为主\n")
+            f.write("- 三日上涨概率: `score_100` 等于 `up_prob_3d × 100`，不再使用线性排名分\n")
+        else:
+            f.write("- 选股流程: 先做硬过滤并在可交易样本内打分，再叠加次日2-3天交易过滤与动量地板\n")
         f.write("- 启动检测: 底部横盘低波动收敛 + 量价同步放大 + 刚突破均线（20日涨幅≤20%、5日涨幅≤12%）+ 回撤受控\n")
         f.write(f"- 交易目标: {trade_target_text}\n")
-        f.write("- 次日交易过滤: 过滤当日追高、过热、量能过弱、波动过大、上影压力过重样本\n")
+        if output_stem in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
+            f.write("- 旧形态过滤: 仅保留为诊断字段，不参与三日上涨概率 Top5 的最终排序门槛\n")
+        else:
+            f.write("- 次日交易过滤: 过滤当日追高、过热、量能过弱、波动过大、上影压力过重样本\n")
         if not quote_is_intraday:
-            f.write("- 行情口径: 当前快照已降级为日线/非盘中口径，时效性弱于盘中快照\n")
-            if output_stem == DEFAULT_TAIL_OUTPUT_STEM:
-                f.write("- 尾盘风险提示: 本次未取得盘中快照，不建议直接用于14:30-14:45尾盘实盘决策\n")
+            f.write("- 行情口径: 日线收盘数据\n")
+        if moneyflow_ok:
+            f.write("- 资金流口径: Tushare moneyflow，金额字段按万元折算为元；资金偏置优先使用真实净流入占比\n")
+        else:
+            f.write("- 资金流口径: Tushare moneyflow 不可用，已回退为量价代理资金偏置\n")
         if kline_fallback_used:
             f.write("- 快速兜底: 已启用代理因子；实盘交易建议优先使用真实K线样本\n")
         elif scored_quote_only:
             f.write("- 纯行情降级: 当前历史K线不可用，Top5由收盘涨跌幅、60日涨幅、成交额、换手率、振幅生成，仅作低置信候选\n")
         else:
             f.write("- K线口径: 默认不使用代理兜底，真实K线缺失时不进入最终Top5\n")
-        f.write("- 百分制得分: 按原始综合分在全样本中的线性排名换算到0-100\n")
+        if output_stem in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
+            f.write("- 百分制得分: 直接使用三日上涨概率百分数\n")
+        else:
+            f.write("- 百分制得分: 按原始综合分在全样本中的线性排名换算到0-100\n")
+
+    if output_stem in {DEFAULT_OUTPUT_STEM, DEFAULT_TAIL_OUTPUT_STEM}:
+        for _suf in [
+            "passed.csv",
+            "passed.md",
+            "top5.csv",
+            "top5.md",
+            "top20.csv",
+            "top20.md",
+            "summary.md",
+        ]:
+            _src = build_output_path(output_stem, _suf, run_ts)
+            _dst = OUTPUT_DIR / f"{output_stem}_{_suf}"
+            if _src.exists() and _src.resolve() != _dst.resolve():
+                shutil.copy2(_src, _dst)
 
     if copy_history:
         # 保留带时间戳的历史副本，避免同日多次运行覆盖。
@@ -1369,7 +1841,7 @@ def run_screen(
     persist_outputs: bool = True,
     copy_history: bool = True,
 ) -> dict:
-    """通用筛选入口。_mode='postclose'（盘后版）或 'tail'（尾盘版）。"""
+    """通用筛选入口。_mode='postclose'（盘后版）或 'tail'（收盘资金版）。"""
     run_ts = run_ts or datetime.now()
     as_of = pd.to_datetime(trade_date, format="%Y%m%d", errors="coerce").date() if trade_date else run_ts.date()
     kline_workers = max(1, int(os.environ.get("SHORT_KLINE_WORKERS", "6")))
@@ -1395,9 +1867,8 @@ def run_screen(
     require_real_kline = os.environ.get("SHORT_REQUIRE_REAL_KLINE", "1") != "0"
     quote_only_fallback = os.environ.get("SHORT_QUOTE_ONLY_FALLBACK", "1") != "0"
     quote_only_limit = max(SHORT_TOP_N, int(os.environ.get("SHORT_QUOTE_ONLY_LIMIT", "50")))
-    quote_source = "auto" if _mode == "tail" else "tushare"
+    quote_source = "tushare"
     kline_source = "tushare"
-    tail_allow_daily_fallback = os.environ.get("SHORT_TAIL_ALLOW_DAILY_FALLBACK", "0") == "1"
 
     print("[1/3] fetch A-share quote universe (no STAR)...")
     quote = fetch_a_no_star_quotes(source=quote_source, trade_date=trade_date, as_of=run_ts)
@@ -1412,23 +1883,14 @@ def run_screen(
     )
     if quote_fallback_reason:
         print(f"[1/3] quote fallback reason: {quote_fallback_reason}")
-    if _mode == "tail" and not quote_is_intraday:
-        msg = (
-            "tail mode 未取得盘中快照，当前已降级为日线口径；"
-            "默认中止运行，若仅做参考可设置 SHORT_TAIL_ALLOW_DAILY_FALLBACK=1 后重试"
-        )
-        if not tail_allow_daily_fallback:
-            raise RuntimeError(msg)
-        print(f"[tail-warning] {msg}")
-
-    print("[2/3] fetch org info + short kline features...")
+    print("[2/3] fetch org info + short kline + moneyflow features...")
     print(
         f"[2/3] short kline config: workers={kline_workers}, retries={kline_retries}, "
         f"fast_prefilter={int(fast_prefilter)}, skip_kline={int(skip_kline)}, "
         f"kline_fallback={int(kline_fallback)}, require_real_kline={int(require_real_kline)}, "
         f"requested_candidate_limit={kline_candidate_limit}, quote_only_fallback={int(quote_only_fallback)}, "
         f"quote_source={quote_source}, quote_source_used={quote_source_used}, "
-        f"tail_allow_daily_fallback={int(tail_allow_daily_fallback)}, kline_source={kline_source}"
+        f"kline_source={kline_source}, moneyflow_source=tushare"
     )
     org = fetch_org_info(quote["secucode"].unique().tolist(), trade_date=resolved_trade_date or trade_date, as_of=run_ts)
 
@@ -1452,13 +1914,25 @@ def run_screen(
             kline_source=kline_source,
             end_trade_date=resolved_trade_date or trade_date,
         )
-    print(f"[2/3] org rows={len(org)}, short kline rows={len(kf)}")
+    mf = fetch_short_moneyflow_features(kline_codes, end_trade_date=resolved_trade_date or trade_date)
+    print(f"[2/3] org rows={len(org)}, short kline rows={len(kf)}, moneyflow rows={len(mf)}")
 
     print("[3/3] merge, filter, score...")
     df = pre
     df = df.merge(kf, on="code", how="left")
     if kline_fallback:
         df = apply_short_kline_fallback(df)
+    df = df.merge(mf, on="code", how="left")
+    for col in SHORT_MONEYFLOW_COLUMNS:
+        if col != "code" and col not in df.columns:
+            df[col] = np.nan
+    df["real_moneyflow_ok"] = pd.to_numeric(df["real_moneyflow_ok"], errors="coerce").fillna(0).astype(int)
+    df["money_flow_bias_20_proxy"] = pd.to_numeric(df["money_flow_bias_20"], errors="coerce")
+    real_flow_bias = pd.to_numeric(df["real_money_flow_bias_20"], errors="coerce")
+    df["money_flow_bias_20"] = df["money_flow_bias_20_proxy"].where(
+        ~(df["real_moneyflow_ok"].eq(1) & real_flow_bias.notna()),
+        real_flow_bias,
+    )
 
     calendar_days = df["calendar_listed_days"].fillna(9999)
     df["pass_listing"] = np.where(df["listed_days_kline"].notna(), df["listed_days_kline"] >= 60, calendar_days >= 90)
@@ -1541,20 +2015,34 @@ def run_screen(
         scored["pass_next_2_3d_setup"] = scored["pass_next_2_3d_setup"].fillna(False)
         if "pass_market_env" not in scored.columns:
             scored["pass_market_env"] = True
-        scored = scored[
-            scored["pass_next_2_3d_setup"]
-            & scored["pass_momentum_floor"]
-            & scored["pass_market_env"].fillna(True)
-        ].copy()
-        if _mode != "tail" and not scored.empty:
+        if _mode in {"postclose", "tail"}:
+            scored["upside_model_candidate"] = scored.get(
+                "upside_model_candidate",
+                pd.Series(True, index=scored.index),
+            ).fillna(False)
+            scored = scored[
+                scored["upside_model_candidate"]
+            ].copy()
+            scored = scored.sort_values(
+                ["up_prob_3d", "expected_ret_3d", "score"],
+                ascending=False,
+            ).reset_index(drop=True)
+            scored["rank"] = np.arange(1, len(scored) + 1)
+            scored["score_raw"] = scored["up_prob_3d"]
+            scored["score_100"] = scored["up_prob_3d"] * 100.0
+        else:
+            scored = scored[
+                scored["pass_next_2_3d_setup"]
+                & scored["pass_momentum_floor"]
+                & scored["pass_market_env"].fillna(True)
+            ].copy()
+        if _mode not in {"postclose", "tail"} and not scored.empty:
             _sel_cfg = _SCREEN_CFG.get("postclose", {}).get("selection", {})
             _max_per_ind = int(_sel_cfg.get("max_per_industry", 0) or 0)
             if _max_per_ind > 0:
                 scored = apply_industry_cap(scored, _max_per_ind)
 
     postclose_market_ok = True
-    if _mode != "tail" and "pass_market_env" in df.columns and not df.empty:
-        postclose_market_ok = bool(df["pass_market_env"].fillna(True).iloc[0])
 
     if scored.empty and quote_only_fallback and postclose_market_ok:
         print("[3/3] no real-kline final candidates, use quote-only fallback candidates")
@@ -1593,30 +2081,13 @@ def run_tail_screen(
     output_stem: str = DEFAULT_TAIL_OUTPUT_STEM,
     trade_target_text: str = DEFAULT_TAIL_TRADE_TARGET_TEXT,
 ) -> None:
-    """尾盘版筛选入口（14:30-14:45 运行，面向当日 14:50 操作）。"""
-    result = run_screen(
+    """收盘资金版筛选入口（每日收盘后运行）。"""
+    run_screen(
         model_name=model_name,
         output_stem=output_stem,
         trade_target_text=trade_target_text,
         _mode="tail",
     )
-    try:
-        settlement_summary = auto_settle_due_buylists(
-            result["quote"],
-            quote_is_intraday=bool(result["quote_is_intraday"]),
-        )
-    except Exception as exc:
-        print(f"[tail-settle] error: {exc}")
-        settlement_summary = {
-            "status": "error",
-            "message": str(exc),
-            "settledCount": 0,
-            "pendingFileCount": 0,
-            "pendingSymbolCount": 0,
-            "settledFiles": [],
-            "skippedFiles": [],
-        }
-    print(f"{SETTLEMENT_SUMMARY_PREFIX}{json.dumps(settlement_summary, ensure_ascii=False)}")
 
 
 def main() -> None:

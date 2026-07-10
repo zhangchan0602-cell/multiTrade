@@ -2,7 +2,8 @@ import { parseCsv } from './csv';
 
 const INDEX_CODE = '000688.SH';
 const INDEX_NAME = '科创50';
-const HORIZONS = [3, 5, 10];
+const DRAWDOWN_HORIZONS = [3, 5, 10];
+const UPSIDE_HORIZONS = [1, 3, 5, 10];
 const MIN_ANALOG_COUNT = 24;
 const MAX_ANALOG_COUNT = 56;
 
@@ -246,11 +247,17 @@ function forwardWorstDrawdown(series, index, horizon) {
   return Math.min(...lows) / currentClose - 1;
 }
 
+function forwardReturn(series, index, horizon) {
+  const currentClose = series[index]?.close;
+  const futureClose = series[index + horizon]?.close;
+  return currentClose > 0 && futureClose > 0 ? futureClose / currentClose - 1 : null;
+}
+
 function calculateDrawdownModel(series) {
   const latestIndex = series.length - 1;
   const current = series[latestIndex];
   const currentFeatures = featureVector(current);
-  const candidateEndIndex = latestIndex - Math.max(...HORIZONS);
+  const candidateEndIndex = latestIndex - Math.max(...DRAWDOWN_HORIZONS, ...UPSIDE_HORIZONS);
 
   const candidates = [];
   for (let index = 80; index <= candidateEndIndex; index += 1) {
@@ -267,7 +274,7 @@ function calculateDrawdownModel(series) {
   const analogs = sorted.slice(0, analogCount);
   const distanceBase = median(analogs.map((item) => item.distance)) || 1;
 
-  const probabilities = HORIZONS.map((horizon) => {
+  const probabilities = DRAWDOWN_HORIZONS.map((horizon) => {
     const threshold = -clamp((current.vol20 || 0.035) * Math.sqrt(horizon) * 0.85, 0.025, 0.1);
     const allDrawdowns = candidates
       .map((item) => forwardWorstDrawdown(series, item.index, horizon))
@@ -300,8 +307,42 @@ function calculateDrawdownModel(series) {
     };
   });
 
+  const upsideProbabilities = UPSIDE_HORIZONS.map((horizon) => {
+    const allReturns = candidates
+      .map((item) => forwardReturn(series, item.index, horizon))
+      .filter((value) => Number.isFinite(value));
+    const analogReturns = analogs
+      .map((item) => ({
+        value: forwardReturn(series, item.index, horizon),
+        weight: Math.exp(-item.distance / distanceBase),
+      }))
+      .filter((item) => Number.isFinite(item.value));
+
+    const analogWeight = sum(analogReturns.map((item) => item.weight));
+    const analogProbability = analogWeight
+      ? sum(analogReturns.map((item) => (item.value > 0 ? item.weight : 0))) / analogWeight
+      : 0;
+    const baselineProbability = allReturns.length
+      ? allReturns.filter((value) => value > 0).length / allReturns.length
+      : 0;
+    const probability = clamp(analogProbability * 0.72 + baselineProbability * 0.28, 0, 1);
+
+    return {
+      horizon,
+      threshold: 0,
+      probability,
+      analogProbability,
+      baselineProbability,
+      medianForwardReturn: median(analogReturns.map((item) => item.value)),
+      p25ForwardReturn: percentile(analogReturns.map((item) => item.value), 0.25),
+      p75ForwardReturn: percentile(analogReturns.map((item) => item.value), 0.75),
+      sampleCount: analogReturns.length,
+    };
+  });
+
   return {
     probabilities,
+    upsideProbabilities,
     analogs: analogs.slice(0, 8).map((item) => ({
       tradeDate: item.point.tradeDate,
       distance: item.distance,
