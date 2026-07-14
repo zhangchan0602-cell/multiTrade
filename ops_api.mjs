@@ -19,6 +19,7 @@ const KECHUANG_INDEX_CSV_PATH = path.join(ROOT_DIR, 'scripts', '.cache', 'index'
 const KECHUANG_DOWNLOAD_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'download_kechuang_index.py');
 const INDUSTRY_TREND_RANK_PATH = path.join(ROOT_DIR, 'docs', 'list', 'industry_trend_rank.json');
 const INDUSTRY_TREND_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'industry_trend_rank.py');
+const INDUSTRY_TREND_MODEL_VERSION = 2;
 
 function resolvePythonCandidates(candidates) {
   const seen = new Set();
@@ -483,6 +484,9 @@ async function readIndustryTrendRank() {
   }
 
   const payload = JSON.parse(await readFile(INDUSTRY_TREND_RANK_PATH, 'utf8'));
+  if (payload.modelVersion !== INDUSTRY_TREND_MODEL_VERSION) {
+    return { exists: false, industries: [], updatedAt: null, tradeDate: null };
+  }
   return {
     exists: true,
     ...payload,

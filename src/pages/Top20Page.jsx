@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { fetchCombinedBoard, generateCombinedBoard } from '../lib/opsApi';
-import { buildCombinedSnapshotFromPayload, getFactorDefinition, loadFactorSnapshots } from '../lib/top20';
+import {
+  buildCombinedSnapshotFromPayload,
+  getFactorDefinition,
+  loadFactorHistorySnapshot,
+  loadFactorSnapshots,
+} from '../lib/top20';
 
 const factorOptions = [
   { key: 'short', label: '盘后概率Top10' },
@@ -22,11 +27,19 @@ function makeRowKey(item) {
   return `${item.rank || ''}-${item.code || ''}`;
 }
 
+function mergeSnapshots(current, additions) {
+  const byId = new Map(current.map((snapshot) => [snapshot.id, snapshot]));
+  additions.filter(Boolean).forEach((snapshot) => byId.set(snapshot.id, snapshot));
+  return Array.from(byId.values()).sort((left, right) => String(left.date).localeCompare(String(right.date)));
+}
+
 export default function Top20Page() {
   const [factorKey, setFactorKey] = useState('short');
   const [snapshots, setSnapshots] = useState([]);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [historyEntries, setHistoryEntries] = useState([]);
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
   const [combinedGenerating, setCombinedGenerating] = useState(false);
@@ -43,6 +56,7 @@ export default function Top20Page() {
     async function loadSnapshots() {
       try {
         let loadedSnapshots = [];
+        let nextHistoryEntries = [];
         let nextCombinedStatus = '';
 
         if (factorKey === 'combined') {
@@ -50,7 +64,7 @@ export default function Top20Page() {
             const payload = await fetchCombinedBoard();
             const generatedSnapshot = buildCombinedSnapshotFromPayload(payload);
             if (generatedSnapshot) {
-              loadedSnapshots = [generatedSnapshot];
+              loadedSnapshots = [{ ...generatedSnapshot, id: 'combined:current', isCurrent: true }];
               nextCombinedStatus = '当前展示的是已生成并落盘的综合榜。';
             }
           } catch (apiError) {
@@ -59,17 +73,29 @@ export default function Top20Page() {
         }
 
         if (loadedSnapshots.length === 0) {
-          loadedSnapshots = await loadFactorSnapshots(factorKey);
+          const loaded = await loadFactorSnapshots(factorKey);
+          loadedSnapshots = loaded.snapshots;
+          nextHistoryEntries = loaded.historyEntries;
           if (factorKey === 'combined' && !nextCombinedStatus) {
             nextCombinedStatus = '当前展示页面实时交集预览，点击“生成综合榜”可写出当日综合榜文件。';
           }
+        }
+
+        const initialSnapshot = loadedSnapshots.find((snapshot) => snapshot.isCurrent) || loadedSnapshots.at(-1) || null;
+        const previousEntry = initialSnapshot
+          ? nextHistoryEntries.filter((entry) => entry.date < initialSnapshot.date).at(-1)
+          : null;
+        if (previousEntry) {
+          const previousSnapshot = await loadFactorHistorySnapshot(factorKey, previousEntry.id);
+          loadedSnapshots = mergeSnapshots(loadedSnapshots, [previousSnapshot]);
         }
 
         if (!mounted) {
           return;
         }
         setSnapshots(loadedSnapshots);
-        setSelectedDate(loadedSnapshots.slice(-1)[0]?.date || '');
+        setHistoryEntries(nextHistoryEntries);
+        setSelectedSnapshotId(initialSnapshot?.id || '');
         setCombinedStatus(factorKey === 'combined' ? nextCombinedStatus : '');
         setLoading(false);
       } catch (err) {
@@ -78,7 +104,8 @@ export default function Top20Page() {
         }
         setError(err.message || '加载榜单失败');
         setSnapshots([]);
-        setSelectedDate('');
+        setHistoryEntries([]);
+        setSelectedSnapshotId('');
         setCombinedStatus('');
         setLoading(false);
       }
@@ -91,42 +118,35 @@ export default function Top20Page() {
     };
   }, [factorKey]);
 
+  const snapshotOptions = useMemo(() => {
+    const options = new Map();
+    historyEntries.forEach((entry) => options.set(entry.id, entry));
+    snapshots.forEach((snapshot) => {
+      if (snapshot.isCurrent || !options.has(snapshot.id)) {
+        options.set(snapshot.id, snapshot);
+      }
+    });
+    return Array.from(options.values()).sort((left, right) => String(left.date).localeCompare(String(right.date)));
+  }, [historyEntries, snapshots]);
+
   const currentSnapshot = useMemo(
-    () => snapshots.find((snapshot) => snapshot.date === selectedDate) || snapshots.slice(-1)[0] || null,
-    [selectedDate, snapshots]
+    () => snapshots.find((snapshot) => snapshot.id === selectedSnapshotId) || null,
+    [selectedSnapshotId, snapshots]
   );
 
   const previousSnapshot = useMemo(() => {
     if (!currentSnapshot) {
       return null;
     }
-    const currentIndex = snapshots.findIndex((snapshot) => snapshot.date === currentSnapshot.date);
-    return currentIndex > 0 ? snapshots[currentIndex - 1] : null;
-  }, [currentSnapshot, snapshots]);
+    const currentIndex = snapshotOptions.findIndex((snapshot) => snapshot.id === currentSnapshot.id);
+    const previousId = currentIndex > 0 ? snapshotOptions[currentIndex - 1].id : null;
+    return snapshots.find((snapshot) => snapshot.id === previousId) || null;
+  }, [currentSnapshot, snapshotOptions, snapshots]);
 
   const previousCodes = useMemo(
     () => new Set((previousSnapshot?.items || []).map((item) => item.code)),
     [previousSnapshot]
   );
-
-  // 计算当前榜单每只股票的连续上榜次数
-  const streakMap = useMemo(() => {
-    if (!currentSnapshot || snapshots.length <= 1) return new Map();
-    const currentIndex = snapshots.findIndex((snapshot) => snapshot.date === currentSnapshot.date);
-    const result = new Map();
-    for (const item of currentSnapshot.items) {
-      let streak = 1;
-      for (let i = currentIndex - 1; i >= 0; i--) {
-        if (snapshots[i].items.some((s) => s.code === item.code)) {
-          streak++;
-        } else {
-          break;
-        }
-      }
-      result.set(item.code, streak);
-    }
-    return result;
-  }, [currentSnapshot, snapshots]);
 
   const removedItems = useMemo(() => {
     if (!previousSnapshot || !currentSnapshot) {
@@ -138,8 +158,10 @@ export default function Top20Page() {
 
   const isRps = factorKey === 'rps90';
   const isCombined = factorKey === 'combined';
+  const isPostclose = factorKey === 'short';
   const isProbabilityModel = factorKey === 'short' || factorKey === 'tail';
   const quoteOnly = currentSnapshot?.items?.some((item) => item.quoteOnlyFallbackUsed) || false;
+  const marketGateFailed = isPostclose && currentSnapshot?.items?.some((item) => item.passMarketEnv === false);
 
   async function handleGenerateCombined() {
     setCombinedGenerating(true);
@@ -149,12 +171,35 @@ export default function Top20Page() {
       const payload = await generateCombinedBoard();
       const generatedSnapshot = buildCombinedSnapshotFromPayload(payload);
       setCombinedStatus('当前展示的是已生成并落盘的综合榜。');
-      setSnapshots(generatedSnapshot ? [generatedSnapshot] : []);
-      setSelectedDate(generatedSnapshot?.date || '');
+      setSnapshots(generatedSnapshot ? [{ ...generatedSnapshot, id: 'combined:current', isCurrent: true }] : []);
+      setSelectedSnapshotId(generatedSnapshot ? 'combined:current' : '');
     } catch (err) {
       setActionError(err.message || '生成综合榜失败');
     } finally {
       setCombinedGenerating(false);
+    }
+  }
+
+  async function handleSnapshotChange(id) {
+    setActionError('');
+    setSelectedSnapshotId(id);
+    const entry = historyEntries.find((item) => item.id === id);
+    if (!entry || snapshots.some((snapshot) => snapshot.id === id)) {
+      return;
+    }
+
+    setSnapshotLoading(true);
+    try {
+      const entryIndex = historyEntries.findIndex((item) => item.id === id);
+      const previousEntry = entryIndex > 0 ? historyEntries[entryIndex - 1] : null;
+      const loadedIds = new Set(snapshots.map((snapshot) => snapshot.id));
+      const entriesToLoad = [entry, previousEntry].filter((item) => item && !loadedIds.has(item.id));
+      const loadedSnapshots = await Promise.all(entriesToLoad.map((item) => loadFactorHistorySnapshot(factorKey, item.id)));
+      setSnapshots((current) => mergeSnapshots(current, loadedSnapshots));
+    } catch (err) {
+      setActionError(err.message || '加载历史榜单失败');
+    } finally {
+      setSnapshotLoading(false);
     }
   }
 
@@ -198,11 +243,16 @@ export default function Top20Page() {
               {combinedGenerating ? '生成中...' : '生成综合榜'}
             </button>
           )}
-          {currentSnapshot && snapshots.length > 1 && (
-            <select value={currentSnapshot.date} onChange={(event) => setSelectedDate(event.target.value)}>
-              {snapshots.map((snapshot) => (
-                <option key={snapshot.date} value={snapshot.date}>
-                  {snapshot.date}
+          {currentSnapshot && snapshotOptions.length > 1 && (
+            <select
+              value={selectedSnapshotId}
+              onChange={(event) => handleSnapshotChange(event.target.value)}
+              disabled={snapshotLoading}
+              aria-label="选择榜单日期"
+            >
+              {snapshotOptions.map((snapshot) => (
+                <option key={snapshot.id} value={snapshot.id}>
+                  {snapshot.date}{snapshot.isCurrent ? '（当前）' : ''}
                 </option>
               ))}
             </select>
@@ -211,6 +261,8 @@ export default function Top20Page() {
       </article>
 
       {actionError && <article className="panel error">{actionError}</article>}
+
+      {snapshotLoading && <article className="panel">正在加载所选历史榜单...</article>}
 
       {!currentSnapshot && <article className="panel">{definition.emptyMessage}</article>}
 
@@ -221,12 +273,25 @@ export default function Top20Page() {
         </article>
       )}
 
+      {currentSnapshot && marketGateFailed && (
+        <article className="freshness-banner freshness-danger">
+          <strong>市场环境闸门未通过</strong>
+          <p>当日盘后版的市场广度或弱势股比例不满足开仓条件；当前 Top10 仅用于观察，不应视为执行清单。</p>
+        </article>
+      )}
+
       {currentSnapshot && (
         <>
-          <article className="freshness-banner freshness-warn">
-            <strong>当前仅提供单票层风控</strong>
-            <p>后端当前未加入指数环境过滤、市场风格切换、行业集中度约束、单日组合最大敞口和容量约束，榜单候选可能集中于同一题材或风格。</p>
-          </article>
+          {!isCombined && (
+            <article className="freshness-banner freshness-warn">
+              <strong>{isPostclose ? '榜单与执行清单口径不同' : '组合层约束仍需人工确认'}</strong>
+              <p>
+                {isPostclose
+                  ? '此处展示的是评分前列候选。实际执行仍应以交易过滤、市场环境闸门和单行业上限后的最终清单为准。'
+                  : '当前榜单以单票筛选或策略共识为主，未统一控制组合总敞口、容量和跨策略相关性。'}
+              </p>
+            </article>
+          )}
 
           <article className="panel">
             <div className="stat-row">
@@ -310,21 +375,20 @@ export default function Top20Page() {
                 <tbody>
                   {currentSnapshot.items.map((item) => {
                     const isNew = previousSnapshot && !previousCodes.has(item.code);
-                    const streak = streakMap.get(item.code) || 1;
                     const stateLabel = item.quoteOnlyFallbackUsed
                       ? '降级'
-                      : streak >= 2
-                        ? `连续${streak}日`
+                      : !previousSnapshot
+                        ? '待比对'
                         : isNew
                           ? '新增'
-                          : '跟踪';
+                          : '持续入选';
                     const stateClass = item.quoteOnlyFallbackUsed
                       ? 'badge-flat'
-                      : streak >= 2
-                        ? 'badge-streak'
+                      : !previousSnapshot
+                        ? 'badge-flat'
                         : isNew
                           ? 'badge-new'
-                          : 'badge-up';
+                          : 'badge-streak';
 
                     return isCombined ? (
                       <tr key={makeRowKey(item)}>

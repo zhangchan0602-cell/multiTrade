@@ -95,6 +95,20 @@ npm run backtest:portfolio
 | `docs/list/strategy_portfolio_backtest_open_positions.csv` | 回测结束时仍未平仓持仓 |
 | `docs/list/strategy_portfolio_backtest_summary.md` | 策略汇总统计 |
 
+### 行业趋势月度准确性回测（`industry_trend_backtest.py`）
+
+```bash
+npm run backtest:industry-trend
+```
+
+使用最近 12 个具备完整后续行情的自然月，每月均匀取 5 个交易日作为机会日。每个机会日从行业热度前 15 中选择排名最高、且满足“3 日上涨概率 >75% 且回撤概率 <30%，或 5 日上涨概率 >70% 且回撤概率 <30%”的行业，持有后续 5 个交易日；全周期按时间顺序最多 50 笔。行业收益使用成分股日收益中位数复利，用于检验行业信号准确性，并非可交易 ETF 的实际收益。
+
+| 文件 | 说明 |
+|------|------|
+| `docs/list/industry_trend_backtest_trades.csv` | 每个入选行业的模型状态与后续 5 日收益 |
+| `docs/list/industry_trend_backtest_monthly.csv` | 12 个信号月的机会数、触发数、胜负与月度平均收益 |
+| `docs/list/industry_trend_backtest.md` | 回测口径与 5 日方向准确率汇总 |
+
 ### 买入清单与结算（`buylist_io.py` / `buylist_settlement.py`）
 
 | 文件 | 说明 |

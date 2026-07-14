@@ -1,0 +1,5619 @@
+{
+  "modelVersion": 2,
+  "updatedAt": "2026-07-14T19:27:35+08:00",
+  "tradeDate": "20260714",
+  "source": "本地全市场日线缓存；MACD量能、分位数极值、双均线三模型共识",
+  "industries": [
+    {
+      "industry": "公路",
+      "memberCount": 3,
+      "heat": 74.553013,
+      "events": [
+        "MACD量能共振",
+        "分位中性",
+        "双均线多头"
+      ],
+      "ret3": 0.019086,
+      "ret5": 0.023974,
+      "ret10": 0.034023,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 1.197725,
+      "consensusScore": 0.701515,
+      "models": {
+        "macdVolume": {
+          "score": 0.835312,
+          "signal": "MACD量能共振",
+          "histPct": 0.008786,
+          "amountRatio": 1.197725
+        },
+        "quantileExtreme": {
+          "score": 0.44,
+          "signal": "分位中性",
+          "ret5Quantile": 0.633333,
+          "ret20Quantile": 0.85
+        },
+        "dualMA": {
+          "score": 0.784633,
+          "signal": "双均线多头",
+          "maSpread": 0.047023,
+          "ma20Slope5": 0.018463
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.716538,
+          "drawdown": 0.322169
+        },
+        "5": {
+          "up": 0.689412,
+          "drawdown": 0.337103
+        },
+        "10": {
+          "up": 0.660918,
+          "drawdown": 0.352369
+        }
+      },
+      "rank": 1
+    },
+    {
+      "industry": "保险",
+      "memberCount": 5,
+      "heat": 73.77726,
+      "events": [
+        "MACD转强",
+        "强势极值",
+        "双均线多头"
+      ],
+      "ret3": 0.008281,
+      "ret5": 0.062232,
+      "ret10": 0.02721,
+      "breadth3": 0.533333,
+      "amountRatio3_20": 0.889301,
+      "consensusScore": 0.67935,
+      "models": {
+        "macdVolume": {
+          "score": 0.546415,
+          "signal": "MACD转强",
+          "histPct": 0.007351,
+          "amountRatio": 0.889301
+        },
+        "quantileExtreme": {
+          "score": 0.94,
+          "signal": "强势极值",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 1.0
+        },
+        "dualMA": {
+          "score": 0.595948,
+          "signal": "双均线多头",
+          "maSpread": 0.019118,
+          "ma20Slope5": 0.013713
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.690361,
+          "drawdown": 0.336588
+        },
+        "5": {
+          "up": 0.665527,
+          "drawdown": 0.349924
+        },
+        "10": {
+          "up": 0.639742,
+          "drawdown": 0.3635
+        }
+      },
+      "rank": 2
+    },
+    {
+      "industry": "生物制药",
+      "memberCount": 41,
+      "heat": 73.671266,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "均线收敛"
+      ],
+      "ret3": 0.051793,
+      "ret5": 0.073424,
+      "ret10": 0.092686,
+      "breadth3": 0.772358,
+      "amountRatio3_20": 1.541129,
+      "consensusScore": 0.676322,
+      "models": {
+        "macdVolume": {
+          "score": 0.580376,
+          "signal": "MACD转弱",
+          "histPct": 0.01526,
+          "amountRatio": 1.541129
+        },
+        "quantileExtreme": {
+          "score": 0.966667,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.983333
+        },
+        "dualMA": {
+          "score": 0.513905,
+          "signal": "均线收敛",
+          "maSpread": 0.026802,
+          "ma20Slope5": -0.00861
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.858345,
+          "drawdown": 0.231753
+        },
+        "5": {
+          "up": 0.826185,
+          "drawdown": 0.254987
+        },
+        "10": {
+          "up": 0.788521,
+          "drawdown": 0.279702
+        }
+      },
+      "rank": 3
+    },
+    {
+      "industry": "化学制药",
+      "memberCount": 118,
+      "heat": 71.573647,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "均线收敛"
+      ],
+      "ret3": 0.056455,
+      "ret5": 0.077801,
+      "ret10": 0.075151,
+      "breadth3": 0.830508,
+      "amountRatio3_20": 1.471321,
+      "consensusScore": 0.61639,
+      "models": {
+        "macdVolume": {
+          "score": 0.557107,
+          "signal": "MACD转弱",
+          "histPct": 0.012929,
+          "amountRatio": 1.471321
+        },
+        "quantileExtreme": {
+          "score": 0.966667,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.983333
+        },
+        "dualMA": {
+          "score": 0.345157,
+          "signal": "均线收敛",
+          "maSpread": 0.017483,
+          "ma20Slope5": -0.007444
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.864866,
+          "drawdown": 0.226728
+        },
+        "5": {
+          "up": 0.83292,
+          "drawdown": 0.25031
+        },
+        "10": {
+          "up": 0.795209,
+          "drawdown": 0.275471
+        }
+      },
+      "rank": 4
+    },
+    {
+      "industry": "矿物制品",
+      "memberCount": 26,
+      "heat": 64.45195,
+      "events": [
+        "MACD转强",
+        "强势极值",
+        "双均线多头"
+      ],
+      "ret3": 0.039196,
+      "ret5": 0.083049,
+      "ret10": -0.035734,
+      "breadth3": 0.679487,
+      "amountRatio3_20": 0.880325,
+      "consensusScore": 0.412913,
+      "models": {
+        "macdVolume": {
+          "score": 0.157993,
+          "signal": "MACD转强",
+          "histPct": 0.00182,
+          "amountRatio": 0.880325
+        },
+        "quantileExtreme": {
+          "score": 0.853333,
+          "signal": "强势极值",
+          "ret5Quantile": 0.966667,
+          "ret20Quantile": 0.866667
+        },
+        "dualMA": {
+          "score": 0.312385,
+          "signal": "双均线多头",
+          "maSpread": 0.008126,
+          "ma20Slope5": 0.011737
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.74856,
+          "drawdown": 0.303879
+        },
+        "5": {
+          "up": 0.719071,
+          "drawdown": 0.32075
+        },
+        "10": {
+          "up": 0.687567,
+          "drawdown": 0.338103
+        }
+      },
+      "rank": 5
+    },
+    {
+      "industry": "证券",
+      "memberCount": 50,
+      "heat": 64.085604,
+      "events": [
+        "MACD转强",
+        "分位中性",
+        "双均线多头"
+      ],
+      "ret3": -0.027103,
+      "ret5": 0.011564,
+      "ret10": -0.017746,
+      "breadth3": 0.313333,
+      "amountRatio3_20": 0.85661,
+      "consensusScore": 0.402446,
+      "models": {
+        "macdVolume": {
+          "score": 0.195812,
+          "signal": "MACD转强",
+          "histPct": 0.00317,
+          "amountRatio": 0.85661
+        },
+        "quantileExtreme": {
+          "score": 0.6,
+          "signal": "分位中性",
+          "ret5Quantile": 0.666667,
+          "ret20Quantile": 1.0
+        },
+        "dualMA": {
+          "score": 0.480404,
+          "signal": "双均线多头",
+          "maSpread": 0.01709,
+          "ma20Slope5": 0.007025
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.416054,
+          "drawdown": 0.478682
+        },
+        "5": {
+          "up": 0.424195,
+          "drawdown": 0.474347
+        },
+        "10": {
+          "up": 0.432378,
+          "drawdown": 0.470016
+        }
+      },
+      "rank": 6
+    },
+    {
+      "industry": "农业综合",
+      "memberCount": 38,
+      "heat": 63.638824,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.042963,
+      "ret5": 0.073872,
+      "ret10": 0.041789,
+      "breadth3": 0.77193,
+      "amountRatio3_20": 1.178905,
+      "consensusScore": 0.389681,
+      "models": {
+        "macdVolume": {
+          "score": 0.459635,
+          "signal": "MACD转弱",
+          "histPct": 0.011669,
+          "amountRatio": 1.178905
+        },
+        "quantileExtreme": {
+          "score": 0.86,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.85
+        },
+        "dualMA": {
+          "score": -0.173911,
+          "signal": "双均线空头",
+          "maSpread": -1.2e-05,
+          "ma20Slope5": -0.017363
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.801572,
+          "drawdown": 0.271387
+        },
+        "5": {
+          "up": 0.769533,
+          "drawdown": 0.291409
+        },
+        "10": {
+          "up": 0.734038,
+          "drawdown": 0.312274
+        }
+      },
+      "rank": 7
+    },
+    {
+      "industry": "医疗保健",
+      "memberCount": 112,
+      "heat": 62.698955,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.05,
+      "ret5": 0.063977,
+      "ret10": 0.040795,
+      "breadth3": 0.742678,
+      "amountRatio3_20": 1.170879,
+      "consensusScore": 0.362827,
+      "models": {
+        "macdVolume": {
+          "score": 0.45696,
+          "signal": "MACD转弱",
+          "histPct": 0.010408,
+          "amountRatio": 1.170879
+        },
+        "quantileExtreme": {
+          "score": 0.846667,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.833333
+        },
+        "dualMA": {
+          "score": -0.246522,
+          "signal": "双均线空头",
+          "maSpread": -0.002579,
+          "ma20Slope5": -0.018463
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.79587,
+          "drawdown": 0.275049
+        },
+        "5": {
+          "up": 0.764009,
+          "drawdown": 0.294737
+        },
+        "10": {
+          "up": 0.728869,
+          "drawdown": 0.315221
+        }
+      },
+      "rank": 8
+    },
+    {
+      "industry": "中成药",
+      "memberCount": 66,
+      "heat": 62.328831,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.038639,
+      "ret5": 0.049302,
+      "ret10": 0.031966,
+      "breadth3": 0.762626,
+      "amountRatio3_20": 1.530134,
+      "consensusScore": 0.352252,
+      "models": {
+        "macdVolume": {
+          "score": 0.54629,
+          "signal": "MACD转弱",
+          "histPct": 0.007594,
+          "amountRatio": 1.530134
+        },
+        "quantileExtreme": {
+          "score": 0.833333,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.816667
+        },
+        "dualMA": {
+          "score": -0.387545,
+          "signal": "双均线空头",
+          "maSpread": -0.008689,
+          "ma20Slope5": -0.017901
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.769607,
+          "drawdown": 0.291364
+        },
+        "5": {
+          "up": 0.738878,
+          "drawdown": 0.309496
+        },
+        "10": {
+          "up": 0.705619,
+          "drawdown": 0.328234
+        }
+      },
+      "rank": 9
+    },
+    {
+      "industry": "半导体",
+      "memberCount": 77,
+      "heat": 61.947906,
+      "events": [
+        "MACD量能共振",
+        "分位中性",
+        "双均线多头"
+      ],
+      "ret3": -0.09433,
+      "ret5": -0.067744,
+      "ret10": -0.002287,
+      "breadth3": 0.238095,
+      "amountRatio3_20": 1.188164,
+      "consensusScore": 0.341369,
+      "models": {
+        "macdVolume": {
+          "score": 0.356233,
+          "signal": "MACD量能共振",
+          "histPct": 0.001247,
+          "amountRatio": 1.188164
+        },
+        "quantileExtreme": {
+          "score": -0.3,
+          "signal": "分位中性",
+          "ret5Quantile": 0.083333,
+          "ret20Quantile": 0.75
+        },
+        "dualMA": {
+          "score": 0.962919,
+          "signal": "双均线多头",
+          "maSpread": 0.066125,
+          "ma20Slope5": 0.036292
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.187084,
+          "drawdown": 0.623004
+        },
+        "5": {
+          "up": 0.21588,
+          "drawdown": 0.600876
+        },
+        "10": {
+          "up": 0.247759,
+          "drawdown": 0.578328
+        }
+      },
+      "rank": 10
+    },
+    {
+      "industry": "医药商业",
+      "memberCount": 37,
+      "heat": 61.852624,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.06426,
+      "ret5": 0.076102,
+      "ret10": 0.038421,
+      "breadth3": 0.873874,
+      "amountRatio3_20": 1.355393,
+      "consensusScore": 0.338646,
+      "models": {
+        "macdVolume": {
+          "score": 0.518464,
+          "signal": "MACD转弱",
+          "histPct": 0.008192,
+          "amountRatio": 1.355393
+        },
+        "quantileExtreme": {
+          "score": 0.906667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.883333
+        },
+        "dualMA": {
+          "score": -0.469131,
+          "signal": "双均线空头",
+          "maSpread": -0.011872,
+          "ma20Slope5": -0.018421
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.848221,
+          "drawdown": 0.239327
+        },
+        "5": {
+          "up": 0.815833,
+          "drawdown": 0.26201
+        },
+        "10": {
+          "up": 0.778339,
+          "drawdown": 0.286033
+        }
+      },
+      "rank": 11
+    },
+    {
+      "industry": "饲料",
+      "memberCount": 20,
+      "heat": 61.135141,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.03356,
+      "ret5": 0.072775,
+      "ret10": 0.033792,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 1.201918,
+      "consensusScore": 0.318147,
+      "models": {
+        "macdVolume": {
+          "score": 0.467306,
+          "signal": "MACD转弱",
+          "histPct": 0.013464,
+          "amountRatio": 1.201918
+        },
+        "quantileExtreme": {
+          "score": 0.753333,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.716667
+        },
+        "dualMA": {
+          "score": -0.315918,
+          "signal": "双均线空头",
+          "maSpread": -0.003322,
+          "ma20Slope5": -0.02362
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.754317,
+          "drawdown": 0.300499
+        },
+        "5": {
+          "up": 0.724462,
+          "drawdown": 0.317717
+        },
+        "10": {
+          "up": 0.692458,
+          "drawdown": 0.335447
+        }
+      },
+      "rank": 12
+    },
+    {
+      "industry": "装修装饰",
+      "memberCount": 25,
+      "heat": 59.317865,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.033403,
+      "ret5": 0.07431,
+      "ret10": 0.022999,
+      "breadth3": 0.6,
+      "amountRatio3_20": 0.997,
+      "consensusScore": 0.266225,
+      "models": {
+        "macdVolume": {
+          "score": 0.399,
+          "signal": "MACD转弱",
+          "histPct": 0.009863,
+          "amountRatio": 0.997
+        },
+        "quantileExtreme": {
+          "score": 0.693333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.616667
+        },
+        "dualMA": {
+          "score": -0.337918,
+          "signal": "双均线空头",
+          "maSpread": -0.00555,
+          "ma20Slope5": -0.020473
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.725064,
+          "drawdown": 0.317376
+        },
+        "5": {
+          "up": 0.697258,
+          "drawdown": 0.332828
+        },
+        "10": {
+          "up": 0.667927,
+          "drawdown": 0.348648
+        }
+      },
+      "rank": 13
+    },
+    {
+      "industry": "化工原料",
+      "memberCount": 214,
+      "heat": 57.403159,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.021896,
+      "ret5": 0.060792,
+      "ret10": -0.007922,
+      "breadth3": 0.597415,
+      "amountRatio3_20": 0.93482,
+      "consensusScore": 0.211519,
+      "models": {
+        "macdVolume": {
+          "score": 0.206906,
+          "signal": "MACD转弱",
+          "histPct": 0.005715,
+          "amountRatio": 0.93482
+        },
+        "quantileExtreme": {
+          "score": 0.76,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.7
+        },
+        "dualMA": {
+          "score": -0.330812,
+          "signal": "双均线空头",
+          "maSpread": -0.008881,
+          "ma20Slope5": -0.011768
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.660808,
+          "drawdown": 0.352427
+        },
+        "5": {
+          "up": 0.638884,
+          "drawdown": 0.363947
+        },
+        "10": {
+          "up": 0.616366,
+          "drawdown": 0.375625
+        }
+      },
+      "rank": 14
+    },
+    {
+      "industry": "仓储物流",
+      "memberCount": 45,
+      "heat": 56.595873,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.034691,
+      "ret5": 0.06693,
+      "ret10": 0.008948,
+      "breadth3": 0.777778,
+      "amountRatio3_20": 1.246493,
+      "consensusScore": 0.188454,
+      "models": {
+        "macdVolume": {
+          "score": 0.424188,
+          "signal": "MACD转弱",
+          "histPct": 0.007227,
+          "amountRatio": 1.246493
+        },
+        "quantileExtreme": {
+          "score": 0.72,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.65
+        },
+        "dualMA": {
+          "score": -0.657406,
+          "signal": "双均线空头",
+          "maSpread": -0.017366,
+          "ma20Slope5": -0.024061
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.750838,
+          "drawdown": 0.302545
+        },
+        "5": {
+          "up": 0.721202,
+          "drawdown": 0.319553
+        },
+        "10": {
+          "up": 0.689498,
+          "drawdown": 0.337056
+        }
+      },
+      "rank": 15
+    },
+    {
+      "industry": "普钢",
+      "memberCount": 26,
+      "heat": 56.303694,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.046618,
+      "ret5": 0.064844,
+      "ret10": 0.003646,
+      "breadth3": 0.782051,
+      "amountRatio3_20": 0.908236,
+      "consensusScore": 0.180106,
+      "models": {
+        "macdVolume": {
+          "score": 0.334169,
+          "signal": "MACD转弱",
+          "histPct": 0.00753,
+          "amountRatio": 0.908236
+        },
+        "quantileExtreme": {
+          "score": 0.866667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.833333
+        },
+        "dualMA": {
+          "score": -0.711874,
+          "signal": "双均线空头",
+          "maSpread": -0.020181,
+          "ma20Slope5": -0.022753
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.759308,
+          "drawdown": 0.297544
+        },
+        "5": {
+          "up": 0.729152,
+          "drawdown": 0.31506
+        },
+        "10": {
+          "up": 0.696726,
+          "drawdown": 0.333119
+        }
+      },
+      "rank": 16
+    },
+    {
+      "industry": "机场",
+      "memberCount": 5,
+      "heat": 55.898676,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.020706,
+      "ret5": 0.027022,
+      "ret10": 0.019255,
+      "breadth3": 0.733333,
+      "amountRatio3_20": 0.951133,
+      "consensusScore": 0.168534,
+      "models": {
+        "macdVolume": {
+          "score": 0.090533,
+          "signal": "MACD转弱",
+          "histPct": 0.004091,
+          "amountRatio": 0.951133
+        },
+        "quantileExtreme": {
+          "score": 0.853333,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.816667
+        },
+        "dualMA": {
+          "score": -0.412266,
+          "signal": "双均线空头",
+          "maSpread": -0.011434,
+          "ma20Slope5": -0.013785
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.661114,
+          "drawdown": 0.352265
+        },
+        "5": {
+          "up": 0.639158,
+          "drawdown": 0.363804
+        },
+        "10": {
+          "up": 0.616605,
+          "drawdown": 0.375502
+        }
+      },
+      "rank": 17
+    },
+    {
+      "industry": "造纸",
+      "memberCount": 33,
+      "heat": 55.790907,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.034886,
+      "ret5": 0.051111,
+      "ret10": 0.00909,
+      "breadth3": 0.707071,
+      "amountRatio3_20": 0.991838,
+      "consensusScore": 0.165454,
+      "models": {
+        "macdVolume": {
+          "score": 0.397279,
+          "signal": "MACD转弱",
+          "histPct": 0.00836,
+          "amountRatio": 0.991838
+        },
+        "quantileExtreme": {
+          "score": 0.7,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.65
+        },
+        "dualMA": {
+          "score": -0.678191,
+          "signal": "双均线空头",
+          "maSpread": -0.017672,
+          "ma20Slope5": -0.025407
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.709076,
+          "drawdown": 0.326322
+        },
+        "5": {
+          "up": 0.682574,
+          "drawdown": 0.340801
+        },
+        "10": {
+          "up": 0.654832,
+          "drawdown": 0.355585
+        }
+      },
+      "rank": 18
+    },
+    {
+      "industry": "渔业",
+      "memberCount": 7,
+      "heat": 55.686229,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.063484,
+      "ret5": 0.08326,
+      "ret10": 0.02656,
+      "breadth3": 0.904762,
+      "amountRatio3_20": 1.181281,
+      "consensusScore": 0.162464,
+      "models": {
+        "macdVolume": {
+          "score": 0.460427,
+          "signal": "MACD转弱",
+          "histPct": 0.009617,
+          "amountRatio": 1.181281
+        },
+        "quantileExtreme": {
+          "score": 0.76,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.7
+        },
+        "dualMA": {
+          "score": -0.832357,
+          "signal": "双均线空头",
+          "maSpread": -0.021598,
+          "ma20Slope5": -0.031401
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.837501,
+          "drawdown": 0.247075
+        },
+        "5": {
+          "up": 0.805001,
+          "drawdown": 0.269161
+        },
+        "10": {
+          "up": 0.767803,
+          "drawdown": 0.292455
+        }
+      },
+      "rank": 19
+    },
+    {
+      "industry": "橡胶",
+      "memberCount": 13,
+      "heat": 54.985951,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.026013,
+      "ret5": 0.061903,
+      "ret10": -0.012078,
+      "breadth3": 0.589744,
+      "amountRatio3_20": 0.803699,
+      "consensusScore": 0.142456,
+      "models": {
+        "macdVolume": {
+          "score": 0.261545,
+          "signal": "MACD转弱",
+          "histPct": 0.007026,
+          "amountRatio": 0.803699
+        },
+        "quantileExtreme": {
+          "score": 0.773333,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.716667
+        },
+        "dualMA": {
+          "score": -0.647207,
+          "signal": "双均线空头",
+          "maSpread": -0.018435,
+          "ma20Slope5": -0.020476
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.653264,
+          "drawdown": 0.356411
+        },
+        "5": {
+          "up": 0.632129,
+          "drawdown": 0.367465
+        },
+        "10": {
+          "up": 0.610475,
+          "drawdown": 0.37866
+        }
+      },
+      "rank": 20
+    },
+    {
+      "industry": "石油开采",
+      "memberCount": 20,
+      "heat": 54.821036,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.056183,
+      "ret5": 0.067745,
+      "ret10": -0.014892,
+      "breadth3": 0.7,
+      "amountRatio3_20": 1.270275,
+      "consensusScore": 0.137744,
+      "models": {
+        "macdVolume": {
+          "score": 0.439893,
+          "signal": "MACD转弱",
+          "histPct": 0.007331,
+          "amountRatio": 1.270275
+        },
+        "quantileExtreme": {
+          "score": 0.866667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.833333
+        },
+        "dualMA": {
+          "score": -0.994045,
+          "signal": "双均线空头",
+          "maSpread": -0.043612,
+          "ma20Slope5": -0.039404
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.759786,
+          "drawdown": 0.297259
+        },
+        "5": {
+          "up": 0.729602,
+          "drawdown": 0.314804
+        },
+        "10": {
+          "up": 0.697137,
+          "drawdown": 0.332894
+        }
+      },
+      "rank": 21
+    },
+    {
+      "industry": "种植业",
+      "memberCount": 17,
+      "heat": 54.652073,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.056573,
+      "ret5": 0.07319,
+      "ret10": 0.000441,
+      "breadth3": 0.784314,
+      "amountRatio3_20": 1.042877,
+      "consensusScore": 0.132916,
+      "models": {
+        "macdVolume": {
+          "score": 0.414292,
+          "signal": "MACD转弱",
+          "histPct": 0.008178,
+          "amountRatio": 1.042877
+        },
+        "quantileExtreme": {
+          "score": 0.786667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.733333
+        },
+        "dualMA": {
+          "score": -0.896002,
+          "signal": "双均线空头",
+          "maSpread": -0.030672,
+          "ma20Slope5": -0.0296
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.782982,
+          "drawdown": 0.283162
+        },
+        "5": {
+          "up": 0.751615,
+          "drawdown": 0.30209
+        },
+        "10": {
+          "up": 0.71735,
+          "drawdown": 0.321714
+        }
+      },
+      "rank": 22
+    },
+    {
+      "industry": "纺织",
+      "memberCount": 41,
+      "heat": 54.080591,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.04353,
+      "ret5": 0.058578,
+      "ret10": 0.001619,
+      "breadth3": 0.747967,
+      "amountRatio3_20": 1.148226,
+      "consensusScore": 0.116588,
+      "models": {
+        "macdVolume": {
+          "score": 0.39052,
+          "signal": "MACD转弱",
+          "histPct": 0.007215,
+          "amountRatio": 1.148226
+        },
+        "quantileExtreme": {
+          "score": 0.72,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.65
+        },
+        "dualMA": {
+          "score": -0.852065,
+          "signal": "双均线空头",
+          "maSpread": -0.025901,
+          "ma20Slope5": -0.025207
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.739178,
+          "drawdown": 0.309323
+        },
+        "5": {
+          "up": 0.710325,
+          "drawdown": 0.325629
+        },
+        "10": {
+          "up": 0.679664,
+          "drawdown": 0.342368
+        }
+      },
+      "rank": 23
+    },
+    {
+      "industry": "化工机械",
+      "memberCount": 12,
+      "heat": 53.952865,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.038466,
+      "ret5": 0.065069,
+      "ret10": -0.008676,
+      "breadth3": 0.694444,
+      "amountRatio3_20": 0.980062,
+      "consensusScore": 0.112939,
+      "models": {
+        "macdVolume": {
+          "score": 0.350253,
+          "signal": "MACD转弱",
+          "histPct": 0.007425,
+          "amountRatio": 0.980062
+        },
+        "quantileExtreme": {
+          "score": 0.746667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.683333
+        },
+        "dualMA": {
+          "score": -0.837207,
+          "signal": "双均线空头",
+          "maSpread": -0.029735,
+          "ma20Slope5": -0.023721
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.714089,
+          "drawdown": 0.323536
+        },
+        "5": {
+          "up": 0.687165,
+          "drawdown": 0.338321
+        },
+        "10": {
+          "up": 0.658916,
+          "drawdown": 0.353428
+        }
+      },
+      "rank": 24
+    },
+    {
+      "industry": "家用电器",
+      "memberCount": 79,
+      "heat": 53.910722,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.024434,
+      "ret5": 0.048397,
+      "ret10": -0.000666,
+      "breadth3": 0.631013,
+      "amountRatio3_20": 1.007909,
+      "consensusScore": 0.111735,
+      "models": {
+        "macdVolume": {
+          "score": 0.294722,
+          "signal": "MACD转弱",
+          "histPct": 0.006561,
+          "amountRatio": 1.007909
+        },
+        "quantileExtreme": {
+          "score": 0.62,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.55
+        },
+        "dualMA": {
+          "score": -0.640513,
+          "signal": "双均线空头",
+          "maSpread": -0.017452,
+          "ma20Slope5": -0.022167
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.653822,
+          "drawdown": 0.356117
+        },
+        "5": {
+          "up": 0.632629,
+          "drawdown": 0.367205
+        },
+        "10": {
+          "up": 0.61091,
+          "drawdown": 0.378436
+        }
+      },
+      "rank": 25
+    },
+    {
+      "industry": "化纤",
+      "memberCount": 30,
+      "heat": 53.817904,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.037009,
+      "ret5": 0.056739,
+      "ret10": -0.015128,
+      "breadth3": 0.711111,
+      "amountRatio3_20": 0.804741,
+      "consensusScore": 0.109083,
+      "models": {
+        "macdVolume": {
+          "score": 0.231325,
+          "signal": "MACD转弱",
+          "histPct": 0.006619,
+          "amountRatio": 0.804741
+        },
+        "quantileExtreme": {
+          "score": 0.726667,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.683333
+        },
+        "dualMA": {
+          "score": -0.67149,
+          "signal": "双均线空头",
+          "maSpread": -0.020276,
+          "ma20Slope5": -0.018486
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.695704,
+          "drawdown": 0.333677
+        },
+        "5": {
+          "up": 0.670379,
+          "drawdown": 0.347341
+        },
+        "10": {
+          "up": 0.644025,
+          "drawdown": 0.361261
+        }
+      },
+      "rank": 26
+    },
+    {
+      "industry": "林业",
+      "memberCount": 4,
+      "heat": 53.624314,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.046209,
+      "ret5": 0.088225,
+      "ret10": 0.018431,
+      "breadth3": 0.75,
+      "amountRatio3_20": 0.82605,
+      "consensusScore": 0.103552,
+      "models": {
+        "macdVolume": {
+          "score": 0.342017,
+          "signal": "MACD转弱",
+          "histPct": 0.010603,
+          "amountRatio": 0.82605
+        },
+        "quantileExtreme": {
+          "score": 0.693333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.616667
+        },
+        "dualMA": {
+          "score": -0.804183,
+          "signal": "双均线空头",
+          "maSpread": -0.020395,
+          "ma20Slope5": -0.031471
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.770687,
+          "drawdown": 0.290709
+        },
+        "5": {
+          "up": 0.739902,
+          "drawdown": 0.308906
+        },
+        "10": {
+          "up": 0.706558,
+          "drawdown": 0.327715
+        }
+      },
+      "rank": 27
+    },
+    {
+      "industry": "公共交通",
+      "memberCount": 7,
+      "heat": 53.540174,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.045139,
+      "ret5": 0.064568,
+      "ret10": 0.009356,
+      "breadth3": 0.714286,
+      "amountRatio3_20": 0.808693,
+      "consensusScore": 0.101148,
+      "models": {
+        "macdVolume": {
+          "score": 0.336231,
+          "signal": "MACD转弱",
+          "histPct": 0.009216,
+          "amountRatio": 0.808693
+        },
+        "quantileExtreme": {
+          "score": 0.68,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.6
+        },
+        "dualMA": {
+          "score": -0.791148,
+          "signal": "双均线空头",
+          "maSpread": -0.021157,
+          "ma20Slope5": -0.028337
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.732417,
+          "drawdown": 0.313201
+        },
+        "5": {
+          "up": 0.704052,
+          "drawdown": 0.329098
+        },
+        "10": {
+          "up": 0.67402,
+          "drawdown": 0.345396
+        }
+      },
+      "rank": 28
+    },
+    {
+      "industry": "园区开发",
+      "memberCount": 14,
+      "heat": 53.260076,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.034678,
+      "ret5": 0.041166,
+      "ret10": 0.00235,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 1.098907,
+      "consensusScore": 0.093145,
+      "models": {
+        "macdVolume": {
+          "score": 0.23903,
+          "signal": "MACD转弱",
+          "histPct": 0.005414,
+          "amountRatio": 1.098907
+        },
+        "quantileExtreme": {
+          "score": 0.673333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.616667
+        },
+        "dualMA": {
+          "score": -0.681557,
+          "signal": "双均线空头",
+          "maSpread": -0.019183,
+          "ma20Slope5": -0.022117
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.678925,
+          "drawdown": 0.342765
+        },
+        "5": {
+          "up": 0.655181,
+          "drawdown": 0.355401
+        },
+        "10": {
+          "up": 0.630635,
+          "drawdown": 0.368241
+        }
+      },
+      "rank": 29
+    },
+    {
+      "industry": "农用机械",
+      "memberCount": 12,
+      "heat": 52.691181,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.038103,
+      "ret5": 0.07008,
+      "ret10": 0.009066,
+      "breadth3": 0.833333,
+      "amountRatio3_20": 0.927542,
+      "consensusScore": 0.076891,
+      "models": {
+        "macdVolume": {
+          "score": 0.288923,
+          "signal": "MACD转弱",
+          "histPct": 0.006841,
+          "amountRatio": 0.927542
+        },
+        "quantileExtreme": {
+          "score": 0.64,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.55
+        },
+        "dualMA": {
+          "score": -0.768928,
+          "signal": "双均线空头",
+          "maSpread": -0.021425,
+          "ma20Slope5": -0.025473
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.752014,
+          "drawdown": 0.301855
+        },
+        "5": {
+          "up": 0.722303,
+          "drawdown": 0.318934
+        },
+        "10": {
+          "up": 0.690497,
+          "drawdown": 0.336513
+        }
+      },
+      "rank": 30
+    },
+    {
+      "industry": "农药化肥",
+      "memberCount": 55,
+      "heat": 52.499395,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.050143,
+      "ret5": 0.063191,
+      "ret10": -0.014522,
+      "breadth3": 0.812121,
+      "amountRatio3_20": 0.889139,
+      "consensusScore": 0.071411,
+      "models": {
+        "macdVolume": {
+          "score": 0.296717,
+          "signal": "MACD转弱",
+          "histPct": 0.007116,
+          "amountRatio": 0.889139
+        },
+        "quantileExtreme": {
+          "score": 0.746667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.683333
+        },
+        "dualMA": {
+          "score": -0.904252,
+          "signal": "双均线空头",
+          "maSpread": -0.034521,
+          "ma20Slope5": -0.030425
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.750798,
+          "drawdown": 0.302569
+        },
+        "5": {
+          "up": 0.721165,
+          "drawdown": 0.319575
+        },
+        "10": {
+          "up": 0.689464,
+          "drawdown": 0.337074
+        }
+      },
+      "rank": 31
+    },
+    {
+      "industry": "酒店餐饮",
+      "memberCount": 9,
+      "heat": 52.388898,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.041025,
+      "ret5": 0.055732,
+      "ret10": -0.005837,
+      "breadth3": 0.777778,
+      "amountRatio3_20": 1.05658,
+      "consensusScore": 0.068254,
+      "models": {
+        "macdVolume": {
+          "score": 0.312911,
+          "signal": "MACD转弱",
+          "histPct": 0.006587,
+          "amountRatio": 1.05658
+        },
+        "quantileExtreme": {
+          "score": 0.733333,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.666667
+        },
+        "dualMA": {
+          "score": -0.923033,
+          "signal": "双均线空头",
+          "maSpread": -0.037811,
+          "ma20Slope5": -0.032303
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.726731,
+          "drawdown": 0.316434
+        },
+        "5": {
+          "up": 0.698796,
+          "drawdown": 0.331986
+        },
+        "10": {
+          "up": 0.669304,
+          "drawdown": 0.347914
+        }
+      },
+      "rank": 32
+    },
+    {
+      "industry": "黄金",
+      "memberCount": 10,
+      "heat": 52.26944,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头",
+        "短线过热"
+      ],
+      "ret3": 0.121416,
+      "ret5": 0.092226,
+      "ret10": -0.087508,
+      "breadth3": 0.9,
+      "amountRatio3_20": 1.241593,
+      "consensusScore": 0.064841,
+      "models": {
+        "macdVolume": {
+          "score": 0.387103,
+          "signal": "MACD转弱",
+          "histPct": 0.006754,
+          "amountRatio": 1.241593
+        },
+        "quantileExtreme": {
+          "score": 0.7,
+          "signal": "强势极值",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 0.7
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.063515,
+          "ma20Slope5": -0.04297
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.849829,
+          "drawdown": 0.263237
+        },
+        "5": {
+          "up": 0.817468,
+          "drawdown": 0.287502
+        },
+        "10": {
+          "up": 0.779941,
+          "drawdown": 0.313053
+        }
+      },
+      "rank": 33
+    },
+    {
+      "industry": "超市连锁",
+      "memberCount": 8,
+      "heat": 52.260779,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.055132,
+      "ret5": 0.07687,
+      "ret10": 0.014782,
+      "breadth3": 0.875,
+      "amountRatio3_20": 1.046004,
+      "consensusScore": 0.064594,
+      "models": {
+        "macdVolume": {
+          "score": 0.341002,
+          "signal": "MACD转弱",
+          "histPct": 0.007009,
+          "amountRatio": 1.046004
+        },
+        "quantileExtreme": {
+          "score": 0.666667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.583333
+        },
+        "dualMA": {
+          "score": -0.906023,
+          "signal": "双均线空头",
+          "maSpread": -0.02481,
+          "ma20Slope5": -0.031058
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.800202,
+          "drawdown": 0.272271
+        },
+        "5": {
+          "up": 0.768203,
+          "drawdown": 0.292213
+        },
+        "10": {
+          "up": 0.732792,
+          "drawdown": 0.312987
+        }
+      },
+      "rank": 34
+    },
+    {
+      "industry": "航空",
+      "memberCount": 39,
+      "heat": 52.146205,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.00171,
+      "ret5": 0.042369,
+      "ret10": -0.046147,
+      "breadth3": 0.452991,
+      "amountRatio3_20": 1.030502,
+      "consensusScore": 0.06132,
+      "models": {
+        "macdVolume": {
+          "score": 0.254404,
+          "signal": "MACD转弱",
+          "histPct": 0.005923,
+          "amountRatio": 1.030502
+        },
+        "quantileExtreme": {
+          "score": 0.633333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 0.616667
+        },
+        "dualMA": {
+          "score": -0.768138,
+          "signal": "双均线空头",
+          "maSpread": -0.024351,
+          "ma20Slope5": -0.018371
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.511239,
+          "drawdown": 0.429233
+        },
+        "5": {
+          "up": 0.507209,
+          "drawdown": 0.431289
+        },
+        "10": {
+          "up": 0.503178,
+          "drawdown": 0.433346
+        }
+      },
+      "rank": 35
+    },
+    {
+      "industry": "互联网",
+      "memberCount": 79,
+      "heat": 52.102704,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.020404,
+      "ret5": 0.051298,
+      "ret10": -0.046715,
+      "breadth3": 0.590717,
+      "amountRatio3_20": 1.183136,
+      "consensusScore": 0.060077,
+      "models": {
+        "macdVolume": {
+          "score": 0.378014,
+          "signal": "MACD转弱",
+          "histPct": 0.006893,
+          "amountRatio": 1.183136
+        },
+        "quantileExtreme": {
+          "score": 0.593333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.516667
+        },
+        "dualMA": {
+          "score": -0.897094,
+          "signal": "双均线空头",
+          "maSpread": -0.027005,
+          "ma20Slope5": -0.029709
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.611777,
+          "drawdown": 0.37799
+        },
+        "5": {
+          "up": 0.595267,
+          "drawdown": 0.386462
+        },
+        "10": {
+          "up": 0.578539,
+          "drawdown": 0.395004
+        }
+      },
+      "rank": 36
+    },
+    {
+      "industry": "机床制造",
+      "memberCount": 17,
+      "heat": 51.86085,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.030073,
+      "ret5": 0.077093,
+      "ret10": -0.009416,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 1.004136,
+      "consensusScore": 0.053167,
+      "models": {
+        "macdVolume": {
+          "score": 0.153094,
+          "signal": "MACD转弱",
+          "histPct": 0.00469,
+          "amountRatio": 1.004136
+        },
+        "quantileExtreme": {
+          "score": 0.593333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.516667
+        },
+        "dualMA": {
+          "score": -0.620235,
+          "signal": "双均线空头",
+          "maSpread": -0.02083,
+          "ma20Slope5": -0.012032
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.697286,
+          "drawdown": 0.332812
+        },
+        "5": {
+          "up": 0.671818,
+          "drawdown": 0.346573
+        },
+        "10": {
+          "up": 0.645298,
+          "drawdown": 0.360594
+        }
+      },
+      "rank": 37
+    },
+    {
+      "industry": "特种钢",
+      "memberCount": 9,
+      "heat": 51.85456,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.02806,
+      "ret5": 0.047007,
+      "ret10": -0.0341,
+      "breadth3": 0.740741,
+      "amountRatio3_20": 0.861281,
+      "consensusScore": 0.052987,
+      "models": {
+        "macdVolume": {
+          "score": 0.159315,
+          "signal": "MACD转弱",
+          "histPct": 0.005407,
+          "amountRatio": 0.861281
+        },
+        "quantileExtreme": {
+          "score": 0.786667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.733333
+        },
+        "dualMA": {
+          "score": -0.822461,
+          "signal": "双均线空头",
+          "maSpread": -0.025468,
+          "ma20Slope5": -0.022246
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.657944,
+          "drawdown": 0.353942
+        },
+        "5": {
+          "up": 0.636318,
+          "drawdown": 0.365285
+        },
+        "10": {
+          "up": 0.614126,
+          "drawdown": 0.37678
+        }
+      },
+      "rank": 38
+    },
+    {
+      "industry": "食品",
+      "memberCount": 85,
+      "heat": 51.775842,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.037473,
+      "ret5": 0.050208,
+      "ret10": 0.006769,
+      "breadth3": 0.760784,
+      "amountRatio3_20": 0.899396,
+      "consensusScore": 0.050738,
+      "models": {
+        "macdVolume": {
+          "score": 0.231162,
+          "signal": "MACD转弱",
+          "histPct": 0.006196,
+          "amountRatio": 0.899396
+        },
+        "quantileExtreme": {
+          "score": 0.653333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.566667
+        },
+        "dualMA": {
+          "score": -0.792422,
+          "signal": "双均线空头",
+          "maSpread": -0.02282,
+          "ma20Slope5": -0.024475
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.708509,
+          "drawdown": 0.326636
+        },
+        "5": {
+          "up": 0.682055,
+          "drawdown": 0.341081
+        },
+        "10": {
+          "up": 0.654371,
+          "drawdown": 0.355828
+        }
+      },
+      "rank": 39
+    },
+    {
+      "industry": "轻工机械",
+      "memberCount": 7,
+      "heat": 51.635786,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.021215,
+      "ret5": 0.04171,
+      "ret10": 0.002339,
+      "breadth3": 0.619048,
+      "amountRatio3_20": 1.112479,
+      "consensusScore": 0.046737,
+      "models": {
+        "macdVolume": {
+          "score": 0.319408,
+          "signal": "MACD转弱",
+          "histPct": 0.006426,
+          "amountRatio": 1.112479
+        },
+        "quantileExtreme": {
+          "score": 0.553333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -0.823421,
+          "signal": "双均线空头",
+          "maSpread": -0.024006,
+          "ma20Slope5": -0.024728
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.631833,
+          "drawdown": 0.367619
+        },
+        "5": {
+          "up": 0.613032,
+          "drawdown": 0.377343
+        },
+        "10": {
+          "up": 0.593889,
+          "drawdown": 0.387168
+        }
+      },
+      "rank": 40
+    },
+    {
+      "industry": "综合类",
+      "memberCount": 18,
+      "heat": 51.43323,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.02902,
+      "ret5": 0.063284,
+      "ret10": -0.011844,
+      "breadth3": 0.62963,
+      "amountRatio3_20": 1.078604,
+      "consensusScore": 0.040949,
+      "models": {
+        "macdVolume": {
+          "score": 0.400511,
+          "signal": "MACD转弱",
+          "histPct": 0.007657,
+          "amountRatio": 1.078604
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -0.97085,
+          "signal": "双均线空头",
+          "maSpread": -0.035763,
+          "ma20Slope5": -0.037085
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.669424,
+          "drawdown": 0.34785
+        },
+        "5": {
+          "up": 0.646621,
+          "drawdown": 0.359901
+        },
+        "10": {
+          "up": 0.623129,
+          "drawdown": 0.372132
+        }
+      },
+      "rank": 41
+    },
+    {
+      "industry": "白酒",
+      "memberCount": 19,
+      "heat": 51.326423,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.033289,
+      "ret5": 0.043108,
+      "ret10": -0.0092,
+      "breadth3": 0.701754,
+      "amountRatio3_20": 1.037419,
+      "consensusScore": 0.037898,
+      "models": {
+        "macdVolume": {
+          "score": 0.242973,
+          "signal": "MACD转弱",
+          "histPct": 0.00574,
+          "amountRatio": 1.037419
+        },
+        "quantileExtreme": {
+          "score": 0.686667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.633333
+        },
+        "dualMA": {
+          "score": -0.884305,
+          "signal": "双均线空头",
+          "maSpread": -0.024509,
+          "ma20Slope5": -0.029609
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.672357,
+          "drawdown": 0.346285
+        },
+        "5": {
+          "up": 0.64926,
+          "drawdown": 0.358516
+        },
+        "10": {
+          "up": 0.625441,
+          "drawdown": 0.370935
+        }
+      },
+      "rank": 42
+    },
+    {
+      "industry": "水运",
+      "memberCount": 18,
+      "heat": 51.295054,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.036898,
+      "ret5": 0.038646,
+      "ret10": -0.012511,
+      "breadth3": 0.796296,
+      "amountRatio3_20": 0.769878,
+      "consensusScore": 0.037002,
+      "models": {
+        "macdVolume": {
+          "score": -0.034277,
+          "signal": "MACD转弱",
+          "histPct": 0.003232,
+          "amountRatio": 0.769878
+        },
+        "quantileExtreme": {
+          "score": 0.84,
+          "signal": "强势极值",
+          "ret5Quantile": 0.966667,
+          "ret20Quantile": 0.85
+        },
+        "dualMA": {
+          "score": -0.670959,
+          "signal": "双均线空头",
+          "maSpread": -0.020324,
+          "ma20Slope5": -0.018319
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.686432,
+          "drawdown": 0.338717
+        },
+        "5": {
+          "up": 0.661967,
+          "drawdown": 0.351813
+        },
+        "10": {
+          "up": 0.636604,
+          "drawdown": 0.365136
+        }
+      },
+      "rank": 43
+    },
+    {
+      "industry": "广告包装",
+      "memberCount": 50,
+      "heat": 51.260806,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.029647,
+      "ret5": 0.064431,
+      "ret10": -0.031514,
+      "breadth3": 0.646667,
+      "amountRatio3_20": 1.168474,
+      "consensusScore": 0.036023,
+      "models": {
+        "macdVolume": {
+          "score": 0.282181,
+          "signal": "MACD转弱",
+          "histPct": 0.00568,
+          "amountRatio": 1.168474
+        },
+        "quantileExtreme": {
+          "score": 0.64,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.55
+        },
+        "dualMA": {
+          "score": -0.896164,
+          "signal": "双均线空头",
+          "maSpread": -0.034289,
+          "ma20Slope5": -0.029616
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.668478,
+          "drawdown": 0.348354
+        },
+        "5": {
+          "up": 0.64577,
+          "drawdown": 0.360347
+        },
+        "10": {
+          "up": 0.622384,
+          "drawdown": 0.372517
+        }
+      },
+      "rank": 44
+    },
+    {
+      "industry": "软饮料",
+      "memberCount": 9,
+      "heat": 51.221863,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.023455,
+      "ret5": 0.0534,
+      "ret10": 0.007543,
+      "breadth3": 0.592593,
+      "amountRatio3_20": 0.937248,
+      "consensusScore": 0.03491,
+      "models": {
+        "macdVolume": {
+          "score": 0.076035,
+          "signal": "MACD转弱",
+          "histPct": 0.003959,
+          "amountRatio": 0.937248
+        },
+        "quantileExtreme": {
+          "score": 0.533333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.416667
+        },
+        "dualMA": {
+          "score": -0.518346,
+          "signal": "双均线空头",
+          "maSpread": -0.013318,
+          "ma20Slope5": -0.019871
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.639821,
+          "drawdown": 0.363458
+        },
+        "5": {
+          "up": 0.620135,
+          "drawdown": 0.373679
+        },
+        "10": {
+          "up": 0.600047,
+          "drawdown": 0.384014
+        }
+      },
+      "rank": 45
+    },
+    {
+      "industry": "影视音像",
+      "memberCount": 34,
+      "heat": 51.154149,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.037745,
+      "ret5": 0.059788,
+      "ret10": -0.018466,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 1.127379,
+      "consensusScore": 0.032976,
+      "models": {
+        "macdVolume": {
+          "score": 0.415156,
+          "signal": "MACD转弱",
+          "histPct": 0.007636,
+          "amountRatio": 1.127379
+        },
+        "quantileExtreme": {
+          "score": 0.52,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.4
+        },
+        "dualMA": {
+          "score": -0.963622,
+          "signal": "双均线空头",
+          "maSpread": -0.031305,
+          "ma20Slope5": -0.036362
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.69046,
+          "drawdown": 0.336533
+        },
+        "5": {
+          "up": 0.665618,
+          "drawdown": 0.349876
+        },
+        "10": {
+          "up": 0.639821,
+          "drawdown": 0.363458
+        }
+      },
+      "rank": 46
+    },
+    {
+      "industry": "日用化工",
+      "memberCount": 18,
+      "heat": 51.015033,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.040857,
+      "ret5": 0.056213,
+      "ret10": 0.001382,
+      "breadth3": 0.796296,
+      "amountRatio3_20": 1.004739,
+      "consensusScore": 0.029001,
+      "models": {
+        "macdVolume": {
+          "score": 0.276091,
+          "signal": "MACD转弱",
+          "histPct": 0.006327,
+          "amountRatio": 1.004739
+        },
+        "quantileExtreme": {
+          "score": 0.64,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.55
+        },
+        "dualMA": {
+          "score": -0.911452,
+          "signal": "双均线空头",
+          "maSpread": -0.030878,
+          "ma20Slope5": -0.031145
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.728529,
+          "drawdown": 0.315414
+        },
+        "5": {
+          "up": 0.700456,
+          "drawdown": 0.331075
+        },
+        "10": {
+          "up": 0.670793,
+          "drawdown": 0.34712
+        }
+      },
+      "rank": 47
+    },
+    {
+      "industry": "多元金融",
+      "memberCount": 23,
+      "heat": 50.793954,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.013062,
+      "ret5": 0.046794,
+      "ret10": -0.047663,
+      "breadth3": 0.637681,
+      "amountRatio3_20": 0.908433,
+      "consensusScore": 0.022684,
+      "models": {
+        "macdVolume": {
+          "score": 0.135467,
+          "signal": "MACD转弱",
+          "histPct": 0.00488,
+          "amountRatio": 0.908433
+        },
+        "quantileExtreme": {
+          "score": 0.746667,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.683333
+        },
+        "dualMA": {
+          "score": -0.851675,
+          "signal": "双均线空头",
+          "maSpread": -0.026506,
+          "ma20Slope5": -0.025168
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.585861,
+          "drawdown": 0.39127
+        },
+        "5": {
+          "up": 0.572437,
+          "drawdown": 0.398112
+        },
+        "10": {
+          "up": 0.558905,
+          "drawdown": 0.404995
+        }
+      },
+      "rank": 48
+    },
+    {
+      "industry": "旅游景点",
+      "memberCount": 18,
+      "heat": 50.717049,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.033782,
+      "ret5": 0.046417,
+      "ret10": 0.003447,
+      "breadth3": 0.740741,
+      "amountRatio3_20": 0.886162,
+      "consensusScore": 0.020487,
+      "models": {
+        "macdVolume": {
+          "score": 0.110139,
+          "signal": "MACD转弱",
+          "histPct": 0.004641,
+          "amountRatio": 0.886162
+        },
+        "quantileExtreme": {
+          "score": 0.76,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.7
+        },
+        "dualMA": {
+          "score": -0.838562,
+          "signal": "双均线空头",
+          "maSpread": -0.028196,
+          "ma20Slope5": -0.023856
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.685956,
+          "drawdown": 0.338975
+        },
+        "5": {
+          "up": 0.661536,
+          "drawdown": 0.352042
+        },
+        "10": {
+          "up": 0.636224,
+          "drawdown": 0.365334
+        }
+      },
+      "rank": 49
+    },
+    {
+      "industry": "服饰",
+      "memberCount": 65,
+      "heat": 50.69865,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.038921,
+      "ret5": 0.055456,
+      "ret10": 0.001228,
+      "breadth3": 0.752163,
+      "amountRatio3_20": 0.922162,
+      "consensusScore": 0.019961,
+      "models": {
+        "macdVolume": {
+          "score": 0.216372,
+          "signal": "MACD转弱",
+          "histPct": 0.005898,
+          "amountRatio": 0.922162
+        },
+        "quantileExtreme": {
+          "score": 0.64,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.55
+        },
+        "dualMA": {
+          "score": -0.861958,
+          "signal": "双均线空头",
+          "maSpread": -0.024728,
+          "ma20Slope5": -0.026849
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.709921,
+          "drawdown": 0.325854
+        },
+        "5": {
+          "up": 0.683346,
+          "drawdown": 0.340385
+        },
+        "10": {
+          "up": 0.655518,
+          "drawdown": 0.355223
+        }
+      },
+      "rank": 50
+    },
+    {
+      "industry": "石油贸易",
+      "memberCount": 4,
+      "heat": 50.342168,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.046095,
+      "ret5": 0.070807,
+      "ret10": -0.014781,
+      "breadth3": 0.75,
+      "amountRatio3_20": 1.074037,
+      "consensusScore": 0.009776,
+      "models": {
+        "macdVolume": {
+          "score": 0.384441,
+          "signal": "MACD转弱",
+          "histPct": 0.007463,
+          "amountRatio": 1.074037
+        },
+        "quantileExtreme": {
+          "score": 0.52,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.4
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.040747,
+          "ma20Slope5": -0.046672
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.736473,
+          "drawdown": 0.310879
+        },
+        "5": {
+          "up": 0.707813,
+          "drawdown": 0.327021
+        },
+        "10": {
+          "up": 0.677401,
+          "drawdown": 0.343584
+        }
+      },
+      "rank": 51
+    },
+    {
+      "industry": "建筑工程",
+      "memberCount": 118,
+      "heat": 50.272216,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.028984,
+      "ret5": 0.048008,
+      "ret10": -0.020467,
+      "breadth3": 0.679557,
+      "amountRatio3_20": 0.908895,
+      "consensusScore": 0.007778,
+      "models": {
+        "macdVolume": {
+          "score": 0.202624,
+          "signal": "MACD转弱",
+          "histPct": 0.005773,
+          "amountRatio": 0.908895
+        },
+        "quantileExtreme": {
+          "score": 0.653333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.566667
+        },
+        "dualMA": {
+          "score": -0.897573,
+          "signal": "双均线空头",
+          "maSpread": -0.031245,
+          "ma20Slope5": -0.029757
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.648854,
+          "drawdown": 0.358729
+        },
+        "5": {
+          "up": 0.628189,
+          "drawdown": 0.369511
+        },
+        "10": {
+          "up": 0.607045,
+          "drawdown": 0.380423
+        }
+      },
+      "rank": 52
+    },
+    {
+      "industry": "百货",
+      "memberCount": 35,
+      "heat": 50.268493,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.051912,
+      "ret5": 0.071199,
+      "ret10": 0.011451,
+      "breadth3": 0.771429,
+      "amountRatio3_20": 0.950274,
+      "consensusScore": 0.007671,
+      "models": {
+        "macdVolume": {
+          "score": 0.297243,
+          "signal": "MACD转弱",
+          "histPct": 0.006851,
+          "amountRatio": 0.950274
+        },
+        "quantileExtreme": {
+          "score": 0.56,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.45
+        },
+        "dualMA": {
+          "score": -0.930753,
+          "signal": "双均线空头",
+          "maSpread": -0.029199,
+          "ma20Slope5": -0.033075
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.760012,
+          "drawdown": 0.297125
+        },
+        "5": {
+          "up": 0.729814,
+          "drawdown": 0.314683
+        },
+        "10": {
+          "up": 0.69733,
+          "drawdown": 0.332788
+        }
+      },
+      "rank": 53
+    },
+    {
+      "industry": "船舶",
+      "memberCount": 11,
+      "heat": 50.074629,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.012888,
+      "ret5": 0.038962,
+      "ret10": -0.053342,
+      "breadth3": 0.484848,
+      "amountRatio3_20": 1.366083,
+      "consensusScore": 0.002132,
+      "models": {
+        "macdVolume": {
+          "score": 0.273806,
+          "signal": "MACD转弱",
+          "histPct": 0.00469,
+          "amountRatio": 1.366083
+        },
+        "quantileExtreme": {
+          "score": 0.493333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.866667,
+          "ret20Quantile": 0.566667
+        },
+        "dualMA": {
+          "score": -0.8513,
+          "signal": "双均线空头",
+          "maSpread": -0.030962,
+          "ma20Slope5": -0.02513
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.541782,
+          "drawdown": 0.413696
+        },
+        "5": {
+          "up": 0.533843,
+          "drawdown": 0.417729
+        },
+        "10": {
+          "up": 0.525887,
+          "drawdown": 0.421774
+        }
+      },
+      "rank": 54
+    },
+    {
+      "industry": "石油加工",
+      "memberCount": 13,
+      "heat": 49.659217,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.049345,
+      "ret5": 0.08344,
+      "ret10": -0.013775,
+      "breadth3": 0.769231,
+      "amountRatio3_20": 0.956631,
+      "consensusScore": -0.009737,
+      "models": {
+        "macdVolume": {
+          "score": 0.295658,
+          "signal": "MACD转弱",
+          "histPct": 0.006802,
+          "amountRatio": 0.956631
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.044288,
+          "ma20Slope5": -0.040417
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.754704,
+          "drawdown": 0.300271
+        },
+        "5": {
+          "up": 0.724825,
+          "drawdown": 0.317512
+        },
+        "10": {
+          "up": 0.692788,
+          "drawdown": 0.335267
+        }
+      },
+      "rank": 55
+    },
+    {
+      "industry": "乳制品",
+      "memberCount": 20,
+      "heat": 49.42432,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.046925,
+      "ret5": 0.049787,
+      "ret10": -0.004198,
+      "breadth3": 0.833333,
+      "amountRatio3_20": 1.069885,
+      "consensusScore": -0.016448,
+      "models": {
+        "macdVolume": {
+          "score": 0.260942,
+          "signal": "MACD转弱",
+          "histPct": 0.005835,
+          "amountRatio": 1.069885
+        },
+        "quantileExtreme": {
+          "score": 0.533333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.416667
+        },
+        "dualMA": {
+          "score": -0.936083,
+          "signal": "双均线空头",
+          "maSpread": -0.033379,
+          "ma20Slope5": -0.033608
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.736141,
+          "drawdown": 0.31107
+        },
+        "5": {
+          "up": 0.707505,
+          "drawdown": 0.327192
+        },
+        "10": {
+          "up": 0.677124,
+          "drawdown": 0.343733
+        }
+      },
+      "rank": 56
+    },
+    {
+      "industry": "文教休闲",
+      "memberCount": 51,
+      "heat": 49.387917,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.03498,
+      "ret5": 0.05319,
+      "ret10": -0.011404,
+      "breadth3": 0.72549,
+      "amountRatio3_20": 0.795532,
+      "consensusScore": -0.017488,
+      "models": {
+        "macdVolume": {
+          "score": 0.233135,
+          "signal": "MACD转弱",
+          "histPct": 0.006684,
+          "amountRatio": 0.795532
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -0.942474,
+          "signal": "双均线空头",
+          "maSpread": -0.03753,
+          "ma20Slope5": -0.034247
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.677025,
+          "drawdown": 0.343786
+        },
+        "5": {
+          "up": 0.653466,
+          "drawdown": 0.356304
+        },
+        "10": {
+          "up": 0.62913,
+          "drawdown": 0.369023
+        }
+      },
+      "rank": 57
+    },
+    {
+      "industry": "家居用品",
+      "memberCount": 68,
+      "heat": 49.382268,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.027533,
+      "ret5": 0.040672,
+      "ret10": -0.017222,
+      "breadth3": 0.651961,
+      "amountRatio3_20": 0.985504,
+      "consensusScore": -0.017649,
+      "models": {
+        "macdVolume": {
+          "score": 0.253319,
+          "signal": "MACD转弱",
+          "histPct": 0.006109,
+          "amountRatio": 0.985504
+        },
+        "quantileExtreme": {
+          "score": 0.546667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.433333
+        },
+        "dualMA": {
+          "score": -0.943257,
+          "signal": "双均线空头",
+          "maSpread": -0.034941,
+          "ma20Slope5": -0.034326
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.630497,
+          "drawdown": 0.368313
+        },
+        "5": {
+          "up": 0.611846,
+          "drawdown": 0.377954
+        },
+        "10": {
+          "up": 0.592862,
+          "drawdown": 0.387693
+        }
+      },
+      "rank": 58
+    },
+    {
+      "industry": "红黄酒",
+      "memberCount": 9,
+      "heat": 49.373411,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.046395,
+      "ret5": 0.056469,
+      "ret10": -0.002365,
+      "breadth3": 0.851852,
+      "amountRatio3_20": 0.905323,
+      "consensusScore": -0.017903,
+      "models": {
+        "macdVolume": {
+          "score": 0.099483,
+          "signal": "MACD转弱",
+          "histPct": 0.004414,
+          "amountRatio": 0.905323
+        },
+        "quantileExtreme": {
+          "score": 0.666667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.583333
+        },
+        "dualMA": {
+          "score": -0.858985,
+          "signal": "双均线空头",
+          "maSpread": -0.029906,
+          "ma20Slope5": -0.025899
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.741853,
+          "drawdown": 0.307779
+        },
+        "5": {
+          "up": 0.712814,
+          "drawdown": 0.324246
+        },
+        "10": {
+          "up": 0.681909,
+          "drawdown": 0.34116
+        }
+      },
+      "rank": 59
+    },
+    {
+      "industry": "钢加工",
+      "memberCount": 22,
+      "heat": 49.324134,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.036617,
+      "ret5": 0.045894,
+      "ret10": -0.023423,
+      "breadth3": 0.712121,
+      "amountRatio3_20": 0.981962,
+      "consensusScore": -0.01931,
+      "models": {
+        "macdVolume": {
+          "score": 0.20354,
+          "signal": "MACD转弱",
+          "histPct": 0.005461,
+          "amountRatio": 0.981962
+        },
+        "quantileExtreme": {
+          "score": 0.6,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.5
+        },
+        "dualMA": {
+          "score": -0.935755,
+          "signal": "双均线空头",
+          "maSpread": -0.037952,
+          "ma20Slope5": -0.033576
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.669355,
+          "drawdown": 0.347887
+        },
+        "5": {
+          "up": 0.646558,
+          "drawdown": 0.359934
+        },
+        "10": {
+          "up": 0.623075,
+          "drawdown": 0.37216
+        }
+      },
+      "rank": 60
+    },
+    {
+      "industry": "汽车整车",
+      "memberCount": 22,
+      "heat": 49.144942,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.035503,
+      "ret5": 0.046159,
+      "ret10": -0.025099,
+      "breadth3": 0.757576,
+      "amountRatio3_20": 1.100483,
+      "consensusScore": -0.02443,
+      "models": {
+        "macdVolume": {
+          "score": 0.234704,
+          "signal": "MACD转弱",
+          "histPct": 0.005349,
+          "amountRatio": 1.100483
+        },
+        "quantileExtreme": {
+          "score": 0.6,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.5
+        },
+        "dualMA": {
+          "score": -0.994373,
+          "signal": "双均线空头",
+          "maSpread": -0.049524,
+          "ma20Slope5": -0.039437
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.68097,
+          "drawdown": 0.341666
+        },
+        "5": {
+          "up": 0.657027,
+          "drawdown": 0.354427
+        },
+        "10": {
+          "up": 0.632257,
+          "drawdown": 0.367398
+        }
+      },
+      "rank": 61
+    },
+    {
+      "industry": "机械基件",
+      "memberCount": 104,
+      "heat": 48.961533,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.018274,
+      "ret5": 0.061448,
+      "ret10": -0.022198,
+      "breadth3": 0.586881,
+      "amountRatio3_20": 0.987305,
+      "consensusScore": -0.02967,
+      "models": {
+        "macdVolume": {
+          "score": 0.189261,
+          "signal": "MACD转弱",
+          "histPct": 0.005247,
+          "amountRatio": 0.987305
+        },
+        "quantileExtreme": {
+          "score": 0.506667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.966667,
+          "ret20Quantile": 0.433333
+        },
+        "dualMA": {
+          "score": -0.857917,
+          "signal": "双均线空头",
+          "maSpread": -0.027622,
+          "ma20Slope5": -0.025792
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.613784,
+          "drawdown": 0.376956
+        },
+        "5": {
+          "up": 0.597041,
+          "drawdown": 0.385554
+        },
+        "10": {
+          "up": 0.580068,
+          "drawdown": 0.394225
+        }
+      },
+      "rank": 62
+    },
+    {
+      "industry": "区域地产",
+      "memberCount": 44,
+      "heat": 48.887659,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.041421,
+      "ret5": 0.062791,
+      "ret10": -0.00558,
+      "breadth3": 0.613636,
+      "amountRatio3_20": 1.001985,
+      "consensusScore": -0.031781,
+      "models": {
+        "macdVolume": {
+          "score": 0.290547,
+          "signal": "MACD转弱",
+          "histPct": 0.006532,
+          "amountRatio": 1.001985
+        },
+        "quantileExtreme": {
+          "score": 0.506667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.383333
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.044409,
+          "ma20Slope5": -0.043367
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.683587,
+          "drawdown": 0.340255
+        },
+        "5": {
+          "up": 0.659392,
+          "drawdown": 0.353176
+        },
+        "10": {
+          "up": 0.634338,
+          "drawdown": 0.366316
+        }
+      },
+      "rank": 63
+    },
+    {
+      "industry": "染料涂料",
+      "memberCount": 32,
+      "heat": 48.83214,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.015767,
+      "ret5": 0.048657,
+      "ret10": -0.034867,
+      "breadth3": 0.614583,
+      "amountRatio3_20": 0.819171,
+      "consensusScore": -0.033367,
+      "models": {
+        "macdVolume": {
+          "score": -0.011187,
+          "signal": "MACD转弱",
+          "histPct": 0.003321,
+          "amountRatio": 0.819171
+        },
+        "quantileExtreme": {
+          "score": 0.646667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.583333
+        },
+        "dualMA": {
+          "score": -0.742976,
+          "signal": "双均线空头",
+          "maSpread": -0.023566,
+          "ma20Slope5": -0.017739
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.584193,
+          "drawdown": 0.392121
+        },
+        "5": {
+          "up": 0.570972,
+          "drawdown": 0.398858
+        },
+        "10": {
+          "up": 0.557648,
+          "drawdown": 0.405634
+        }
+      },
+      "rank": 64
+    },
+    {
+      "industry": "汽车配件",
+      "memberCount": 229,
+      "heat": 48.820237,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.027924,
+      "ret5": 0.061466,
+      "ret10": -0.025273,
+      "breadth3": 0.673945,
+      "amountRatio3_20": 0.946252,
+      "consensusScore": -0.033708,
+      "models": {
+        "macdVolume": {
+          "score": 0.200122,
+          "signal": "MACD转弱",
+          "histPct": 0.005574,
+          "amountRatio": 0.946252
+        },
+        "quantileExtreme": {
+          "score": 0.546667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.433333
+        },
+        "dualMA": {
+          "score": -0.925855,
+          "signal": "双均线空头",
+          "maSpread": -0.03778,
+          "ma20Slope5": -0.032585
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.655215,
+          "drawdown": 0.355383
+        },
+        "5": {
+          "up": 0.633874,
+          "drawdown": 0.366557
+        },
+        "10": {
+          "up": 0.611996,
+          "drawdown": 0.377877
+        }
+      },
+      "rank": 65
+    },
+    {
+      "industry": "旅游服务",
+      "memberCount": 8,
+      "heat": 48.670318,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.036353,
+      "ret5": 0.063422,
+      "ret10": -0.019961,
+      "breadth3": 0.767857,
+      "amountRatio3_20": 0.779564,
+      "consensusScore": -0.037991,
+      "models": {
+        "macdVolume": {
+          "score": 0.109918,
+          "signal": "MACD转弱",
+          "histPct": 0.005112,
+          "amountRatio": 0.779564
+        },
+        "quantileExtreme": {
+          "score": 0.68,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.6
+        },
+        "dualMA": {
+          "score": -0.953194,
+          "signal": "双均线空头",
+          "maSpread": -0.044547,
+          "ma20Slope5": -0.035319
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.694861,
+          "drawdown": 0.334137
+        },
+        "5": {
+          "up": 0.669613,
+          "drawdown": 0.347749
+        },
+        "10": {
+          "up": 0.643348,
+          "drawdown": 0.361615
+        }
+      },
+      "rank": 66
+    },
+    {
+      "industry": "工程机械",
+      "memberCount": 32,
+      "heat": 48.512585,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.025876,
+      "ret5": 0.03874,
+      "ret10": -0.042484,
+      "breadth3": 0.65625,
+      "amountRatio3_20": 0.991593,
+      "consensusScore": -0.042498,
+      "models": {
+        "macdVolume": {
+          "score": 0.111976,
+          "signal": "MACD转弱",
+          "histPct": 0.004197,
+          "amountRatio": 0.991593
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.966667,
+          "ret20Quantile": 0.516667
+        },
+        "dualMA": {
+          "score": -0.864294,
+          "signal": "双均线空头",
+          "maSpread": -0.036039,
+          "ma20Slope5": -0.026429
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.608417,
+          "drawdown": 0.379718
+        },
+        "5": {
+          "up": 0.5923,
+          "drawdown": 0.38798
+        },
+        "10": {
+          "up": 0.575981,
+          "drawdown": 0.396307
+        }
+      },
+      "rank": 67
+    },
+    {
+      "industry": "运输设备",
+      "memberCount": 39,
+      "heat": 48.385984,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.020938,
+      "ret5": 0.039833,
+      "ret10": -0.031544,
+      "breadth3": 0.622132,
+      "amountRatio3_20": 0.839315,
+      "consensusScore": -0.046115,
+      "models": {
+        "macdVolume": {
+          "score": 0.137095,
+          "signal": "MACD转弱",
+          "histPct": 0.005209,
+          "amountRatio": 0.839315
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -0.909842,
+          "signal": "双均线空头",
+          "maSpread": -0.036673,
+          "ma20Slope5": -0.030984
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.588169,
+          "drawdown": 0.390091
+        },
+        "5": {
+          "up": 0.574465,
+          "drawdown": 0.39708
+        },
+        "10": {
+          "up": 0.560645,
+          "drawdown": 0.404111
+        }
+      },
+      "rank": 68
+    },
+    {
+      "industry": "铝",
+      "memberCount": 30,
+      "heat": 48.377153,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.062541,
+      "ret5": 0.067132,
+      "ret10": -0.045043,
+      "breadth3": 0.655556,
+      "amountRatio3_20": 1.039798,
+      "consensusScore": -0.046367,
+      "models": {
+        "macdVolume": {
+          "score": 0.045776,
+          "signal": "MACD转弱",
+          "histPct": 0.0031,
+          "amountRatio": 1.039798
+        },
+        "quantileExtreme": {
+          "score": 0.733333,
+          "signal": "强势极值",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.666667
+        },
+        "dualMA": {
+          "score": -0.948925,
+          "signal": "双均线空头",
+          "maSpread": -0.038955,
+          "ma20Slope5": -0.034893
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.722494,
+          "drawdown": 0.318826
+        },
+        "5": {
+          "up": 0.694889,
+          "drawdown": 0.334122
+        },
+        "10": {
+          "up": 0.665809,
+          "drawdown": 0.349775
+        }
+      },
+      "rank": 69
+    },
+    {
+      "industry": "水泥",
+      "memberCount": 23,
+      "heat": 48.292319,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.040017,
+      "ret5": 0.044205,
+      "ret10": -0.018295,
+      "breadth3": 0.710145,
+      "amountRatio3_20": 1.00451,
+      "consensusScore": -0.048791,
+      "models": {
+        "macdVolume": {
+          "score": 0.137271,
+          "signal": "MACD转弱",
+          "histPct": 0.004477,
+          "amountRatio": 1.00451
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -0.918998,
+          "signal": "双均线空头",
+          "maSpread": -0.038951,
+          "ma20Slope5": -0.0319
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.674055,
+          "drawdown": 0.345377
+        },
+        "5": {
+          "up": 0.650789,
+          "drawdown": 0.357713
+        },
+        "10": {
+          "up": 0.626781,
+          "drawdown": 0.37024
+        }
+      },
+      "rank": 70
+    },
+    {
+      "industry": "空运",
+      "memberCount": 8,
+      "heat": 48.212844,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.00412,
+      "ret5": 0.009331,
+      "ret10": 0.004455,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 0.641581,
+      "consensusScore": -0.051062,
+      "models": {
+        "macdVolume": {
+          "score": -0.162085,
+          "signal": "MACD转弱",
+          "histPct": 0.002069,
+          "amountRatio": 0.641581
+        },
+        "quantileExtreme": {
+          "score": 0.433333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.65,
+          "ret20Quantile": 0.816667
+        },
+        "dualMA": {
+          "score": -0.387426,
+          "signal": "双均线空头",
+          "maSpread": -0.011517,
+          "ma20Slope5": -0.011103
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.528471,
+          "drawdown": 0.42046
+        },
+        "5": {
+          "up": 0.522229,
+          "drawdown": 0.423636
+        },
+        "10": {
+          "up": 0.51598,
+          "drawdown": 0.426817
+        }
+      },
+      "rank": 71
+    },
+    {
+      "industry": "商品城",
+      "memberCount": 4,
+      "heat": 48.195114,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.045181,
+      "ret5": 0.068202,
+      "ret10": -0.003792,
+      "breadth3": 0.583333,
+      "amountRatio3_20": 0.817087,
+      "consensusScore": -0.051568,
+      "models": {
+        "macdVolume": {
+          "score": 0.184788,
+          "signal": "MACD转弱",
+          "histPct": 0.005943,
+          "amountRatio": 0.817087
+        },
+        "quantileExtreme": {
+          "score": 0.546667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.433333
+        },
+        "dualMA": {
+          "score": -0.964945,
+          "signal": "双均线空头",
+          "maSpread": -0.037355,
+          "ma20Slope5": -0.036494
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.682223,
+          "drawdown": 0.34099
+        },
+        "5": {
+          "up": 0.65816,
+          "drawdown": 0.353828
+        },
+        "10": {
+          "up": 0.633253,
+          "drawdown": 0.36688
+        }
+      },
+      "rank": 72
+    },
+    {
+      "industry": "商贸代理",
+      "memberCount": 16,
+      "heat": 48.148656,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.033505,
+      "ret5": 0.056013,
+      "ret10": -0.018239,
+      "breadth3": 0.625,
+      "amountRatio3_20": 0.838951,
+      "consensusScore": -0.052896,
+      "models": {
+        "macdVolume": {
+          "score": 0.119507,
+          "signal": "MACD转弱",
+          "histPct": 0.004976,
+          "amountRatio": 0.838951
+        },
+        "quantileExtreme": {
+          "score": 0.6,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.5
+        },
+        "dualMA": {
+          "score": -0.935662,
+          "signal": "双均线空头",
+          "maSpread": -0.038325,
+          "ma20Slope5": -0.033566
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.645469,
+          "drawdown": 0.360505
+        },
+        "5": {
+          "up": 0.625169,
+          "drawdown": 0.371076
+        },
+        "10": {
+          "up": 0.604418,
+          "drawdown": 0.381772
+        }
+      },
+      "rank": 73
+    },
+    {
+      "industry": "其他商业",
+      "memberCount": 12,
+      "heat": 48.105609,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.027514,
+      "ret5": 0.061678,
+      "ret10": -0.020681,
+      "breadth3": 0.611111,
+      "amountRatio3_20": 0.842016,
+      "consensusScore": -0.054125,
+      "models": {
+        "macdVolume": {
+          "score": 0.17426,
+          "signal": "MACD转弱",
+          "histPct": 0.005692,
+          "amountRatio": 0.842016
+        },
+        "quantileExtreme": {
+          "score": 0.586667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.483333
+        },
+        "dualMA": {
+          "score": -0.999431,
+          "signal": "双均线空头",
+          "maSpread": -0.044189,
+          "ma20Slope5": -0.039943
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.633879,
+          "drawdown": 0.366555
+        },
+        "5": {
+          "up": 0.61485,
+          "drawdown": 0.376407
+        },
+        "10": {
+          "up": 0.595464,
+          "drawdown": 0.386362
+        }
+      },
+      "rank": 74
+    },
+    {
+      "industry": "专用机械",
+      "memberCount": 199,
+      "heat": 47.938319,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.0159,
+      "ret5": 0.05029,
+      "ret10": -0.03662,
+      "breadth3": 0.561139,
+      "amountRatio3_20": 0.86493,
+      "consensusScore": -0.058905,
+      "models": {
+        "macdVolume": {
+          "score": 0.061521,
+          "signal": "MACD转弱",
+          "histPct": 0.004087,
+          "amountRatio": 0.86493
+        },
+        "quantileExtreme": {
+          "score": 0.566667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.483333
+        },
+        "dualMA": {
+          "score": -0.845045,
+          "signal": "双均线空头",
+          "maSpread": -0.02972,
+          "ma20Slope5": -0.024504
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.569434,
+          "drawdown": 0.399641
+        },
+        "5": {
+          "up": 0.558024,
+          "drawdown": 0.405443
+        },
+        "10": {
+          "up": 0.546554,
+          "drawdown": 0.411271
+        }
+      },
+      "rank": 75
+    },
+    {
+      "industry": "铅锌",
+      "memberCount": 13,
+      "heat": 47.864046,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.016655,
+      "ret5": 0.018033,
+      "ret10": -0.082164,
+      "breadth3": 0.461538,
+      "amountRatio3_20": 0.728474,
+      "consensusScore": -0.061027,
+      "models": {
+        "macdVolume": {
+          "score": -0.174386,
+          "signal": "MACD转弱",
+          "histPct": 0.001548,
+          "amountRatio": 0.728474
+        },
+        "quantileExtreme": {
+          "score": 0.333333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.633333,
+          "ret20Quantile": 0.716667
+        },
+        "dualMA": {
+          "score": -0.304242,
+          "signal": "双均线空头",
+          "maSpread": -0.009724,
+          "ma20Slope5": -0.007088
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.466336,
+          "drawdown": 0.452278
+        },
+        "5": {
+          "up": 0.468098,
+          "drawdown": 0.451366
+        },
+        "10": {
+          "up": 0.469861,
+          "drawdown": 0.450455
+        }
+      },
+      "rank": 76
+    },
+    {
+      "industry": "房产服务",
+      "memberCount": 13,
+      "heat": 47.821681,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.031493,
+      "ret5": 0.050167,
+      "ret10": -0.017243,
+      "breadth3": 0.717949,
+      "amountRatio3_20": 0.980101,
+      "consensusScore": -0.062238,
+      "models": {
+        "macdVolume": {
+          "score": 0.258162,
+          "signal": "MACD转弱",
+          "histPct": 0.006197,
+          "amountRatio": 0.980101
+        },
+        "quantileExtreme": {
+          "score": 0.446667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 0.383333
+        },
+        "dualMA": {
+          "score": -0.998342,
+          "signal": "双均线空头",
+          "maSpread": -0.0449,
+          "ma20Slope5": -0.039834
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.662482,
+          "drawdown": 0.351541
+        },
+        "5": {
+          "up": 0.640385,
+          "drawdown": 0.363164
+        },
+        "10": {
+          "up": 0.617676,
+          "drawdown": 0.374949
+        }
+      },
+      "rank": 77
+    },
+    {
+      "industry": "水务",
+      "memberCount": 15,
+      "heat": 47.683256,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.018168,
+      "ret5": 0.028135,
+      "ret10": -0.015888,
+      "breadth3": 0.711111,
+      "amountRatio3_20": 0.915245,
+      "consensusScore": -0.066193,
+      "models": {
+        "macdVolume": {
+          "score": -0.040033,
+          "signal": "MACD转弱",
+          "histPct": 0.00251,
+          "amountRatio": 0.915245
+        },
+        "quantileExtreme": {
+          "score": 0.666667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.583333
+        },
+        "dualMA": {
+          "score": -0.833931,
+          "signal": "双均线空头",
+          "maSpread": -0.025141,
+          "ma20Slope5": -0.023393
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.599941,
+          "drawdown": 0.384069
+        },
+        "5": {
+          "up": 0.584824,
+          "drawdown": 0.391799
+        },
+        "10": {
+          "up": 0.569547,
+          "drawdown": 0.399584
+        }
+      },
+      "rank": 78
+    },
+    {
+      "industry": "电器仪表",
+      "memberCount": 67,
+      "heat": 47.62872,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.001511,
+      "ret5": 0.046173,
+      "ret10": -0.040714,
+      "breadth3": 0.49144,
+      "amountRatio3_20": 0.953531,
+      "consensusScore": -0.067751,
+      "models": {
+        "macdVolume": {
+          "score": 0.121402,
+          "signal": "MACD转弱",
+          "histPct": 0.004492,
+          "amountRatio": 0.953531
+        },
+        "quantileExtreme": {
+          "score": 0.493333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.966667,
+          "ret20Quantile": 0.416667
+        },
+        "dualMA": {
+          "score": -0.881039,
+          "signal": "双均线空头",
+          "maSpread": -0.031128,
+          "ma20Slope5": -0.028104
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.508976,
+          "drawdown": 0.430387
+        },
+        "5": {
+          "up": 0.505238,
+          "drawdown": 0.432295
+        },
+        "10": {
+          "up": 0.501499,
+          "drawdown": 0.434204
+        }
+      },
+      "rank": 79
+    },
+    {
+      "industry": "环境保护",
+      "memberCount": 97,
+      "heat": 47.518865,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.029964,
+      "ret5": 0.049834,
+      "ret10": -0.023342,
+      "breadth3": 0.687285,
+      "amountRatio3_20": 0.891001,
+      "consensusScore": -0.07089,
+      "models": {
+        "macdVolume": {
+          "score": 0.113577,
+          "signal": "MACD转弱",
+          "histPct": 0.004665,
+          "amountRatio": 0.891001
+        },
+        "quantileExtreme": {
+          "score": 0.56,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.45
+        },
+        "dualMA": {
+          "score": -0.947734,
+          "signal": "双均线空头",
+          "maSpread": -0.038953,
+          "ma20Slope5": -0.034773
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.643079,
+          "drawdown": 0.361756
+        },
+        "5": {
+          "up": 0.623038,
+          "drawdown": 0.372179
+        },
+        "10": {
+          "up": 0.602567,
+          "drawdown": 0.382722
+        }
+      },
+      "rank": 80
+    },
+    {
+      "industry": "路桥",
+      "memberCount": 19,
+      "heat": 47.29986,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.031547,
+      "ret5": 0.032845,
+      "ret10": 0.010146,
+      "breadth3": 0.719298,
+      "amountRatio3_20": 1.036422,
+      "consensusScore": -0.077147,
+      "models": {
+        "macdVolume": {
+          "score": -0.040614,
+          "signal": "MACD转弱",
+          "histPct": 0.001963,
+          "amountRatio": 1.036422
+        },
+        "quantileExtreme": {
+          "score": 0.44,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.3
+        },
+        "dualMA": {
+          "score": -0.643005,
+          "signal": "双均线空头",
+          "maSpread": -0.018118,
+          "ma20Slope5": -0.020818
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.656218,
+          "drawdown": 0.354853
+        },
+        "5": {
+          "up": 0.634773,
+          "drawdown": 0.36609
+        },
+        "10": {
+          "up": 0.612778,
+          "drawdown": 0.377474
+        }
+      },
+      "rank": 81
+    },
+    {
+      "industry": "批发业",
+      "memberCount": 5,
+      "heat": 47.051744,
+      "events": [
+        "MACD转弱",
+        "强势极值",
+        "双均线空头"
+      ],
+      "ret3": 0.04462,
+      "ret5": 0.041059,
+      "ret10": -0.021776,
+      "breadth3": 0.8,
+      "amountRatio3_20": 0.784345,
+      "consensusScore": -0.084236,
+      "models": {
+        "macdVolume": {
+          "score": -0.104627,
+          "signal": "MACD转弱",
+          "histPct": 0.00223,
+          "amountRatio": 0.784345
+        },
+        "quantileExtreme": {
+          "score": 0.7,
+          "signal": "强势极值",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.65
+        },
+        "dualMA": {
+          "score": -0.841283,
+          "signal": "双均线空头",
+          "maSpread": -0.034987,
+          "ma20Slope5": -0.024128
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.688066,
+          "drawdown": 0.337832
+        },
+        "5": {
+          "up": 0.663447,
+          "drawdown": 0.351028
+        },
+        "10": {
+          "up": 0.637908,
+          "drawdown": 0.364456
+        }
+      },
+      "rank": 82
+    },
+    {
+      "industry": "出版业",
+      "memberCount": 29,
+      "heat": 46.79753,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.022425,
+      "ret5": 0.029968,
+      "ret10": -0.033804,
+      "breadth3": 0.724138,
+      "amountRatio3_20": 0.981058,
+      "consensusScore": -0.091499,
+      "models": {
+        "macdVolume": {
+          "score": 0.030277,
+          "signal": "MACD转弱",
+          "histPct": 0.003155,
+          "amountRatio": 0.981058
+        },
+        "quantileExtreme": {
+          "score": 0.54,
+          "signal": "分位中性",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 0.5
+        },
+        "dualMA": {
+          "score": -0.885367,
+          "signal": "双均线空头",
+          "maSpread": -0.040363,
+          "ma20Slope5": -0.028537
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.605201,
+          "drawdown": 0.38137
+        },
+        "5": {
+          "up": 0.589462,
+          "drawdown": 0.389431
+        },
+        "10": {
+          "up": 0.573537,
+          "drawdown": 0.397552
+        }
+      },
+      "rank": 83
+    },
+    {
+      "industry": "IT设备",
+      "memberCount": 68,
+      "heat": 46.735673,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": -0.00549,
+      "ret5": 0.034753,
+      "ret10": -0.062813,
+      "breadth3": 0.514706,
+      "amountRatio3_20": 1.35917,
+      "consensusScore": -0.093266,
+      "models": {
+        "macdVolume": {
+          "score": 0.094686,
+          "signal": "MACD转弱",
+          "histPct": 0.002333,
+          "amountRatio": 1.35917
+        },
+        "quantileExtreme": {
+          "score": 0.44,
+          "signal": "分位中性",
+          "ret5Quantile": 0.9,
+          "ret20Quantile": 0.45
+        },
+        "dualMA": {
+          "score": -0.877136,
+          "signal": "双均线空头",
+          "maSpread": -0.036053,
+          "ma20Slope5": -0.027714
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.480079,
+          "drawdown": 0.445186
+        },
+        "5": {
+          "up": 0.48007,
+          "drawdown": 0.44519
+        },
+        "10": {
+          "up": 0.480061,
+          "drawdown": 0.445195
+        }
+      },
+      "rank": 84
+    },
+    {
+      "industry": "陶瓷",
+      "memberCount": 5,
+      "heat": 46.470531,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.028031,
+      "ret5": 0.036601,
+      "ret10": -0.032175,
+      "breadth3": 0.733333,
+      "amountRatio3_20": 0.747137,
+      "consensusScore": -0.100842,
+      "models": {
+        "macdVolume": {
+          "score": -0.102438,
+          "signal": "MACD转弱",
+          "histPct": 0.002425,
+          "amountRatio": 0.747137
+        },
+        "quantileExtreme": {
+          "score": 0.626667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.966667,
+          "ret20Quantile": 0.583333
+        },
+        "dualMA": {
+          "score": -0.826222,
+          "signal": "双均线空头",
+          "maSpread": -0.030476,
+          "ma20Slope5": -0.022622
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.619066,
+          "drawdown": 0.374232
+        },
+        "5": {
+          "up": 0.601712,
+          "drawdown": 0.38316
+        },
+        "10": {
+          "up": 0.5841,
+          "drawdown": 0.392169
+        }
+      },
+      "rank": 85
+    },
+    {
+      "industry": "其他建材",
+      "memberCount": 26,
+      "heat": 46.380544,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.032908,
+      "ret5": 0.049433,
+      "ret10": -0.032036,
+      "breadth3": 0.602564,
+      "amountRatio3_20": 0.76583,
+      "consensusScore": -0.103413,
+      "models": {
+        "macdVolume": {
+          "score": -0.009671,
+          "signal": "MACD转弱",
+          "histPct": 0.003578,
+          "amountRatio": 0.76583
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -0.905149,
+          "signal": "双均线空头",
+          "maSpread": -0.038664,
+          "ma20Slope5": -0.030515
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.612459,
+          "drawdown": 0.377638
+        },
+        "5": {
+          "up": 0.59587,
+          "drawdown": 0.386154
+        },
+        "10": {
+          "up": 0.579059,
+          "drawdown": 0.394739
+        }
+      },
+      "rank": 86
+    },
+    {
+      "industry": "港口",
+      "memberCount": 16,
+      "heat": 46.342749,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.039076,
+      "ret5": 0.038466,
+      "ret10": 0.007478,
+      "breadth3": 0.916667,
+      "amountRatio3_20": 0.935582,
+      "consensusScore": -0.104493,
+      "models": {
+        "macdVolume": {
+          "score": 0.008839,
+          "signal": "MACD转弱",
+          "histPct": 0.003071,
+          "amountRatio": 0.935582
+        },
+        "quantileExtreme": {
+          "score": 0.48,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.35
+        },
+        "dualMA": {
+          "score": -0.840095,
+          "signal": "双均线空头",
+          "maSpread": -0.02487,
+          "ma20Slope5": -0.024321
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.718832,
+          "drawdown": 0.320884
+        },
+        "5": {
+          "up": 0.69152,
+          "drawdown": 0.335958
+        },
+        "10": {
+          "up": 0.662799,
+          "drawdown": 0.351373
+        }
+      },
+      "rank": 87
+    },
+    {
+      "industry": "软件服务",
+      "memberCount": 202,
+      "heat": 46.033217,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.000664,
+      "ret5": 0.042855,
+      "ret10": -0.070494,
+      "breadth3": 0.495066,
+      "amountRatio3_20": 1.038888,
+      "consensusScore": -0.113337,
+      "models": {
+        "macdVolume": {
+          "score": 0.125791,
+          "signal": "MACD转弱",
+          "histPct": 0.004171,
+          "amountRatio": 1.038888
+        },
+        "quantileExtreme": {
+          "score": 0.426667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.933333,
+          "ret20Quantile": 0.383333
+        },
+        "dualMA": {
+          "score": -0.972177,
+          "signal": "双均线空头",
+          "maSpread": -0.045733,
+          "ma20Slope5": -0.037218
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.483065,
+          "drawdown": 0.44365
+        },
+        "5": {
+          "up": 0.482671,
+          "drawdown": 0.443852
+        },
+        "10": {
+          "up": 0.482277,
+          "drawdown": 0.444055
+        }
+      },
+      "rank": 88
+    },
+    {
+      "industry": "电气设备",
+      "memberCount": 277,
+      "heat": 46.009286,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.014359,
+      "ret5": 0.034773,
+      "ret10": -0.062508,
+      "breadth3": 0.592923,
+      "amountRatio3_20": 0.870246,
+      "consensusScore": -0.11402,
+      "models": {
+        "macdVolume": {
+          "score": 0.067804,
+          "signal": "MACD转弱",
+          "histPct": 0.004147,
+          "amountRatio": 0.870246
+        },
+        "quantileExtreme": {
+          "score": 0.5,
+          "signal": "分位中性",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 0.45
+        },
+        "dualMA": {
+          "score": -0.970474,
+          "signal": "双均线空头",
+          "maSpread": -0.043016,
+          "ma20Slope5": -0.037047
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.531512,
+          "drawdown": 0.418914
+        },
+        "5": {
+          "up": 0.524881,
+          "drawdown": 0.422286
+        },
+        "10": {
+          "up": 0.518242,
+          "drawdown": 0.425665
+        }
+      },
+      "rank": 89
+    },
+    {
+      "industry": "摩托车",
+      "memberCount": 10,
+      "heat": 45.984968,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": -0.002432,
+      "ret5": -0.002554,
+      "ret10": -0.024503,
+      "breadth3": 0.633333,
+      "amountRatio3_20": 0.631581,
+      "consensusScore": -0.114715,
+      "models": {
+        "macdVolume": {
+          "score": -0.056807,
+          "signal": "MACD转弱",
+          "histPct": 0.003547,
+          "amountRatio": 0.631581
+        },
+        "quantileExtreme": {
+          "score": 0.526667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.85,
+          "ret20Quantile": 0.633333
+        },
+        "dualMA": {
+          "score": -0.833308,
+          "signal": "双均线空头",
+          "maSpread": -0.028913,
+          "ma20Slope5": -0.023331
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.460425,
+          "drawdown": 0.455341
+        },
+        "5": {
+          "up": 0.462947,
+          "drawdown": 0.454033
+        },
+        "10": {
+          "up": 0.46547,
+          "drawdown": 0.452726
+        }
+      },
+      "rank": 90
+    },
+    {
+      "industry": "全国地产",
+      "memberCount": 26,
+      "heat": 45.637043,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.034643,
+      "ret5": 0.046532,
+      "ret10": -0.030226,
+      "breadth3": 0.692308,
+      "amountRatio3_20": 0.978847,
+      "consensusScore": -0.124656,
+      "models": {
+        "macdVolume": {
+          "score": 0.09508,
+          "signal": "MACD转弱",
+          "histPct": 0.004028,
+          "amountRatio": 0.978847
+        },
+        "quantileExtreme": {
+          "score": 0.453333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.933333,
+          "ret20Quantile": 0.416667
+        },
+        "dualMA": {
+          "score": -0.995627,
+          "signal": "双均线空头",
+          "maSpread": -0.048966,
+          "ma20Slope5": -0.039563
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.643717,
+          "drawdown": 0.361422
+        },
+        "5": {
+          "up": 0.623606,
+          "drawdown": 0.371885
+        },
+        "10": {
+          "up": 0.603061,
+          "drawdown": 0.382469
+        }
+      },
+      "rank": 91
+    },
+    {
+      "industry": "铁路",
+      "memberCount": 7,
+      "heat": 45.620057,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.031302,
+      "ret5": 0.029828,
+      "ret10": -0.009477,
+      "breadth3": 0.952381,
+      "amountRatio3_20": 0.943517,
+      "consensusScore": -0.125141,
+      "models": {
+        "macdVolume": {
+          "score": -0.0515,
+          "signal": "MACD转弱",
+          "histPct": 0.002231,
+          "amountRatio": 0.943517
+        },
+        "quantileExtreme": {
+          "score": 0.48,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.35
+        },
+        "dualMA": {
+          "score": -0.82847,
+          "signal": "双均线空头",
+          "maSpread": -0.028465,
+          "ma20Slope5": -0.022847
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.691186,
+          "drawdown": 0.336139
+        },
+        "5": {
+          "up": 0.666276,
+          "drawdown": 0.349526
+        },
+        "10": {
+          "up": 0.640402,
+          "drawdown": 0.363155
+        }
+      },
+      "rank": 92
+    },
+    {
+      "industry": "汽车服务",
+      "memberCount": 9,
+      "heat": 45.533348,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.027196,
+      "ret5": 0.04218,
+      "ret10": -0.025855,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 0.699757,
+      "consensusScore": -0.127619,
+      "models": {
+        "macdVolume": {
+          "score": -0.04244,
+          "signal": "MACD转弱",
+          "histPct": 0.003435,
+          "amountRatio": 0.699757
+        },
+        "quantileExtreme": {
+          "score": 0.573333,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.466667
+        },
+        "dualMA": {
+          "score": -0.942142,
+          "signal": "双均线空头",
+          "maSpread": -0.045225,
+          "ma20Slope5": -0.034214
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.603817,
+          "drawdown": 0.382081
+        },
+        "5": {
+          "up": 0.588241,
+          "drawdown": 0.390055
+        },
+        "10": {
+          "up": 0.572486,
+          "drawdown": 0.398087
+        }
+      },
+      "rank": 93
+    },
+    {
+      "industry": "供气供热",
+      "memberCount": 44,
+      "heat": 45.196558,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.030714,
+      "ret5": 0.052821,
+      "ret10": -0.014183,
+      "breadth3": 0.716878,
+      "amountRatio3_20": 0.925588,
+      "consensusScore": -0.137241,
+      "models": {
+        "macdVolume": {
+          "score": 0.044267,
+          "signal": "MACD转弱",
+          "histPct": 0.003588,
+          "amountRatio": 0.925588
+        },
+        "quantileExtreme": {
+          "score": 0.466667,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.333333
+        },
+        "dualMA": {
+          "score": -0.983161,
+          "signal": "双均线空头",
+          "maSpread": -0.036976,
+          "ma20Slope5": -0.038316
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.653898,
+          "drawdown": 0.356077
+        },
+        "5": {
+          "up": 0.632696,
+          "drawdown": 0.36717
+        },
+        "10": {
+          "up": 0.610969,
+          "drawdown": 0.378406
+        }
+      },
+      "rank": 94
+    },
+    {
+      "industry": "水力发电",
+      "memberCount": 22,
+      "heat": 44.940837,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.041215,
+      "ret5": 0.062844,
+      "ret10": -0.006248,
+      "breadth3": 0.727273,
+      "amountRatio3_20": 0.938129,
+      "consensusScore": -0.144548,
+      "models": {
+        "macdVolume": {
+          "score": 0.103631,
+          "signal": "MACD转弱",
+          "histPct": 0.004323,
+          "amountRatio": 0.938129
+        },
+        "quantileExtreme": {
+          "score": 0.38,
+          "signal": "分位中性",
+          "ret5Quantile": 0.983333,
+          "ret20Quantile": 0.25
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.041519,
+          "ma20Slope5": -0.051411
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.69488,
+          "drawdown": 0.334127
+        },
+        "5": {
+          "up": 0.66963,
+          "drawdown": 0.34774
+        },
+        "10": {
+          "up": 0.643363,
+          "drawdown": 0.361607
+        }
+      },
+      "rank": 95
+    },
+    {
+      "industry": "焦炭加工",
+      "memberCount": 7,
+      "heat": 44.933562,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.070604,
+      "ret5": 0.077878,
+      "ret10": 0.009359,
+      "breadth3": 0.809524,
+      "amountRatio3_20": 0.788123,
+      "consensusScore": -0.144755,
+      "models": {
+        "macdVolume": {
+          "score": 0.123112,
+          "signal": "MACD转弱",
+          "histPct": 0.00525,
+          "amountRatio": 0.788123
+        },
+        "quantileExtreme": {
+          "score": 0.353333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 0.266667
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.048787,
+          "ma20Slope5": -0.055237
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.78563,
+          "drawdown": 0.281831
+        },
+        "5": {
+          "up": 0.754151,
+          "drawdown": 0.300927
+        },
+        "10": {
+          "up": 0.719698,
+          "drawdown": 0.32074
+        }
+      },
+      "rank": 96
+    },
+    {
+      "industry": "电器连锁",
+      "memberCount": 2,
+      "heat": 44.13279,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.026567,
+      "ret5": 0.05843,
+      "ret10": -0.047833,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 0.813146,
+      "consensusScore": -0.167635,
+      "models": {
+        "macdVolume": {
+          "score": -0.222079,
+          "signal": "MACD转弱",
+          "histPct": 0.000536,
+          "amountRatio": 0.813146
+        },
+        "quantileExtreme": {
+          "score": 0.56,
+          "signal": "分位中性",
+          "ret5Quantile": 1.0,
+          "ret20Quantile": 0.45
+        },
+        "dualMA": {
+          "score": -0.822677,
+          "signal": "双均线空头",
+          "maSpread": -0.043894,
+          "ma20Slope5": -0.022268
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.611389,
+          "drawdown": 0.378189
+        },
+        "5": {
+          "up": 0.594925,
+          "drawdown": 0.386638
+        },
+        "10": {
+          "up": 0.578244,
+          "drawdown": 0.395155
+        }
+      },
+      "rank": 97
+    },
+    {
+      "industry": "塑料",
+      "memberCount": 63,
+      "heat": 42.878307,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.026982,
+      "ret5": 0.052863,
+      "ret10": -0.04255,
+      "breadth3": 0.622205,
+      "amountRatio3_20": 0.73112,
+      "consensusScore": -0.203477,
+      "models": {
+        "macdVolume": {
+          "score": -0.310329,
+          "signal": "MACD转弱",
+          "histPct": -0.000276,
+          "amountRatio": 0.73112
+        },
+        "quantileExtreme": {
+          "score": 0.526667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.95,
+          "ret20Quantile": 0.483333
+        },
+        "dualMA": {
+          "score": -0.791151,
+          "signal": "双均线空头",
+          "maSpread": -0.039262,
+          "ma20Slope5": -0.019115
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.587184,
+          "drawdown": 0.390594
+        },
+        "5": {
+          "up": 0.573599,
+          "drawdown": 0.397521
+        },
+        "10": {
+          "up": 0.559902,
+          "drawdown": 0.404488
+        }
+      },
+      "rank": 98
+    },
+    {
+      "industry": "新型电力",
+      "memberCount": 31,
+      "heat": 41.400661,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.018386,
+      "ret5": 0.027578,
+      "ret10": -0.043111,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 0.733108,
+      "consensusScore": -0.245695,
+      "models": {
+        "macdVolume": {
+          "score": -0.049238,
+          "signal": "MACD转弱",
+          "histPct": 0.003196,
+          "amountRatio": 0.733108
+        },
+        "quantileExtreme": {
+          "score": 0.246667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.883333,
+          "ret20Quantile": 0.233333
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.056686,
+          "ma20Slope5": -0.062393
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.538918,
+          "drawdown": 0.41515
+        },
+        "5": {
+          "up": 0.531343,
+          "drawdown": 0.419
+        },
+        "10": {
+          "up": 0.523754,
+          "drawdown": 0.422859
+        }
+      },
+      "rank": 99
+    },
+    {
+      "industry": "小金属",
+      "memberCount": 56,
+      "heat": 39.968062,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.006451,
+      "ret5": 0.026575,
+      "ret10": -0.102388,
+      "breadth3": 0.52381,
+      "amountRatio3_20": 0.729344,
+      "consensusScore": -0.286627,
+      "models": {
+        "macdVolume": {
+          "score": -0.459375,
+          "signal": "MACD转弱",
+          "histPct": -0.002255,
+          "amountRatio": 0.729344
+        },
+        "quantileExtreme": {
+          "score": 0.34,
+          "signal": "分位中性",
+          "ret5Quantile": 0.683333,
+          "ret20Quantile": 0.65
+        },
+        "dualMA": {
+          "score": -0.682922,
+          "signal": "双均线空头",
+          "maSpread": -0.027787,
+          "ma20Slope5": -0.008292
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.427591,
+          "drawdown": 0.472547
+        },
+        "5": {
+          "up": 0.434289,
+          "drawdown": 0.469008
+        },
+        "10": {
+          "up": 0.441012,
+          "drawdown": 0.465472
+        }
+      },
+      "rank": 100
+    },
+    {
+      "industry": "银行",
+      "memberCount": 42,
+      "heat": 38.750552,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.023565,
+      "ret5": 0.011988,
+      "ret10": -0.016728,
+      "breadth3": 0.761905,
+      "amountRatio3_20": 0.954715,
+      "consensusScore": -0.321413,
+      "models": {
+        "macdVolume": {
+          "score": -0.360564,
+          "signal": "MACD转弱",
+          "histPct": -0.00194,
+          "amountRatio": 0.954715
+        },
+        "quantileExtreme": {
+          "score": 0.146667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.833333,
+          "ret20Quantile": 0.183333
+        },
+        "dualMA": {
+          "score": -0.737291,
+          "signal": "双均线空头",
+          "maSpread": -0.033464,
+          "ma20Slope5": -0.013729
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.57226,
+          "drawdown": 0.398203
+        },
+        "5": {
+          "up": 0.560501,
+          "drawdown": 0.404184
+        },
+        "10": {
+          "up": 0.548674,
+          "drawdown": 0.410194
+        }
+      },
+      "rank": 101
+    },
+    {
+      "industry": "通信设备",
+      "memberCount": 108,
+      "heat": 38.719275,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": -0.010147,
+      "ret5": 0.030858,
+      "ret10": -0.08557,
+      "breadth3": 0.459877,
+      "amountRatio3_20": 0.961143,
+      "consensusScore": -0.322306,
+      "models": {
+        "macdVolume": {
+          "score": -0.256694,
+          "signal": "MACD转弱",
+          "histPct": -0.000583,
+          "amountRatio": 0.961143
+        },
+        "quantileExtreme": {
+          "score": 0.2,
+          "signal": "分位中性",
+          "ret5Quantile": 0.833333,
+          "ret20Quantile": 0.25
+        },
+        "dualMA": {
+          "score": -0.932096,
+          "signal": "双均线空头",
+          "maSpread": -0.051283,
+          "ma20Slope5": -0.03321
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.390835,
+          "drawdown": 0.492295
+        },
+        "5": {
+          "up": 0.402067,
+          "drawdown": 0.486195
+        },
+        "10": {
+          "up": 0.413402,
+          "drawdown": 0.4801
+        }
+      },
+      "rank": 102
+    },
+    {
+      "industry": "玻璃",
+      "memberCount": 19,
+      "heat": 38.254242,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "均线收敛"
+      ],
+      "ret3": -0.02513,
+      "ret5": -0.018993,
+      "ret10": -0.057299,
+      "breadth3": 0.421053,
+      "amountRatio3_20": 0.86458,
+      "consensusScore": -0.335593,
+      "models": {
+        "macdVolume": {
+          "score": -0.519529,
+          "signal": "MACD转弱",
+          "histPct": -0.006058,
+          "amountRatio": 0.86458
+        },
+        "quantileExtreme": {
+          "score": -0.206667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.316667,
+          "ret20Quantile": 0.516667
+        },
+        "dualMA": {
+          "score": -0.219272,
+          "signal": "均线收敛",
+          "maSpread": -0.01061,
+          "ma20Slope5": 0.003537
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.296274,
+          "drawdown": 0.546925
+        },
+        "5": {
+          "up": 0.317822,
+          "drawdown": 0.533842
+        },
+        "10": {
+          "up": 0.340179,
+          "drawdown": 0.520713
+        }
+      },
+      "rank": 103
+    },
+    {
+      "industry": "啤酒",
+      "memberCount": 8,
+      "heat": 37.548944,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.021945,
+      "ret5": 0.018577,
+      "ret10": -0.04229,
+      "breadth3": 0.875,
+      "amountRatio3_20": 0.718416,
+      "consensusScore": -0.355744,
+      "models": {
+        "macdVolume": {
+          "score": -0.274361,
+          "signal": "MACD转弱",
+          "histPct": 0.00026,
+          "amountRatio": 0.718416
+        },
+        "quantileExtreme": {
+          "score": 0.18,
+          "signal": "分位中性",
+          "ret5Quantile": 0.883333,
+          "ret20Quantile": 0.15
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.067349,
+          "ma20Slope5": -0.052447
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.578504,
+          "drawdown": 0.395022
+        },
+        "5": {
+          "up": 0.565977,
+          "drawdown": 0.401399
+        },
+        "10": {
+          "up": 0.553365,
+          "drawdown": 0.40781
+        }
+      },
+      "rank": 104
+    },
+    {
+      "industry": "纺织机械",
+      "memberCount": 11,
+      "heat": 37.444375,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.026424,
+      "ret5": 0.045496,
+      "ret10": -0.047639,
+      "breadth3": 0.575758,
+      "amountRatio3_20": 0.735815,
+      "consensusScore": -0.358732,
+      "models": {
+        "macdVolume": {
+          "score": -0.372891,
+          "signal": "MACD转弱",
+          "histPct": -0.001131,
+          "amountRatio": 0.735815
+        },
+        "quantileExtreme": {
+          "score": 0.3,
+          "signal": "分位中性",
+          "ret5Quantile": 0.916667,
+          "ret20Quantile": 0.25
+        },
+        "dualMA": {
+          "score": -0.998586,
+          "signal": "双均线空头",
+          "maSpread": -0.056659,
+          "ma20Slope5": -0.039859
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.539063,
+          "drawdown": 0.415077
+        },
+        "5": {
+          "up": 0.53147,
+          "drawdown": 0.418936
+        },
+        "10": {
+          "up": 0.523862,
+          "drawdown": 0.422805
+        }
+      },
+      "rank": 105
+    },
+    {
+      "industry": "电信运营",
+      "memberCount": 5,
+      "heat": 35.919494,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.013429,
+      "ret5": 0.02393,
+      "ret10": -0.043397,
+      "breadth3": 0.666667,
+      "amountRatio3_20": 0.943126,
+      "consensusScore": -0.4023,
+      "models": {
+        "macdVolume": {
+          "score": -0.43691,
+          "signal": "MACD转弱",
+          "histPct": -0.002906,
+          "amountRatio": 0.943126
+        },
+        "quantileExtreme": {
+          "score": 0.166667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.883333,
+          "ret20Quantile": 0.133333
+        },
+        "dualMA": {
+          "score": -0.92512,
+          "signal": "双均线空头",
+          "maSpread": -0.052606,
+          "ma20Slope5": -0.032512
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.509504,
+          "drawdown": 0.430118
+        },
+        "5": {
+          "up": 0.505697,
+          "drawdown": 0.43206
+        },
+        "10": {
+          "up": 0.501891,
+          "drawdown": 0.434004
+        }
+      },
+      "rank": 106
+    },
+    {
+      "industry": "铜",
+      "memberCount": 16,
+      "heat": 35.141799,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.050319,
+      "ret5": 0.042387,
+      "ret10": -0.131328,
+      "breadth3": 0.6875,
+      "amountRatio3_20": 0.814997,
+      "consensusScore": -0.42452,
+      "models": {
+        "macdVolume": {
+          "score": -0.61333,
+          "signal": "MACD转弱",
+          "histPct": -0.004689,
+          "amountRatio": 0.814997
+        },
+        "quantileExtreme": {
+          "score": 0.293333,
+          "signal": "分位中性",
+          "ret5Quantile": 0.8,
+          "ret20Quantile": 0.416667
+        },
+        "dualMA": {
+          "score": -0.890626,
+          "signal": "双均线空头",
+          "maSpread": -0.055382,
+          "ma20Slope5": -0.029063
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.571583,
+          "drawdown": 0.398547
+        },
+        "5": {
+          "up": 0.559908,
+          "drawdown": 0.404485
+        },
+        "10": {
+          "up": 0.548167,
+          "drawdown": 0.410452
+        }
+      },
+      "rank": 107
+    },
+    {
+      "industry": "元器件",
+      "memberCount": 245,
+      "heat": 34.542548,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": -0.035123,
+      "ret5": 0.008068,
+      "ret10": -0.070189,
+      "breadth3": 0.421299,
+      "amountRatio3_20": 0.930801,
+      "consensusScore": -0.441641,
+      "models": {
+        "macdVolume": {
+          "score": -0.584411,
+          "signal": "MACD转弱",
+          "histPct": -0.004818,
+          "amountRatio": 0.930801
+        },
+        "quantileExtreme": {
+          "score": -0.12,
+          "signal": "分位中性",
+          "ret5Quantile": 0.566667,
+          "ret20Quantile": 0.25
+        },
+        "dualMA": {
+          "score": -0.572923,
+          "signal": "双均线空头",
+          "maSpread": -0.019481,
+          "ma20Slope5": -0.010538
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.290109,
+          "drawdown": 0.550755
+        },
+        "5": {
+          "up": 0.312231,
+          "drawdown": 0.537194
+        },
+        "10": {
+          "up": 0.335242,
+          "drawdown": 0.523576
+        }
+      },
+      "rank": 108
+    },
+    {
+      "industry": "煤炭开采",
+      "memberCount": 25,
+      "heat": 32.836145,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.045159,
+      "ret5": 0.046287,
+      "ret10": -0.028864,
+      "breadth3": 0.68,
+      "amountRatio3_20": 0.870963,
+      "consensusScore": -0.490396,
+      "models": {
+        "macdVolume": {
+          "score": -0.52599,
+          "signal": "MACD转弱",
+          "histPct": -0.003773,
+          "amountRatio": 0.870963
+        },
+        "quantileExtreme": {
+          "score": 0.066667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.833333,
+          "ret20Quantile": 0.083333
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.067655,
+          "ma20Slope5": -0.054798
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.613374,
+          "drawdown": 0.377167
+        },
+        "5": {
+          "up": 0.596679,
+          "drawdown": 0.38574
+        },
+        "10": {
+          "up": 0.579756,
+          "drawdown": 0.394384
+        }
+      },
+      "rank": 109
+    },
+    {
+      "industry": "火力发电",
+      "memberCount": 31,
+      "heat": 32.247552,
+      "events": [
+        "MACD转弱",
+        "分位中性",
+        "双均线空头"
+      ],
+      "ret3": 0.014559,
+      "ret5": 0.024993,
+      "ret10": -0.054137,
+      "breadth3": 0.677419,
+      "amountRatio3_20": 0.674174,
+      "consensusScore": -0.507213,
+      "models": {
+        "macdVolume": {
+          "score": -0.568032,
+          "signal": "MACD转弱",
+          "histPct": -0.003459,
+          "amountRatio": 0.674174
+        },
+        "quantileExtreme": {
+          "score": 0.066667,
+          "signal": "分位中性",
+          "ret5Quantile": 0.8,
+          "ret20Quantile": 0.133333
+        },
+        "dualMA": {
+          "score": -1.0,
+          "signal": "双均线空头",
+          "maSpread": -0.068529,
+          "ma20Slope5": -0.065115
+        }
+      },
+      "probabilities": {
+        "3": {
+          "up": 0.482925,
+          "drawdown": 0.443722
+        },
+        "5": {
+          "up": 0.482548,
+          "drawdown": 0.443915
+        },
+        "10": {
+          "up": 0.482172,
+          "drawdown": 0.444109
+        }
+      },
+      "rank": 110
+    }
+  ]
+}

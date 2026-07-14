@@ -11,115 +11,73 @@ import rps90Top20Text from '../../docs/list/rps90_top20.csv?raw';
 import rps90SummaryText from '../../docs/list/rps90_summary.md?raw';
 import historySeed from '../data/top20_history.json';
 
-const shortTop20MarkdownHistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top20.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-
-const shortSummaryHistoryModules = import.meta.glob('../../docs/list/history/short/*/short_summary.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
+const HISTORY_MODULES = {
+  short: {
+    csv: import.meta.glob('../../docs/list/history/short/*/short_top20.csv', {
+      query: '?raw',
+      import: 'default',
+    }),
+  },
+  leader: {
+    csv: import.meta.glob('../../docs/list/history/leader/*/leader_top20.csv', {
+      query: '?raw',
+      import: 'default',
+    }),
+  },
+  rps90: {
+    csv: import.meta.glob('../../docs/list/history/rps90/*/rps90_top20.csv', {
+      query: '?raw',
+      import: 'default',
+    }),
+  },
+};
 
 function normalizeModuleSourcePath(modulePath) {
   return String(modulePath || '').replace(/^\.\.\/\.\.\//, '');
 }
 
-function extractShortHistoryDate(modulePath) {
-  const matched = String(modulePath || '').match(/history\/short\/(\d{4}-\d{2}-\d{2})\//);
-  return matched ? matched[1] : null;
+function normalizeSnapshotDate(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length === 8) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+  }
+  return String(value || '').trim() || null;
 }
 
-function selectLatestShortHistoryModule(modules) {
-  const entries = Object.entries(modules || {})
-    .map(([modulePath, text]) => ({
-      date: extractShortHistoryDate(modulePath),
-      sourcePath: normalizeModuleSourcePath(modulePath),
-      text,
-    }))
-    .filter((entry) => entry.date && typeof entry.text === 'string')
-    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-
-  return entries.at(-1) || null;
+function extractHistoryDate(factorKey, modulePath) {
+  const factorPattern = factorKey === 'short' ? 'short' : factorKey;
+  const matched = String(modulePath || '').match(
+    new RegExp(`history/${factorPattern}/(\\d{4}-\\d{2}-\\d{2}|\\d{8})/`)
+  );
+  return matched ? normalizeSnapshotDate(matched[1]) : null;
 }
 
-const latestShortTop20MarkdownHistory = selectLatestShortHistoryModule(shortTop20MarkdownHistoryModules);
-const latestShortSummaryHistory = selectLatestShortHistoryModule(shortSummaryHistoryModules);
+function listHistoryEntries(factorKey) {
+  const modules = HISTORY_MODULES[factorKey];
+  if (!modules) {
+    return [];
+  }
 
-const shortTop20HistoryModules = import.meta.glob('../../docs/list/history/short/*/short_top20.csv', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-const latestShortTop20History = selectLatestShortHistoryModule(shortTop20HistoryModules);
-
-const leaderTop20HistoryModules = import.meta.glob('../../docs/list/history/leader/*/leader_top20.csv', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-
-const leaderSummaryHistoryModules = import.meta.glob('../../docs/list/history/leader/*/leader_summary.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-
-function extractLeaderHistoryDate(modulePath) {
-  const matched = String(modulePath || '').match(/history\/leader\/(\d{4}-\d{2}-\d{2}|\d{8})\//);
-  return matched ? matched[1] : null;
+  return Object.entries(modules.csv)
+    .map(([modulePath, loadCsv]) => {
+      const date = extractHistoryDate(factorKey, modulePath);
+      if (!date) {
+        return null;
+      }
+      return {
+        id: `${factorKey}:history:${modulePath}`,
+        date,
+        sourcePath: normalizeModuleSourcePath(modulePath),
+        loadCsv,
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.date.localeCompare(right.date));
 }
 
-function selectLatestLeaderHistoryModule(modules) {
-  const entries = Object.entries(modules || {})
-    .map(([modulePath, text]) => ({
-      date: extractLeaderHistoryDate(modulePath),
-      sourcePath: normalizeModuleSourcePath(modulePath),
-      text,
-    }))
-    .filter((entry) => entry.date && typeof entry.text === 'string')
-    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-
-  return entries.at(-1) || null;
+function getHistoryEntry(factorKey, id) {
+  return listHistoryEntries(factorKey).find((entry) => entry.id === id) || null;
 }
-
-const latestLeaderTop20History = selectLatestLeaderHistoryModule(leaderTop20HistoryModules);
-const latestLeaderSummaryHistory = selectLatestLeaderHistoryModule(leaderSummaryHistoryModules);
-
-const rps90Top20HistoryModules = import.meta.glob('../../docs/list/history/rps90/*/rps90_top20.csv', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-
-const rps90SummaryHistoryModules = import.meta.glob('../../docs/list/history/rps90/*/rps90_summary.md', {
-  eager: true,
-  query: '?raw',
-  import: 'default',
-});
-
-function extractRps90HistoryDate(modulePath) {
-  const matched = String(modulePath || '').match(/history\/rps90\/(\d{4}-\d{2}-\d{2}|\d{8})\//);
-  return matched ? matched[1] : null;
-}
-
-function selectLatestRps90HistoryModule(modules) {
-  const entries = Object.entries(modules || {})
-    .map(([modulePath, text]) => ({
-      date: extractRps90HistoryDate(modulePath),
-      sourcePath: normalizeModuleSourcePath(modulePath),
-      text,
-    }))
-    .filter((entry) => entry.date && typeof entry.text === 'string')
-    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
-
-  return entries.at(-1) || null;
-}
-
-const latestRps90Top20History = selectLatestRps90HistoryModule(rps90Top20HistoryModules);
-const latestRps90SummaryHistory = selectLatestRps90HistoryModule(rps90SummaryHistoryModules);
 
 export const FACTOR_DEFINITIONS = {
   short: {
@@ -127,16 +85,13 @@ export const FACTOR_DEFINITIONS = {
     title: '短线三日上涨概率-盘后版',
     subtitle: '查看盘后三日上涨概率Top10候选，并按记录日期回看榜单与新增/移除变化。',
     description: '盘后使用三日上涨概率模型估计未来3个交易日收盘上涨可能性，输出概率最高的候选。',
-    riskNote: '当前盘后版保留单票层过滤和市场环境闸门，但尚未加入市场风格切换、行业集中度约束和组合层仓位控制。Top10 更适合作为候选池参考，不等同于可直接等权执行的组合。',
+    riskNote: '盘后版已启用市场环境闸门与单行业候选上限。Top10 仍是评分候选，只有通过交易过滤且市场闸门放行的标的才可进入执行清单。',
     displayLimit: 10,
     emptyMessage: '未找到 `short_top20*.csv` 数据文件。',
     current: {
-      sourcePath: latestShortTop20History?.sourcePath || 'docs/list/short_top20.csv',
-      csvText: latestShortTop20History?.text || shortTop20Text,
-      metaTexts: [
-        latestShortTop20MarkdownHistory?.text || shortTop20Markdown,
-        latestShortSummaryHistory?.text || shortSummaryText,
-      ],
+      sourcePath: 'docs/list/short_top20.csv',
+      csvText: shortTop20Text,
+      metaTexts: [shortTop20Markdown, shortSummaryText],
     },
   },
   tail: {
@@ -144,7 +99,7 @@ export const FACTOR_DEFINITIONS = {
     title: '短线三日上涨概率-收盘资金版',
     subtitle: '查看收盘资金三日上涨概率Top10候选，并按记录日期回看榜单与新增/移除变化。',
     description: '使用收盘价、成交量和资金流入流出估计未来3个交易日收盘上涨可能性，输出概率最高的候选。',
-    riskNote: '当前收盘资金版主要做单票层概率排序，尚未加入指数环境过滤、市场风格切换、行业集中度约束和组合层仓位控制。Top10 可能出现同题材或同风格集中，适合作为候选池参考。',
+    riskNote: '收盘资金版目前仍以单票层概率排序为主，未设置指数环境闸门与行业集中度约束。Top10 可能集中于同一题材或风格，适合作为候选池参考。',
     displayLimit: 10,
     emptyMessage: '未找到 `tail_top20*.csv` 数据文件。',
     current: {
@@ -161,9 +116,9 @@ export const FACTOR_DEFINITIONS = {
     riskNote: '龙头抱团策略面向中期趋势持仓，当前未加入指数环境过滤、行业集中度约束和组合层仓位控制。Top20 应作为候选池参考，建议结合市场整体趋势研判后操作。',
     emptyMessage: '未找到 `leader_top20*.csv` 数据文件。',
     current: {
-      sourcePath: latestLeaderTop20History?.sourcePath || 'docs/list/leader_top20.csv',
-      csvText: latestLeaderTop20History?.text || leaderTop20Text,
-      metaTexts: [latestLeaderSummaryHistory?.text || leaderSummaryText],
+      sourcePath: 'docs/list/leader_top20.csv',
+      csvText: leaderTop20Text,
+      metaTexts: [leaderSummaryText],
     },
   },
   rps90: {
@@ -175,9 +130,9 @@ export const FACTOR_DEFINITIONS = {
     displayLimit: 20,
     emptyMessage: '未找到 `rps90_top20*.csv` 数据文件。',
     current: {
-      sourcePath: latestRps90Top20History?.sourcePath || 'docs/list/rps90_top20.csv',
-      csvText: latestRps90Top20History?.text || rps90Top20Text,
-      metaTexts: [latestRps90SummaryHistory?.text || rps90SummaryText],
+      sourcePath: 'docs/list/rps90_top20.csv',
+      csvText: rps90Top20Text,
+      metaTexts: [rps90SummaryText],
     },
   },
   combined: {
@@ -189,9 +144,9 @@ export const FACTOR_DEFINITIONS = {
     riskNote: '综合榜单仅反映当日多策略共识，不构成买入建议。两榜重叠产出候选数量仍可能较少。',
     emptyMessage: '当前无股票同时满足任意两个策略条件。',
     sources: {
-      short: { csvText: latestShortTop20History?.text || shortTop20Text, limit: 10 },
-      leader: { csvText: latestLeaderTop20History?.text || leaderTop20Text, limit: 20 },
-      rps90: { csvText: latestRps90Top20History?.text || rps90Top20Text, limit: 20 },
+      short: { csvText: shortTop20Text, limit: 10 },
+      leader: { csvText: leaderTop20Text, limit: 20 },
+      rps90: { csvText: rps90Top20Text, limit: 20 },
     },
   },
 };
@@ -220,6 +175,13 @@ function toBoolean(value) {
     return true;
   }
   return false;
+}
+
+function toOptionalBoolean(value) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  return toBoolean(value);
 }
 
 function normalizeCode(code) {
@@ -256,6 +218,7 @@ function normalizeRow(row = {}) {
     upProb3d: toNumber(readValue(row, ['upProb3d', 'up_prob_3d'])),
     expectedRet3d: toNumber(readValue(row, ['expectedRet3d', 'expected_ret_3d'])),
     upProb3dConfidence: toNumber(readValue(row, ['upProb3dConfidence', 'up_prob_3d_confidence'])),
+    passMarketEnv: toOptionalBoolean(readValue(row, ['passMarketEnv', 'pass_market_env'], null)),
     quoteOnlyFallbackUsed: toBoolean(readValue(row, ['quoteOnlyFallbackUsed', 'quote_only_fallback_used'])),
     klineFallbackUsed: toBoolean(readValue(row, ['klineFallbackUsed', 'kline_fallback_used'])),
     reportDate: readValue(row, ['reportDate', 'report_date']),
@@ -327,7 +290,7 @@ function buildSnapshotBase(items, snapshot, sourcePath) {
   const generatedAt = snapshot.generatedAt || null;
 
   return {
-    date: snapshot.date || generatedAt || latestTradeDate || latestNoticeDate || reportDate || sourcePath,
+    date: normalizeSnapshotDate(snapshot.date || latestTradeDate || latestNoticeDate || reportDate) || generatedAt || sourcePath,
     sourcePath,
     items,
     generatedAt,
@@ -428,7 +391,14 @@ function buildCurrentSnapshot(definition) {
       .map((text) => extractGeneratedAt(text))
       .find(Boolean) || null;
 
-  return buildSnapshotBase(items, { generatedAt }, definition.current.sourcePath);
+  return buildSnapshotBase(
+    items,
+    {
+      date: normalizeSnapshotDate(latestDateValue(items, 'tradeDate')),
+      generatedAt,
+    },
+    definition.current.sourcePath
+  );
 }
 
 function buildHistorySnapshot(snapshot, sourcePath) {
@@ -447,25 +417,51 @@ export function getFactorDefinition(factorKey) {
   return FACTOR_DEFINITIONS[factorKey] || FACTOR_DEFINITIONS.short;
 }
 
+export async function loadFactorHistorySnapshot(factorKey, id) {
+  const definition = getFactorDefinition(factorKey);
+  const entry = getHistoryEntry(definition.key, id);
+  if (!entry) {
+    throw new Error('未找到所选历史榜单。');
+  }
+
+  const csvText = await entry.loadCsv();
+  const items = parseCsv(csvText)
+    .map(normalizeRow)
+    .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+    .slice(0, definition.displayLimit || Infinity);
+  const snapshot = buildSnapshotBase(
+    items,
+    {
+      date: entry.date,
+    },
+    entry.sourcePath
+  );
+
+  return snapshot ? { ...snapshot, id: entry.id, isCurrent: false } : null;
+}
+
 export async function loadFactorSnapshots(factorKey) {
   const definition = getFactorDefinition(factorKey);
 
   if (definition.type === 'combined') {
     const snapshot = buildCombinedSnapshot(definition);
-    return snapshot ? [snapshot] : [];
+    return {
+      snapshots: snapshot ? [{ ...snapshot, id: 'combined:current', isCurrent: true }] : [],
+      historyEntries: [],
+    };
   }
   const snapshots = [];
 
   getHistoryList(definition.key).forEach((snapshot, index) => {
     const historySnapshot = buildHistorySnapshot(snapshot, `history-${definition.key}-${index + 1}`);
     if (historySnapshot) {
-      snapshots.push(historySnapshot);
+      snapshots.push({ ...historySnapshot, id: `${definition.key}:seed:${index + 1}`, isCurrent: false });
     }
   });
 
   const currentSnapshot = buildCurrentSnapshot(definition);
   if (currentSnapshot) {
-    snapshots.push(currentSnapshot);
+    snapshots.push({ ...currentSnapshot, id: `${definition.key}:current`, isCurrent: true });
   }
 
   const dedupedMap = new Map();
@@ -473,5 +469,11 @@ export async function loadFactorSnapshots(factorKey) {
     dedupedMap.set(snapshot.date, snapshot);
   });
 
-  return Array.from(dedupedMap.values()).sort(sortSnapshotsByDate);
+  const currentDate = currentSnapshot?.date || null;
+  const historyEntries = listHistoryEntries(definition.key).filter((entry) => entry.date !== currentDate);
+
+  return {
+    snapshots: Array.from(dedupedMap.values()).sort(sortSnapshotsByDate),
+    historyEntries,
+  };
 }

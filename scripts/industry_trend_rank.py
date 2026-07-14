@@ -23,17 +23,14 @@ DAILY_DIR = CACHE_DIR / "daily"
 BASIC_PATH = CACHE_DIR / "stock_basic.csv"
 DEFAULT_OUTPUT = ROOT.parent / "docs" / "list" / "industry_trend_rank.json"
 HORIZONS = (3, 5, 10)
+MODEL_VERSION = 2
+MIN_HISTORY_SESSIONS = 60
+HISTORY_SESSIONS = 80
+QUANTILE_WINDOW = 60
 
 
 def safe_float(value):
     return None if pd.isna(value) or not np.isfinite(value) else round(float(value), 6)
-
-
-def zscore_by_date(series: pd.Series, dates: pd.Series) -> pd.Series:
-    grouped = series.groupby(dates)
-    mean = grouped.transform("mean")
-    std = grouped.transform(lambda values: values.std(ddof=0))
-    return ((series - mean) / std.replace(0, np.nan)).replace([np.inf, -np.inf], np.nan).fillna(0.0)
 
 
 def sigmoid(value: float) -> float:
@@ -41,7 +38,7 @@ def sigmoid(value: float) -> float:
 
 
 def estimate_probabilities(current: pd.Series) -> dict:
-    """Transparent direction estimates from the current industry state.
+    """Transparent direction estimates from the three-model consensus state.
 
     These are model estimates rather than historical-frequency probabilities.
     They intentionally remain bounded and use the same public fields shown in
@@ -53,9 +50,10 @@ def estimate_probabilities(current: pd.Series) -> dict:
         + 0.45 * np.clip(current["ret_10"] / 0.12, -2.0, 2.0)
         + 0.55 * np.clip((current["breadth_3"] - 0.5) / 0.30, -2.0, 2.0)
         + 0.25 * np.clip(np.log(max(current["amount_ratio_3_20"], 0.25)), -1.0, 1.0)
+        + 0.90 * np.clip(current["consensus_score"], -1.0, 1.0)
     )
     output = {}
-    for horizon, scale in ((3, 0.62), (5, 0.54), (10, 0.46)):
+    for horizon, scale in ((3, 0.62), (5, 0.54), (10, 0.46), (20, 0.38)):
         up = sigmoid(-0.08 + scale * trend)
         drawdown = sigmoid(-0.22 - 0.52 * scale * trend + 0.26 * max(current["ret_3"] / 0.10 - 0.7, 0.0))
         output[str(horizon)] = {
@@ -66,26 +64,50 @@ def estimate_probabilities(current: pd.Series) -> dict:
 
 
 def model_events(row: pd.Series) -> list[str]:
-    events = []
-    if row["ret_3"] >= 0.045 and row["ret_5"] > 0:
-        events.append("趋势加速")
-    if row["breadth_3"] >= 0.65:
-        events.append("上涨扩散")
-    if row["amount_ratio_3_20"] >= 1.25:
-        events.append("量能放大")
+    events = [row["macd_volume_signal"], row["quantile_signal"], row["dual_ma_signal"]]
     if row["ret_3"] >= 0.10 or row["ret_5"] >= 0.16:
         events.append("短线过热")
     if row["ret_5"] <= -0.06 and row["breadth_5"] <= 0.35:
         events.append("趋势转弱")
-    return events or ["趋势观察"]
+    return list(dict.fromkeys(events))
 
 
-def load_daily_history() -> pd.DataFrame:
-    # 25 sessions cover the current 3/5/10-day trend and 20-day volume base while
-    # keeping an on-demand dashboard refresh comfortably bounded.
-    files = sorted(DAILY_DIR.glob("*.csv"))[-25:]
-    if len(files) < 25:
-        raise RuntimeError("日线缓存不足，至少需要 25 个交易日快照")
+def clip_score(series: pd.Series, scale: float) -> pd.Series:
+    return (series / scale).clip(-1.0, 1.0).fillna(0.0)
+
+
+def macd_volume_signal(row: pd.Series) -> str:
+    if row["macd_hist_pct"] > 0 and row["macd_dif_pct"] > 0 and row["amount_ratio_3_20"] >= 1.15:
+        return "MACD量能共振"
+    if row["macd_hist_pct"] > 0 and row["macd_dif_pct"] > 0:
+        return "MACD转强"
+    if row["macd_hist_pct"] < 0 and row["amount_ratio_3_20"] >= 1.15:
+        return "量能失配"
+    return "MACD转弱"
+
+
+def quantile_signal(row: pd.Series) -> str:
+    if row["quantile_score"] >= 0.70:
+        return "强势极值"
+    if row["quantile_score"] <= -0.70:
+        return "弱势极值"
+    return "分位中性"
+
+
+def dual_ma_signal(row: pd.Series) -> str:
+    if row["ma5_ma20_spread"] > 0 and row["ma20_slope_5"] > 0:
+        return "双均线多头"
+    if row["ma5_ma20_spread"] < 0 and row["ma20_slope_5"] < 0:
+        return "双均线空头"
+    return "均线收敛"
+
+
+def load_daily_history(session_limit: int | None = HISTORY_SESSIONS) -> pd.DataFrame:
+    files = sorted(DAILY_DIR.glob("*.csv"))
+    if len(files) < MIN_HISTORY_SESSIONS:
+        raise RuntimeError(f"日线缓存不足，至少需要 {MIN_HISTORY_SESSIONS} 个交易日快照")
+    if session_limit is not None:
+        files = files[-session_limit:]
 
     basic = pd.read_csv(BASIC_PATH, dtype={"secucode": str})
     industry_map = basic.set_index("secucode")["industry"].fillna("未知行业")
@@ -107,8 +129,9 @@ def load_daily_history() -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True).drop_duplicates(["trade_date", "secucode"], keep="last")
 
 
-def build_ranking() -> dict:
-    daily = load_daily_history()
+def build_industry_features(daily: pd.DataFrame) -> pd.DataFrame:
+    """Build causal daily model features for every available industry session."""
+    daily = daily.copy()
     daily["up_today"] = daily["pct_chg"] > 0
     industry = daily.groupby(["trade_date", "industry"], as_index=False).agg(
         member_count=("secucode", "nunique"),
@@ -116,7 +139,7 @@ def build_ranking() -> dict:
         breadth_today=("up_today", "mean"),
         amount=("amount", "sum"),
     ).sort_values(["industry", "trade_date"]).reset_index(drop=True)
-    for horizon in (3, 5, 10):
+    for horizon in (3, 5, 10, 20):
         industry[f"ret_{horizon}"] = industry.groupby("industry")["daily_ret"].transform(
             lambda values: np.expm1(np.log1p(values).rolling(horizon).sum())
         )
@@ -126,14 +149,64 @@ def build_ranking() -> dict:
     industry["amount_ma20"] = industry.groupby("industry")["amount"].transform(lambda values: values.rolling(20).mean())
     industry["amount_ratio_3_20"] = industry["amount_ma3"] / industry["amount_ma20"]
 
-    score = (
-        0.30 * zscore_by_date(industry["ret_3"], industry["trade_date"])
-        + 0.28 * zscore_by_date(industry["ret_5"], industry["trade_date"])
-        + 0.18 * zscore_by_date(industry["ret_10"], industry["trade_date"])
-        + 0.12 * zscore_by_date(industry["breadth_3"], industry["trade_date"])
-        + 0.12 * zscore_by_date(industry["breadth_5"], industry["trade_date"])
+    # A synthetic industry close built from median daily returns keeps the three
+    # technical models robust against a single high-volatility component stock.
+    industry["index_close"] = industry.groupby("industry")["daily_ret"].transform(
+        lambda values: 100.0 * (1.0 + values).cumprod()
     )
-    industry["heat"] = (50.0 + 18.0 * score).clip(0.0, 100.0)
+    industry["ema12"] = industry.groupby("industry")["index_close"].transform(
+        lambda values: values.ewm(span=12, adjust=False, min_periods=12).mean()
+    )
+    industry["ema26"] = industry.groupby("industry")["index_close"].transform(
+        lambda values: values.ewm(span=26, adjust=False, min_periods=26).mean()
+    )
+    industry["macd_dif"] = industry["ema12"] - industry["ema26"]
+    industry["macd_dea"] = industry.groupby("industry")["macd_dif"].transform(
+        lambda values: values.ewm(span=9, adjust=False, min_periods=9).mean()
+    )
+    industry["macd_hist_pct"] = (industry["macd_dif"] - industry["macd_dea"]) / industry["index_close"]
+    industry["macd_dif_pct"] = industry["macd_dif"] / industry["index_close"]
+    industry["macd_volume_score"] = (
+        0.60 * clip_score(industry["macd_hist_pct"], 0.008)
+        + 0.20 * clip_score(industry["macd_dif_pct"], 0.015)
+        + 0.20 * clip_score(industry["amount_ratio_3_20"] - 1.0, 0.60)
+    )
+
+    industry["ret5_quantile"] = industry.groupby("industry")["ret_5"].transform(
+        lambda values: values.rolling(QUANTILE_WINDOW, min_periods=30).rank(pct=True)
+    )
+    industry["ret20_quantile"] = industry.groupby("industry")["ret_20"].transform(
+        lambda values: values.rolling(QUANTILE_WINDOW, min_periods=30).rank(pct=True)
+    )
+    industry["quantile_score"] = (
+        0.60 * (industry["ret5_quantile"].fillna(0.5) - 0.5) * 2.0
+        + 0.40 * (industry["ret20_quantile"].fillna(0.5) - 0.5) * 2.0
+    ).clip(-1.0, 1.0)
+
+    industry["ma5"] = industry.groupby("industry")["index_close"].transform(lambda values: values.rolling(5).mean())
+    industry["ma20"] = industry.groupby("industry")["index_close"].transform(lambda values: values.rolling(20).mean())
+    industry["ma5_ma20_spread"] = industry["ma5"] / industry["ma20"] - 1.0
+    industry["ma20_slope_5"] = industry.groupby("industry")["ma20"].transform(lambda values: values / values.shift(5) - 1.0)
+    industry["dual_ma_score"] = (
+        0.60 * clip_score(industry["ma5_ma20_spread"], 0.025)
+        + 0.40 * clip_score(industry["ma20_slope_5"], 0.040)
+    )
+
+    industry["consensus_score"] = (
+        0.40 * industry["macd_volume_score"]
+        + 0.30 * industry["quantile_score"]
+        + 0.30 * industry["dual_ma_score"]
+    ).clip(-1.0, 1.0)
+    industry["heat"] = (50.0 + 35.0 * industry["consensus_score"]).clip(0.0, 100.0)
+    industry["macd_volume_signal"] = industry.apply(macd_volume_signal, axis=1)
+    industry["quantile_signal"] = industry.apply(quantile_signal, axis=1)
+    industry["dual_ma_signal"] = industry.apply(dual_ma_signal, axis=1)
+
+    return industry
+
+
+def build_ranking() -> dict:
+    industry = build_industry_features(load_daily_history())
 
     latest_date = industry["trade_date"].max()
     latest = industry[industry["trade_date"] == latest_date].copy()
@@ -153,6 +226,27 @@ def build_ranking() -> dict:
             "ret10": safe_float(row["ret_10"]),
             "breadth3": safe_float(row["breadth_3"]),
             "amountRatio3_20": safe_float(row["amount_ratio_3_20"]),
+            "consensusScore": safe_float(row["consensus_score"]),
+            "models": {
+                "macdVolume": {
+                    "score": safe_float(row["macd_volume_score"]),
+                    "signal": row["macd_volume_signal"],
+                    "histPct": safe_float(row["macd_hist_pct"]),
+                    "amountRatio": safe_float(row["amount_ratio_3_20"]),
+                },
+                "quantileExtreme": {
+                    "score": safe_float(row["quantile_score"]),
+                    "signal": row["quantile_signal"],
+                    "ret5Quantile": safe_float(row["ret5_quantile"]),
+                    "ret20Quantile": safe_float(row["ret20_quantile"]),
+                },
+                "dualMA": {
+                    "score": safe_float(row["dual_ma_score"]),
+                    "signal": row["dual_ma_signal"],
+                    "maSpread": safe_float(row["ma5_ma20_spread"]),
+                    "ma20Slope5": safe_float(row["ma20_slope_5"]),
+                },
+            },
             "probabilities": probabilities,
         })
 
@@ -160,9 +254,10 @@ def build_ranking() -> dict:
     for index, record in enumerate(records, start=1):
         record["rank"] = index
     return {
+        "modelVersion": MODEL_VERSION,
         "updatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
         "tradeDate": str(latest_date),
-        "source": "本地全市场日线缓存；事件为量价模型事件",
+        "source": "本地全市场日线缓存；MACD量能、分位数极值、双均线三模型共识",
         "industries": records,
     }
 

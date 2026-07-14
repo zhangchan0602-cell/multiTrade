@@ -9,7 +9,8 @@
     "build": "vite build --base ./",
     "preview": "vite preview",
     "backtest:short": "${OPS_PYTHON:-python3} scripts/postclose_t3_history.py",
-    "backtest:portfolio": "${OPS_PYTHON:-python3} scripts/strategy_backtest.py --portfolio"
+    "backtest:portfolio": "${OPS_PYTHON:-python3} scripts/strategy_backtest.py --portfolio",
+    "backtest:industry-trend": "${OPS_PYTHON:-python3} scripts/industry_trend_backtest.py"
   },
   "dependencies": {
     "react": "^18.3.1",
