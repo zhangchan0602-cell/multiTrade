@@ -493,11 +493,11 @@ function calculatePressureLevels(series) {
   };
 }
 
-function latestSummary(series) {
+function latestSummary(series, index) {
   const latest = series.at(-1);
   return {
-    indexCode: INDEX_CODE,
-    indexName: INDEX_NAME,
+    indexCode: index.indexCode,
+    indexName: index.indexName,
     tradeDate: latest.tradeDate,
     close: latest.close,
     dailyRet: latest.dailyRet,
@@ -513,18 +513,22 @@ function latestSummary(series) {
   };
 }
 
-export function calculateKechuangMarket(csvText) {
+export function calculateIndexMarket(csvText, index = {}) {
+  const indexConfig = {
+    indexCode: index.indexCode || INDEX_CODE,
+    indexName: index.indexName || INDEX_NAME,
+  };
   const series = parseIndexSeries(csvText);
 
   if (series.length < 120) {
-    throw new Error('科创指数历史K线样本不足，无法计算市场模型。');
+    throw new Error(`${indexConfig.indexName}指数历史K线样本不足，无法计算市场模型。`);
   }
 
   const model = calculateDrawdownModel(series);
   const pressure = calculatePressureLevels(series);
 
   return {
-    summary: latestSummary(series),
+    summary: latestSummary(series, indexConfig),
     model,
     pressure,
     chart: series.slice(-80).map((item) => ({
@@ -533,4 +537,8 @@ export function calculateKechuangMarket(csvText) {
       ma20: item.ma20,
     })),
   };
+}
+
+export function calculateKechuangMarket(csvText) {
+  return calculateIndexMarket(csvText, { indexCode: INDEX_CODE, indexName: INDEX_NAME });
 }

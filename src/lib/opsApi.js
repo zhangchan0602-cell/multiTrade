@@ -56,6 +56,10 @@ export function refreshKechuangIndex() {
   return request('/api/kechuang/refresh', { method: 'POST' });
 }
 
+export function refreshSemiconductorIndex() {
+  return request('/api/semiconductor/refresh', { method: 'POST' });
+}
+
 export function fetchIndustryTrendRank() {
   return request('/api/industry-trends');
 }

@@ -17,6 +17,9 @@ const COMBINED_CURRENT_MD_PATH = path.join(ROOT_DIR, 'docs', 'list', 'combined_t
 const KECHUANG_INDEX_CODE = '000688.SH';
 const KECHUANG_INDEX_CSV_PATH = path.join(ROOT_DIR, 'scripts', '.cache', 'index', '000688.csv');
 const KECHUANG_DOWNLOAD_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'download_kechuang_index.py');
+const SEMICONDUCTOR_INDEX_CODE = 'H30184.CSI';
+const SEMICONDUCTOR_INDEX_CSV_PATH = path.join(ROOT_DIR, 'scripts', '.cache', 'index', 'H30184.csv');
+const SEMICONDUCTOR_DOWNLOAD_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'download_semiconductor_index.py');
 const INDUSTRY_TREND_RANK_PATH = path.join(ROOT_DIR, 'docs', 'list', 'industry_trend_rank.json');
 const INDUSTRY_TREND_SCRIPT_PATH = path.join(ROOT_DIR, 'scripts', 'industry_trend_rank.py');
 const INDUSTRY_TREND_MODEL_VERSION = 2;
@@ -458,24 +461,42 @@ function runScript(scriptPath, args = []) {
   });
 }
 
-async function refreshKechuangIndex() {
-  const run = await runScript(KECHUANG_DOWNLOAD_SCRIPT_PATH);
-  const csvText = await readFile(KECHUANG_INDEX_CSV_PATH, 'utf8');
+async function refreshIndex({ downloadScriptPath, csvPath, indexCode, indexName }) {
+  const run = await runScript(downloadScriptPath);
+  const csvText = await readFile(csvPath, 'utf8');
   const latestTradeDate = resolveCsvLatestDate(csvText);
 
   if (!latestTradeDate) {
-    throw new Error('科创指数日线为空，无法读取最新交易日');
+    throw new Error(`${indexName}指数日线为空，无法读取最新交易日`);
   }
 
   return {
     ok: true,
-    indexCode: KECHUANG_INDEX_CODE,
+    indexCode,
     csvText,
     latestTradeDate,
-    updatedAt: statSync(KECHUANG_INDEX_CSV_PATH).mtime.toISOString(),
+    updatedAt: statSync(csvPath).mtime.toISOString(),
     output: run.output,
     pythonBin: run.pythonBin,
   };
+}
+
+async function refreshKechuangIndex() {
+  return refreshIndex({
+    downloadScriptPath: KECHUANG_DOWNLOAD_SCRIPT_PATH,
+    csvPath: KECHUANG_INDEX_CSV_PATH,
+    indexCode: KECHUANG_INDEX_CODE,
+    indexName: '科创',
+  });
+}
+
+async function refreshSemiconductorIndex() {
+  return refreshIndex({
+    downloadScriptPath: SEMICONDUCTOR_DOWNLOAD_SCRIPT_PATH,
+    csvPath: SEMICONDUCTOR_INDEX_CSV_PATH,
+    indexCode: SEMICONDUCTOR_INDEX_CODE,
+    indexName: '半导体',
+  });
 }
 
 async function readIndustryTrendRank() {
@@ -713,6 +734,19 @@ const server = createServer(async (req, res) => {
     } catch (error) {
       json(res, 500, {
         error: error.message || 'refresh-kechuang-failed',
+        output: Array.isArray(error.output) ? error.output : [],
+      });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/semiconductor/refresh') {
+    try {
+      const payload = await refreshSemiconductorIndex();
+      json(res, 200, payload);
+    } catch (error) {
+      json(res, 500, {
+        error: error.message || 'refresh-semiconductor-failed',
         output: Array.isArray(error.output) ? error.output : [],
       });
     }

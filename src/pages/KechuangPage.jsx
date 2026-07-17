@@ -50,7 +50,7 @@ function upsideLabel(probability) {
   return '偏弱';
 }
 
-function MiniTrendChart({ points }) {
+function MiniTrendChart({ points, ariaLabel }) {
   const path = useMemo(() => {
     if (!points?.length) {
       return '';
@@ -81,7 +81,7 @@ function MiniTrendChart({ points }) {
   const latest = points.at(-1);
 
   return (
-    <div className="kc-chart" aria-label="科创指数走势">
+    <div className="kc-chart" aria-label={ariaLabel}>
       <svg viewBox="0 0 620 180" role="img">
         <path className="kc-chart-grid" d="M12 45H608M12 90H608M12 135H608" />
         <path className="kc-chart-line" d={path} />
@@ -95,7 +95,14 @@ function MiniTrendChart({ points }) {
   );
 }
 
-export default function KechuangPage() {
+export default function KechuangPage({
+  title = '科创',
+  analysisName = '科创50',
+  description = '基于本地科创50指数日线，计算当前上涨概率、回撤概率与本轮趋势压力位。',
+  emptyHeading = '模块一',
+  refreshIndex = refreshKechuangIndex,
+  calculateMarket = calculateKechuangMarket,
+}) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [calculating, setCalculating] = useState(false);
@@ -105,8 +112,8 @@ export default function KechuangPage() {
     setError('');
 
     try {
-      const payload = await refreshKechuangIndex();
-      const nextResult = calculateKechuangMarket(payload.csvText);
+      const payload = await refreshIndex();
+      const nextResult = calculateMarket(payload.csvText);
       setResult({
         ...nextResult,
         refreshedAt: payload.updatedAt,
@@ -114,7 +121,7 @@ export default function KechuangPage() {
       });
     } catch (err) {
       setResult(null);
-      setError(err.message || '科创市场模型计算失败');
+      setError(err.message || `${title}市场模型计算失败`);
     } finally {
       setCalculating(false);
     }
@@ -124,8 +131,8 @@ export default function KechuangPage() {
     <section className="content-stack">
       <article className="panel panel-intro kc-intro">
         <div>
-          <h2>科创</h2>
-          <p>基于本地科创50指数日线，计算当前上涨概率、回撤概率与本轮趋势压力位。</p>
+          <h2>{title}</h2>
+          <p>{description}</p>
           <p className="panel-meta-line">概率模型采用历史相似市场状态：动量、波动、量能、均线偏离与20日回撤共同参与匹配。</p>
         </div>
         <button type="button" className="action-button action-primary" onClick={handleCalculate} disabled={calculating}>
@@ -137,8 +144,8 @@ export default function KechuangPage() {
 
       {!result && !error && (
         <article className="panel kc-empty">
-          <h3>模块一</h3>
-          <p>点击“计算”后输出科创50指数模型下 1 / 3 / 5 / 10 天上涨概率、3 / 5 / 10 天内回撤发生概率，并同步给出本次趋势的多个压力位。</p>
+          <h3>{emptyHeading}</h3>
+          <p>点击“计算”后输出{analysisName}指数模型下 1 / 3 / 5 / 10 天上涨概率、3 / 5 / 10 天内回撤发生概率，并同步给出本次趋势的多个压力位。</p>
         </article>
       )}
 
@@ -146,7 +153,7 @@ export default function KechuangPage() {
         <>
           <article className="panel kc-overview">
             <div>
-              <h3>当前科创市场状态</h3>
+              <h3>当前{title}市场状态</h3>
               <p className="panel-meta-line">
                 {result.summary.indexName}（{result.summary.indexCode}），行情日期 {result.summary.tradeDate}，
                 历史日线 {result.summary.dataPointCount} 条。
@@ -171,7 +178,7 @@ export default function KechuangPage() {
                 <div className="meta-value">{formatPct(result.summary.amountRatio5)}</div>
               </div>
             </div>
-            <MiniTrendChart points={result.chart} />
+            <MiniTrendChart points={result.chart} ariaLabel={`${title}指数走势`} />
           </article>
 
           <article className="panel">
